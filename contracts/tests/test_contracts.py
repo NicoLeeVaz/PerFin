@@ -185,6 +185,20 @@ class Rules(unittest.TestCase):
                                             "transaction_id": "t040", "amount_minor": 2500})
         self.assertIn("E_ACCOUNT_KIND", self.mutate(f))
 
+    def test_offsetting_transfer_splits_cannot_inflate_payment(self):
+        def f(d):
+            d["transactions"][3]["splits"] = [
+                {"split_id": "s004", "split_kind": "transfer", "amount_minor": 20000, "transfer_link_id": "L001"},
+                {"split_id": "s004b", "split_kind": "transfer", "amount_minor": -10000, "transfer_link_id": "L001"}]
+            d["statement_payments"][0]["amount_minor"] = 20000
+        got = self.mutate(f)
+        self.assertIn("E_TRANSFER_AMOUNT", got)
+        self.assertIn("E_ALLOCATION_EXCEEDS", got)
+
+    def test_all_entity_ids_unique(self):
+        for coll in ("statement_payments", "reconciliations", "card_terms", "asset_valuations"):
+            self.assertIn("E_DUPLICATE_ID", self.mutate(lambda d: d[coll].append(copy.deepcopy(d[coll][0]))), coll)
+
     def test_deferred_promo_needs_deadline(self):
         self.assertIn("E_REQUIRED", self.mutate(lambda d: d["card_terms"][1]["apr_buckets"][1].pop("promo_end_date")))
 

@@ -73,6 +73,9 @@ def ledger_rules(b: Dict) -> List[Error]:
     e += _dupes(b["transactions"], "transaction_id", "$.transactions")
     e += _dupes(b.get("transfer_links", []), "transfer_link_id", "$.transfer_links")
     e += _dupes(b.get("statements", []), "statement_id", "$.statements")
+    for coll, key in (("statement_payments", "allocation_id"), ("reconciliations", "reconciliation_id"),
+                      ("card_terms", "terms_id"), ("asset_valuations", "valuation_id")):
+        e += _dupes(b.get(coll, []), key, f"$.{coll}")
     e += _dupes([s for t in b["transactions"] for s in t["splits"]], "split_id", "$.transactions[*].splits")
 
     for i, a in enumerate(b["accounts"]):
@@ -154,6 +157,8 @@ def ledger_rules(b: Dict) -> List[Error]:
         legs = link_splits.get(l["transfer_link_id"], [])
         fs = [s["amount_minor"] for t, s in legs if t is f]
         ts = [s["amount_minor"] for t, s in legs if t is to]
+        if any(x > 0 for x in fs) and any(x < 0 for x in fs) or any(x > 0 for x in ts) and any(x < 0 for x in ts):
+            e.append(("E_TRANSFER_AMOUNT", p, "a transfer leg's splits for one link must all have the same sign"))
         if not fs or not ts or len(legs) != len(fs) + len(ts):
             e.append(("E_TRANSFER_UNPAIRED", p, "both legs (and only those) need a transfer split for this link"))
         elif sum(fs) >= 0 or sum(fs) != -sum(ts):
@@ -177,7 +182,11 @@ def ledger_rules(b: Dict) -> List[Error]:
             continue
         # The payment portion is the inbound transfer splits (a linked payment from another
         # account); refunds, credits and reversals on the card are not payments.
-        paid = sum(x["amount_minor"] for x in t["splits"] if x["split_kind"] == "transfer" and x["amount_minor"] > 0)
+        per_link = Counter()
+        for x in t["splits"]:
+            if x["split_kind"] == "transfer":
+                per_link[x["transfer_link_id"]] += x["amount_minor"]
+        paid = sum(v for v in per_link.values() if v > 0)  # net inbound amount per link
         if t["account_id"] != s["account_id"] or paid <= 0:
             e.append(("E_ACCOUNT_KIND", p, "allocation needs a payment: an inbound transfer on the statement's account"))
             continue
