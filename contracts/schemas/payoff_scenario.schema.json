@@ -1,0 +1,293 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "perfin/1.0/payoff_scenario.schema.json",
+  "title": "Payoff module input (read from reconciled ledger balances; never a second ledger)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "document_type",
+    "scenario"
+  ],
+  "properties": {
+    "contract": {
+      "$ref": "common.schema.json#/$defs/contract"
+    },
+    "contract_version": {
+      "$ref": "common.schema.json#/$defs/semver"
+    },
+    "document_type": {
+      "const": "payoff_scenario"
+    },
+    "scenario": {
+      "$ref": "#/$defs/scenario_body"
+    }
+  },
+  "$defs": {
+    "scenario_body": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_id",
+        "as_of",
+        "horizon_months",
+        "accrual_model",
+        "cash_plan",
+        "cards",
+        "strategies",
+        "tolerance"
+      ],
+      "properties": {
+        "scenario_id": {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        "as_of": {
+          "$ref": "common.schema.json#/$defs/date"
+        },
+        "horizon_months": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600
+        },
+        "accrual_model": {
+          "enum": [
+            "m1_monthly_apr_div_12"
+          ],
+          "description": "Only the documented approximate monthly model is frozen in 1.0."
+        },
+        "cash_plan": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "monthly_minor"
+          ],
+          "properties": {
+            "monthly_minor": {
+              "$ref": "common.schema.json#/$defs/money_minor_nonneg"
+            },
+            "overrides": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "month",
+                  "amount_minor"
+                ],
+                "properties": {
+                  "month": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 600
+                  },
+                  "amount_minor": {
+                    "$ref": "common.schema.json#/$defs/money_minor_nonneg"
+                  }
+                }
+              }
+            },
+            "lump_sums": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "month",
+                  "amount_minor"
+                ],
+                "properties": {
+                  "month": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 600
+                  },
+                  "amount_minor": {
+                    "$ref": "common.schema.json#/$defs/money_minor_nonneg"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "cards": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "account_id",
+              "buckets",
+              "min_payment_rule",
+              "source_statement_id"
+            ],
+            "properties": {
+              "account_id": {
+                "$ref": "common.schema.json#/$defs/account_id"
+              },
+              "source_statement_id": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$",
+                "description": "Statement the starting balances came from; null only for synthetic what-if cards."
+              },
+              "buckets": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "bucket_id",
+                    "balance_minor",
+                    "apr",
+                    "deferred_interest"
+                  ],
+                  "properties": {
+                    "bucket_id": {
+                      "$ref": "common.schema.json#/$defs/id"
+                    },
+                    "balance_minor": {
+                      "$ref": "common.schema.json#/$defs/money_minor_nonneg"
+                    },
+                    "apr": {
+                      "$ref": "common.schema.json#/$defs/apr"
+                    },
+                    "promo_end_month": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 1,
+                      "maximum": 600
+                    },
+                    "post_promo_apr": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^(0(\\.[0-9]{1,6})?|1(\\.0{1,6})?)$"
+                    },
+                    "deferred_interest": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              },
+              "min_payment_rule": {
+                "$ref": "ledger_bundle.schema.json#/$defs/card_terms/properties/min_payment_rule"
+              },
+              "assumed_charges": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "month",
+                    "amount_minor"
+                  ],
+                  "properties": {
+                    "month": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 600
+                    },
+                    "amount_minor": {
+                      "$ref": "common.schema.json#/$defs/money_minor_nonneg"
+                    }
+                  }
+                }
+              },
+              "fees": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "month",
+                    "amount_minor"
+                  ],
+                  "properties": {
+                    "month": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 600
+                    },
+                    "amount_minor": {
+                      "$ref": "common.schema.json#/$defs/money_minor_nonneg"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "strategies": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "largest_balance",
+                  "snowball",
+                  "avalanche",
+                  "near_apr_hybrid"
+                ]
+              },
+              "gap_pp": {
+                "type": "string",
+                "pattern": "^[0-9]{1,2}(\\.[0-9]{1,2})?$",
+                "description": "Percentage points as a decimal string, e.g. \"0.5\". Hybrid only."
+              },
+              "prefer": {
+                "enum": [
+                  "smallest",
+                  "largest"
+                ]
+              },
+              "lock_target": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "tolerance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "max_extra_cost_minor",
+            "max_payoff_delay_months"
+          ],
+          "properties": {
+            "max_extra_cost_minor": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "max_payoff_delay_months": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 600
+            }
+          },
+          "description": "null = unset; unset never means approved."
+        }
+      }
+    }
+  }
+}

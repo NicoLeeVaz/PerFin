@@ -1,0 +1,20 @@
+{
+ "contract": "perfin",
+ "contract_version": "1.0.0",
+ "document_type": "command",
+ "command_id": "0f8e3a52-1d2b-4c3d-9e4f-5a6b7c8d9e0f",
+ "command_type": "approve_rows",
+ "issued_at": "2026-07-02T15:10:00Z",
+ "issued_by": "excel_core:review_sheet",
+ "payload": {
+  "batch_id": "b2026_07_alpha",
+  "row_numbers": []
+ },
+ "expected_versions": [
+  {
+   "entity": "batch",
+   "entity_id": "b2026_07_alpha",
+   "row_version": 1
+  }
+ ]
+}

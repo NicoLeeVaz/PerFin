@@ -1,0 +1,588 @@
+{
+  "contract": "perfin",
+  "contract_version": "1.0.0",
+  "document_type": "report_tables",
+  "csv_dialect": {
+    "encoding": "utf-8",
+    "bom": false,
+    "delimiter": ",",
+    "quote": "\"",
+    "quoting": "RFC 4180 minimal; fields containing delimiter, quote, CR or LF are quoted; quotes doubled",
+    "line_terminator": "\r\n",
+    "header": "exact column names in this order",
+    "null": "empty field",
+    "boolean": "TRUE/FALSE",
+    "date": "YYYY-MM-DD",
+    "money_minor": "optional '-' then digits, integer minor units",
+    "decimal_string": "digits with optional '.' fraction, no exponent"
+  },
+  "excel_rules": [
+    "Tables are read-only refresh targets; refresh never writes back.",
+    "text columns are written as text cells; a value starting with = + - @ TAB or CR is never evaluated as a formula.",
+    "money_minor columns are integers; display formatting divides by 100 in the view layer only.",
+    "display_balance_minor = ledger balance for assets and -ledger balance for liabilities (positive = amount owed)."
+  ],
+  "tables": {
+    "rpt_accounts": [
+      {
+        "name": "account_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "display_name",
+        "type": "text",
+        "nullable": 0
+      },
+      {
+        "name": "kind",
+        "type": "enum",
+        "nullable": 0
+      },
+      {
+        "name": "account_class",
+        "type": "enum",
+        "nullable": 0
+      },
+      {
+        "name": "currency",
+        "type": "currency",
+        "nullable": 0
+      },
+      {
+        "name": "ledger_balance_minor",
+        "type": "money_minor",
+        "nullable": 0
+      },
+      {
+        "name": "display_balance_minor",
+        "type": "money_minor",
+        "nullable": 0
+      },
+      {
+        "name": "balance_as_of",
+        "type": "date",
+        "nullable": 0
+      },
+      {
+        "name": "include_in_net_worth",
+        "type": "boolean",
+        "nullable": 0
+      }
+    ],
+    "rpt_transactions": [
+      {
+        "name": "transaction_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "account_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "posted_date",
+        "type": "date",
+        "nullable": 0
+      },
+      {
+        "name": "transaction_date",
+        "type": "date",
+        "nullable": 1
+      },
+      {
+        "name": "amount_minor",
+        "type": "money_minor",
+        "nullable": 0
+      },
+      {
+        "name": "currency",
+        "type": "currency",
+        "nullable": 0
+      },
+      {
+        "name": "description",
+        "type": "text",
+        "nullable": 0
+      },
+      {
+        "name": "entry_method",
+        "type": "enum",
+        "nullable": 0
+      },
+      {
+        "name": "reconciled",
+        "type": "boolean",
+        "nullable": 0
+      },
+      {
+        "name": "row_version",
+        "type": "integer",
+        "nullable": 0
+      }
+    ],
+    "rpt_splits": [
+      {
+        "name": "transaction_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "split_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "split_kind",
+        "type": "enum",
+        "nullable": 0
+      },
+      {
+        "name": "amount_minor",
+        "type": "money_minor",
+        "nullable": 0
+      },
+      {
+        "name": "category_id",
+        "type": "id",
+        "nullable": 1
+      },
+      {
+        "name": "category_kind",
+        "type": "enum",
+        "nullable": 1
+      },
+      {
+        "name": "transfer_link_id",
+        "type": "id",
+        "nullable": 1
+      }
+    ],
+    "rpt_card_status": [
+      {
+        "name": "account_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "statement_id",
+        "type": "id",
+        "nullable": 1
+      },
+      {
+        "name": "statement_closing_owed_minor",
+        "type": "money_minor",
+        "nullable": 1
+      },
+      {
+        "name": "current_owed_minor",
+        "type": "money_minor",
+        "nullable": 0
+      },
+      {
+        "name": "credit_limit_minor",
+        "type": "money_minor",
+        "nullable": 1
+      },
+      {
+        "name": "utilization_basis_points",
+        "type": "integer",
+        "nullable": 1
+      },
+      {
+        "name": "due_date",
+        "type": "date",
+        "nullable": 1
+      },
+      {
+        "name": "minimum_due_minor",
+        "type": "money_minor",
+        "nullable": 1
+      },
+      {
+        "name": "confirmed_payments_minor",
+        "type": "money_minor",
+        "nullable": 0
+      },
+      {
+        "name": "unpaid_statement_minor",
+        "type": "money_minor",
+        "nullable": 1
+      },
+      {
+        "name": "as_of",
+        "type": "date",
+        "nullable": 0
+      }
+    ],
+    "rpt_statements": [
+      {
+        "name": "statement_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "account_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "period_start",
+        "type": "date",
+        "nullable": 0
+      },
+      {
+        "name": "period_end",
+        "type": "date",
+        "nullable": 0
+      },
+      {
+        "name": "due_date",
+        "type": "date",
+        "nullable": 1
+      },
+      {
+        "name": "opening_balance_minor",
+        "type": "money_minor",
+        "nullable": 0
+      },
+      {
+        "name": "closing_balance_minor",
+        "type": "money_minor",
+        "nullable": 0
+      },
+      {
+        "name": "minimum_due_minor",
+        "type": "money_minor",
+        "nullable": 1
+      }
+    ],
+    "rpt_reconciliation": [
+      {
+        "name": "reconciliation_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "statement_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "included_count",
+        "type": "integer",
+        "nullable": 0
+      },
+      {
+        "name": "difference_minor",
+        "type": "money_minor",
+        "nullable": 0
+      },
+      {
+        "name": "recon_status",
+        "type": "enum",
+        "nullable": 0
+      }
+    ],
+    "rpt_review_queue": [
+      {
+        "name": "batch_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "row_number",
+        "type": "integer",
+        "nullable": 0
+      },
+      {
+        "name": "review_state",
+        "type": "enum",
+        "nullable": 0
+      },
+      {
+        "name": "duplicate_status",
+        "type": "enum",
+        "nullable": 0
+      },
+      {
+        "name": "error_codes",
+        "type": "text",
+        "nullable": 1
+      },
+      {
+        "name": "posted_date",
+        "type": "date",
+        "nullable": 1
+      },
+      {
+        "name": "amount_minor",
+        "type": "money_minor",
+        "nullable": 1
+      },
+      {
+        "name": "description",
+        "type": "text",
+        "nullable": 1
+      }
+    ],
+    "rpt_card_terms": [
+      {
+        "name": "terms_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "account_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "bucket_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "bucket_kind",
+        "type": "enum",
+        "nullable": 0
+      },
+      {
+        "name": "apr",
+        "type": "decimal_string",
+        "nullable": 0
+      },
+      {
+        "name": "promo_end_date",
+        "type": "date",
+        "nullable": 1
+      },
+      {
+        "name": "deferred_interest",
+        "type": "boolean",
+        "nullable": 0
+      },
+      {
+        "name": "effective_from",
+        "type": "date",
+        "nullable": 0
+      }
+    ],
+    "rpt_valuations": [
+      {
+        "name": "valuation_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "account_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "as_of",
+        "type": "date",
+        "nullable": 0
+      },
+      {
+        "name": "value_minor",
+        "type": "money_minor",
+        "nullable": 0
+      },
+      {
+        "name": "currency",
+        "type": "currency",
+        "nullable": 0
+      },
+      {
+        "name": "valuation_method",
+        "type": "enum",
+        "nullable": 0
+      },
+      {
+        "name": "valuation_source",
+        "type": "text",
+        "nullable": 0
+      }
+    ],
+    "rpt_payoff_summary": [
+      {
+        "name": "scenario_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "strategy_label",
+        "type": "text",
+        "nullable": 0
+      },
+      {
+        "name": "run_status",
+        "type": "enum",
+        "nullable": 0
+      },
+      {
+        "name": "total_interest_minor",
+        "type": "money_minor",
+        "nullable": 0
+      },
+      {
+        "name": "total_fees_minor",
+        "type": "money_minor",
+        "nullable": 0
+      },
+      {
+        "name": "delta_cost_vs_avalanche_minor",
+        "type": "money_minor",
+        "nullable": 1
+      },
+      {
+        "name": "debt_free_month",
+        "type": "integer",
+        "nullable": 1
+      },
+      {
+        "name": "delta_months_vs_avalanche",
+        "type": "integer",
+        "nullable": 1
+      },
+      {
+        "name": "final_debt_minor",
+        "type": "money_minor",
+        "nullable": 0
+      },
+      {
+        "name": "within_tolerance",
+        "type": "enum",
+        "nullable": 0
+      },
+      {
+        "name": "accrual_model",
+        "type": "enum",
+        "nullable": 0
+      }
+    ],
+    "rpt_payoff_schedule": [
+      {
+        "name": "scenario_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "strategy_label",
+        "type": "text",
+        "nullable": 0
+      },
+      {
+        "name": "month",
+        "type": "integer",
+        "nullable": 0
+      },
+      {
+        "name": "account_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "opening_minor",
+        "type": "money_minor",
+        "nullable": 0
+      },
+      {
+        "name": "interest_minor",
+        "type": "money_minor",
+        "nullable": 0
+      },
+      {
+        "name": "minimum_minor",
+        "type": "money_minor",
+        "nullable": 0
+      },
+      {
+        "name": "extra_minor",
+        "type": "money_minor",
+        "nullable": 0
+      },
+      {
+        "name": "payment_minor",
+        "type": "money_minor",
+        "nullable": 0
+      },
+      {
+        "name": "ending_minor",
+        "type": "money_minor",
+        "nullable": 0
+      }
+    ],
+    "rpt_net_worth_lines": [
+      {
+        "name": "as_of",
+        "type": "date",
+        "nullable": 0
+      },
+      {
+        "name": "liability_view",
+        "type": "enum",
+        "nullable": 0
+      },
+      {
+        "name": "account_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "kind",
+        "type": "enum",
+        "nullable": 0
+      },
+      {
+        "name": "ledger_balance_minor",
+        "type": "money_minor",
+        "nullable": 0
+      },
+      {
+        "name": "included_minor",
+        "type": "money_minor",
+        "nullable": 1
+      },
+      {
+        "name": "valuation_as_of",
+        "type": "date",
+        "nullable": 1
+      },
+      {
+        "name": "stale",
+        "type": "boolean",
+        "nullable": 0
+      },
+      {
+        "name": "excluded_reason",
+        "type": "enum",
+        "nullable": 1
+      }
+    ],
+    "rpt_net_worth_bridge": [
+      {
+        "name": "as_of",
+        "type": "date",
+        "nullable": 0
+      },
+      {
+        "name": "liability_view",
+        "type": "enum",
+        "nullable": 0
+      },
+      {
+        "name": "line",
+        "type": "enum",
+        "nullable": 0
+      },
+      {
+        "name": "amount_minor",
+        "type": "money_minor",
+        "nullable": 0
+      }
+    ]
+  }
+}

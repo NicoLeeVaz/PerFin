@@ -1,0 +1,268 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "perfin/1.0/payoff_result.schema.json",
+  "title": "Payoff module output (a calculation result, not a ledger record)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "document_type",
+    "scenario_id",
+    "engine_version",
+    "accrual_model",
+    "results"
+  ],
+  "properties": {
+    "contract": {
+      "$ref": "common.schema.json#/$defs/contract"
+    },
+    "contract_version": {
+      "$ref": "common.schema.json#/$defs/semver"
+    },
+    "document_type": {
+      "const": "payoff_result"
+    },
+    "scenario_id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "engine_version": {
+      "$ref": "common.schema.json#/$defs/semver"
+    },
+    "accrual_model": {
+      "enum": [
+        "m1_monthly_apr_div_12"
+      ]
+    },
+    "results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "strategy",
+          "run_status",
+          "total_interest_minor",
+          "total_fees_minor",
+          "total_payments_minor",
+          "unspent_minor",
+          "final_debt_minor",
+          "debt_free_month",
+          "payoff_month_by_account",
+          "flags",
+          "schedule"
+        ],
+        "properties": {
+          "strategy": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "largest_balance",
+                  "snowball",
+                  "avalanche",
+                  "near_apr_hybrid"
+                ]
+              },
+              "gap_pp": {
+                "type": "string",
+                "pattern": "^[0-9]{1,2}(\\.[0-9]{1,2})?$",
+                "description": "Percentage points as a decimal string, e.g. \"0.5\". Hybrid only."
+              },
+              "prefer": {
+                "enum": [
+                  "smallest",
+                  "largest"
+                ]
+              },
+              "lock_target": {
+                "type": "boolean"
+              }
+            }
+          },
+          "run_status": {
+            "enum": [
+              "paid_off",
+              "horizon_reached",
+              "infeasible_budget",
+              "unsupported_terms"
+            ]
+          },
+          "total_interest_minor": {
+            "$ref": "common.schema.json#/$defs/money_minor_nonneg"
+          },
+          "total_fees_minor": {
+            "$ref": "common.schema.json#/$defs/money_minor_nonneg"
+          },
+          "total_payments_minor": {
+            "$ref": "common.schema.json#/$defs/money_minor_nonneg"
+          },
+          "unspent_minor": {
+            "$ref": "common.schema.json#/$defs/money_minor_nonneg"
+          },
+          "final_debt_minor": {
+            "$ref": "common.schema.json#/$defs/money_minor_nonneg"
+          },
+          "debt_free_month": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 600
+          },
+          "payoff_month_by_account": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "account_id",
+                "payoff_month"
+              ],
+              "properties": {
+                "account_id": {
+                  "$ref": "common.schema.json#/$defs/account_id"
+                },
+                "payoff_month": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 600
+                }
+              }
+            }
+          },
+          "delta_cost_vs_avalanche_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "delta_months_vs_avalanche": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -600,
+            "maximum": 600
+          },
+          "within_tolerance": {
+            "enum": [
+              "yes",
+              "no",
+              "unset"
+            ]
+          },
+          "flags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "code",
+                "month"
+              ],
+              "properties": {
+                "code": {
+                  "enum": [
+                    "negative_amortization",
+                    "deferred_interest_charged",
+                    "promo_expired",
+                    "horizon_reached",
+                    "infeasible_budget",
+                    "unsupported"
+                  ]
+                },
+                "month": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "maximum": 600
+                },
+                "account_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "pattern": "^[a-z][a-z0-9_]{0,15}:[a-z0-9][a-z0-9_.-]{0,47}$"
+                },
+                "detail": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 1000
+                }
+              }
+            }
+          },
+          "schedule": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "month",
+                "account_id",
+                "opening_minor",
+                "interest_minor",
+                "fees_minor",
+                "charges_minor",
+                "minimum_minor",
+                "extra_minor",
+                "payment_minor",
+                "ending_minor"
+              ],
+              "properties": {
+                "month": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 600
+                },
+                "opening_minor": {
+                  "$ref": "common.schema.json#/$defs/money_minor_nonneg"
+                },
+                "interest_minor": {
+                  "$ref": "common.schema.json#/$defs/money_minor_nonneg"
+                },
+                "fees_minor": {
+                  "$ref": "common.schema.json#/$defs/money_minor_nonneg"
+                },
+                "charges_minor": {
+                  "$ref": "common.schema.json#/$defs/money_minor_nonneg"
+                },
+                "minimum_minor": {
+                  "$ref": "common.schema.json#/$defs/money_minor_nonneg"
+                },
+                "extra_minor": {
+                  "$ref": "common.schema.json#/$defs/money_minor_nonneg"
+                },
+                "payment_minor": {
+                  "$ref": "common.schema.json#/$defs/money_minor_nonneg"
+                },
+                "ending_minor": {
+                  "$ref": "common.schema.json#/$defs/money_minor_nonneg"
+                },
+                "account_id": {
+                  "$ref": "common.schema.json#/$defs/account_id"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

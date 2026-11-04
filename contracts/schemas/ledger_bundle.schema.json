@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "perfin/1.0/ledger_bundle.schema.json",
+  "title": "Ledger bundle: canonical exchange form of committed ledger records",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "contract_version", "document_type", "base_currency", "accounts", "categories", "transactions"],
+  "properties": {
+    "contract": {"$ref": "common.schema.json#/$defs/contract"},
+    "contract_version": {"$ref": "common.schema.json#/$defs/semver"},
+    "document_type": {"const": "ledger_bundle"},
+    "base_currency": {"$ref": "common.schema.json#/$defs/currency"},
+    "accounts": {"type": "array", "items": {"$ref": "#/$defs/account"}},
+    "categories": {"type": "array", "items": {"$ref": "#/$defs/category"}},
+    "transactions": {"type": "array", "items": {"$ref": "#/$defs/transaction"}},
+    "transfer_links": {"type": "array", "items": {"$ref": "#/$defs/transfer_link"}},
+    "statements": {"type": "array", "items": {"$ref": "#/$defs/statement"}},
+    "statement_payments": {"type": "array", "items": {"$ref": "#/$defs/statement_payment"}},
+    "reconciliations": {"type": "array", "items": {"$ref": "#/$defs/reconciliation"}},
+    "card_terms": {"type": "array", "items": {"$ref": "#/$defs/card_terms"}},
+    "asset_valuations": {"type": "array", "items": {"$ref": "#/$defs/asset_valuation"}}
+  },
+  "$defs": {
+    "account": {
+      "type": "object", "additionalProperties": false,
+      "required": ["account_id", "kind", "account_class", "display_name", "currency", "opening_balance_minor", "opening_balance_date", "row_version"],
+      "properties": {
+        "account_id": {"$ref": "common.schema.json#/$defs/account_id"},
+        "kind": {"enum": ["asset", "liability"]},
+        "account_class": {"enum": ["checking", "savings", "cash", "credit_card", "loan", "mortgage", "retirement", "brokerage", "real_estate", "vehicle", "business", "other_asset", "other_liability"]},
+        "display_name": {"$ref": "common.schema.json#/$defs/short_text"},
+        "institution_alias": {"type": ["string", "null"], "maxLength": 60},
+        "number_hint": {"type": ["string", "null"], "pattern": "^[0-9]{2,4}$", "description": "At most the last 4 digits. Full numbers are never stored."},
+        "currency": {"$ref": "common.schema.json#/$defs/currency"},
+        "opening_balance_minor": {"$ref": "common.schema.json#/$defs/money_minor"},
+        "opening_balance_date": {"$ref": "common.schema.json#/$defs/date"},
+        "closed_date": {"type": ["string", "null"], "format": "date"},
+        "liquidity": {"enum": ["liquid", "restricted", "illiquid"]},
+        "ownership_pct": {"$ref": "common.schema.json#/$defs/pct_int"},
+        "legal_liability_pct": {"$ref": "common.schema.json#/$defs/pct_int"},
+        "include_in_net_worth": {"type": "boolean"},
+        "tax_status": {"enum": ["taxable", "tax_deferred", "tax_free", "unknown"]},
+        "row_version": {"$ref": "common.schema.json#/$defs/row_version"}
+      }
+    },
+    "category": {
+      "type": "object", "additionalProperties": false,
+      "required": ["category_id", "name", "category_kind"],
+      "properties": {
+        "category_id": {"$ref": "common.schema.json#/$defs/id"},
+        "name": {"$ref": "common.schema.json#/$defs/short_text"},
+        "category_kind": {"enum": ["income", "expense", "interest", "fee"], "description": "interest and fee are expenses reported separately from spending."},
+        "parent_category_id": {"type": ["string", "null"], "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$"}
+      }
+    },
+    "split": {
+      "type": "object", "additionalProperties": false,
+      "required": ["split_id", "split_kind", "amount_minor"],
+      "properties": {
+        "split_id": {"$ref": "common.schema.json#/$defs/id"},
+        "split_kind": {"enum": ["category", "transfer", "adjustment"]},
+        "amount_minor": {"$ref": "common.schema.json#/$defs/money_minor"},
+        "category_id": {"type": ["string", "null"], "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$"},
+        "transfer_link_id": {"type": ["string", "null"], "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$"},
+        "memo": {"type": ["string", "null"], "maxLength": 1000}
+      }
+    },
+    "transaction": {
+      "type": "object", "additionalProperties": false,
+      "required": ["transaction_id", "account_id", "posted_date", "amount_minor", "currency", "description", "entry_method", "splits", "row_version"],
+      "properties": {
+        "transaction_id": {"$ref": "common.schema.json#/$defs/id"},
+        "account_id": {"$ref": "common.schema.json#/$defs/account_id"},
+        "posted_date": {"$ref": "common.schema.json#/$defs/date"},
+        "transaction_date": {"type": ["string", "null"], "format": "date"},
+        "amount_minor": {"$ref": "common.schema.json#/$defs/money_minor"},
+        "currency": {"$ref": "common.schema.json#/$defs/currency"},
+        "description": {"$ref": "common.schema.json#/$defs/text"},
+        "entry_method": {"enum": ["import", "manual", "reversal"]},
+        "source": {
+          "type": ["object", "null"], "additionalProperties": false, "required": ["batch_id", "row_number"],
+          "properties": {
+            "batch_id": {"$ref": "common.schema.json#/$defs/id"},
+            "row_number": {"type": "integer", "minimum": 1},
+            "source_txn_id": {"type": ["string", "null"], "maxLength": 128}
+          }
+        },
+        "reverses_transaction_id": {"type": ["string", "null"], "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$"},
+        "splits": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/split"}},
+        "row_version": {"$ref": "common.schema.json#/$defs/row_version"}
+      }
+    },
+    "transfer_link": {
+      "type": "object", "additionalProperties": false,
+      "required": ["transfer_link_id", "from_transaction_id", "to_transaction_id", "link_status"],
+      "properties": {
+        "transfer_link_id": {"$ref": "common.schema.json#/$defs/id"},
+        "from_transaction_id": {"$ref": "common.schema.json#/$defs/id"},
+        "to_transaction_id": {"$ref": "common.schema.json#/$defs/id"},
+        "link_status": {"enum": ["confirmed"], "description": "Only confirmed links are ledger records; proposed matches live in staging/review."},
+        "match_evidence": {"type": ["string", "null"], "maxLength": 1000}
+      }
+    },
+    "statement": {
+      "type": "object", "additionalProperties": false,
+      "required": ["statement_id", "account_id", "period_start", "period_end", "opening_balance_minor", "closing_balance_minor"],
+      "properties": {
+        "statement_id": {"$ref": "common.schema.json#/$defs/id"},
+        "account_id": {"$ref": "common.schema.json#/$defs/account_id"},
+        "period_start": {"$ref": "common.schema.json#/$defs/date"},
+        "period_end": {"$ref": "common.schema.json#/$defs/date"},
+        "due_date": {"type": ["string", "null"], "format": "date"},
+        "opening_balance_minor": {"$ref": "common.schema.json#/$defs/money_minor"},
+        "closing_balance_minor": {"$ref": "common.schema.json#/$defs/money_minor"},
+        "minimum_due_minor": {"type": ["integer", "null"], "minimum": 0, "maximum": 9007199254740991},
+        "interest_charged_minor": {"type": ["integer", "null"], "minimum": 0, "maximum": 9007199254740991},
+        "fees_charged_minor": {"type": ["integer", "null"], "minimum": 0, "maximum": 9007199254740991},
+        "bucket_balances": {
+          "type": "array",
+          "items": {"type": "object", "additionalProperties": false, "required": ["bucket_id", "balance_minor"],
+            "properties": {"bucket_id": {"$ref": "common.schema.json#/$defs/id"}, "balance_minor": {"$ref": "common.schema.json#/$defs/money_minor"}}}
+        },
+        "evidence_ref": {"type": ["string", "null"], "maxLength": 200, "description": "Opaque local reference (e.g. a file hash). Never a path into the public repository."}
+      }
+    },
+    "statement_payment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["allocation_id", "statement_id", "transaction_id", "amount_minor"],
+      "properties": {
+        "allocation_id": {"$ref": "common.schema.json#/$defs/id"},
+        "statement_id": {"$ref": "common.schema.json#/$defs/id"},
+        "transaction_id": {"$ref": "common.schema.json#/$defs/id"},
+        "amount_minor": {"type": "integer", "minimum": 1, "maximum": 9007199254740991}
+      }
+    },
+    "reconciliation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["reconciliation_id", "statement_id", "included_transaction_ids", "difference_minor", "recon_status"],
+      "properties": {
+        "reconciliation_id": {"$ref": "common.schema.json#/$defs/id"},
+        "statement_id": {"$ref": "common.schema.json#/$defs/id"},
+        "included_transaction_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "common.schema.json#/$defs/id"}},
+        "difference_minor": {"$ref": "common.schema.json#/$defs/money_minor", "description": "statement closing - (statement opening + sum of included). Must equal the recomputed value."},
+        "recon_status": {"enum": ["in_progress", "balanced"]}
+      }
+    },
+    "card_terms": {
+      "type": "object", "additionalProperties": false,
+      "required": ["terms_id", "account_id", "effective_from", "terms_source", "min_payment_rule", "apr_buckets"],
+      "properties": {
+        "terms_id": {"$ref": "common.schema.json#/$defs/id"},
+        "account_id": {"$ref": "common.schema.json#/$defs/account_id"},
+        "effective_from": {"$ref": "common.schema.json#/$defs/date"},
+        "effective_to": {"type": ["string", "null"], "format": "date"},
+        "terms_source": {"enum": ["agreement", "statement", "user_estimate"]},
+        "credit_limit_minor": {"type": ["integer", "null"], "minimum": 0, "maximum": 9007199254740991, "description": "null = unknown; utilization is then 'unknown', never computed."},
+        "min_payment_rule": {
+          "type": "object", "additionalProperties": false, "required": ["rule_type"],
+          "properties": {
+            "rule_type": {"enum": ["fixed", "pct", "pct_plus_interest"]},
+            "amount_minor": {"$ref": "common.schema.json#/$defs/money_minor_nonneg"},
+            "pct": {"$ref": "common.schema.json#/$defs/apr"},
+            "floor_minor": {"$ref": "common.schema.json#/$defs/money_minor_nonneg"}
+          }
+        },
+        "apr_buckets": {"type": "array", "minItems": 1, "items": {
+          "type": "object", "additionalProperties": false, "required": ["bucket_id", "bucket_kind", "apr", "deferred_interest"],
+          "properties": {
+            "bucket_id": {"$ref": "common.schema.json#/$defs/id"},
+            "bucket_kind": {"enum": ["purchase", "cash_advance", "balance_transfer", "promotional", "penalty", "other"]},
+            "apr": {"$ref": "common.schema.json#/$defs/apr"},
+            "promo_end_date": {"type": ["string", "null"], "format": "date"},
+            "post_promo_apr": {"type": ["string", "null"], "pattern": "^(0(\\.[0-9]{1,6})?|1(\\.0{1,6})?)$"},
+            "deferred_interest": {"type": "boolean"}
+          }
+        }}
+      }
+    },
+    "asset_valuation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["valuation_id", "account_id", "as_of", "value_minor", "currency", "valuation_source", "valuation_method"],
+      "properties": {
+        "valuation_id": {"$ref": "common.schema.json#/$defs/id"},
+        "account_id": {"$ref": "common.schema.json#/$defs/account_id"},
+        "as_of": {"$ref": "common.schema.json#/$defs/date"},
+        "value_minor": {"$ref": "common.schema.json#/$defs/money_minor_nonneg"},
+        "currency": {"$ref": "common.schema.json#/$defs/currency"},
+        "valuation_source": {"$ref": "common.schema.json#/$defs/short_text"},
+        "valuation_method": {"enum": ["statement", "market_close", "appraisal", "automated_estimate", "owner_estimate"]},
+        "cost_basis_minor": {"type": ["integer", "null"], "minimum": 0, "maximum": 9007199254740991}
+      }
+    }
+  }
+}

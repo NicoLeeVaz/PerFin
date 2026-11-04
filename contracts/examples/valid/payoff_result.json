@@ -1,0 +1,52 @@
+{
+ "contract": "perfin",
+ "contract_version": "1.0.0",
+ "document_type": "payoff_result",
+ "scenario_id": "sc_tiny",
+ "engine_version": "0.1.0",
+ "accrual_model": "m1_monthly_apr_div_12",
+ "results": [
+  {
+   "strategy": {
+    "kind": "avalanche"
+   },
+   "run_status": "horizon_reached",
+   "total_interest_minor": 2500,
+   "total_fees_minor": 0,
+   "total_payments_minor": 30000,
+   "unspent_minor": 0,
+   "final_debt_minor": 122500,
+   "debt_free_month": null,
+   "payoff_month_by_account": [
+    {
+     "account_id": "card:alpha",
+     "payoff_month": null
+    }
+   ],
+   "delta_cost_vs_avalanche_minor": 0,
+   "delta_months_vs_avalanche": null,
+   "within_tolerance": "unset",
+   "flags": [
+    {
+     "code": "horizon_reached",
+     "month": 1,
+     "detail": "remaining balance shown; no payoff date"
+    }
+   ],
+   "schedule": [
+    {
+     "month": 1,
+     "account_id": "card:alpha",
+     "opening_minor": 150000,
+     "interest_minor": 2500,
+     "fees_minor": 0,
+     "charges_minor": 0,
+     "minimum_minor": 4000,
+     "extra_minor": 26000,
+     "payment_minor": 30000,
+     "ending_minor": 122500
+    }
+   ]
+  }
+ ]
+}

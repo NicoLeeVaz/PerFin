@@ -1,0 +1,18 @@
+{
+ "contract": "perfin",
+ "contract_version": "1.0.0",
+ "document_type": "command_result",
+ "command_id": "0f8e3a52-1d2b-4c3d-9e4f-5a6b7c8d9e0f",
+ "result_status": "accepted",
+ "errors": [],
+ "affected": [
+  {
+   "entity": "batch",
+   "entity_id": "b2026_07_alpha",
+   "row_version": 2
+  }
+ ],
+ "audit_ids": [
+  "au000123"
+ ]
+}

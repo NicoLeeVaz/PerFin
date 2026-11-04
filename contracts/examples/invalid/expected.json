@@ -1,0 +1,116 @@
+{
+ "allocation_exceeds_payment.json": [
+  "E_ALLOCATION_EXCEEDS"
+ ],
+ "amount_boolean.json": [
+  "E_TYPE"
+ ],
+ "amount_float.json": [
+  "E_AMOUNT_NOT_INTEGER"
+ ],
+ "amount_out_of_range.json": [
+  "E_RANGE"
+ ],
+ "amount_string.json": [
+  "E_AMOUNT_NOT_INTEGER"
+ ],
+ "apr_as_float.json": [
+  "E_TYPE"
+ ],
+ "apr_as_percent.json": [
+  "E_PATTERN"
+ ],
+ "card_terms_on_checking.json": [
+  "E_ACCOUNT_KIND"
+ ],
+ "command_bad_payload.json": [
+  "E_COMMAND_PAYLOAD"
+ ],
+ "duplicate_transaction_id.json": [
+  "E_DUPLICATE_ID",
+  "E_RECON_MISMATCH",
+  "E_REF_UNKNOWN"
+ ],
+ "imported_without_source.json": [
+  "E_REQUIRED"
+ ],
+ "invalid_date.json": [
+  "E_DATE_INVALID"
+ ],
+ "invalid_date_format.json": [
+  "E_DATE_INVALID"
+ ],
+ "invalid_date_nonleap.json": [
+  "E_DATE_INVALID"
+ ],
+ "manifest_writes_ledger.json": [
+  "E_MODULE_WRITES_LEDGER"
+ ],
+ "missing_account.json": [
+  "E_ACCOUNT_UNKNOWN"
+ ],
+ "missing_required.json": [
+  "E_REQUIRED"
+ ],
+ "payment_counted_as_expense.json": [
+  "E_SPLIT_KIND",
+  "E_TRANSFER_UNPAIRED"
+ ],
+ "payoff_hybrid_without_gap.json": [
+  "E_REQUIRED"
+ ],
+ "profile_missing_amount.json": [
+  "E_REQUIRED"
+ ],
+ "recon_mismatch.json": [
+  "E_BUCKET_SUM",
+  "E_RECON_MISMATCH"
+ ],
+ "staging_approved_possible_duplicate.json": [
+  "E_DUPLICATE_UNRESOLVED"
+ ],
+ "staging_approved_with_error.json": [
+  "E_ROW_UNRESOLVED"
+ ],
+ "staging_commit_unreviewed.json": [
+  "E_BATCH_STATE"
+ ],
+ "staging_full_path_name.json": [
+  "E_PATTERN"
+ ],
+ "transfer_amount_mismatch.json": [
+  "E_ALLOCATION_EXCEEDS",
+  "E_RECON_MISMATCH",
+  "E_TRANSFER_AMOUNT"
+ ],
+ "transfer_one_leg.json": [
+  "E_TRANSFER_UNPAIRED"
+ ],
+ "transfer_same_account.json": [
+  "E_ACCOUNT_KIND",
+  "E_RECON_MISMATCH",
+  "E_REF_UNKNOWN",
+  "E_TRANSFER_SAME_ACCOUNT"
+ ],
+ "txn_before_opening.json": [
+  "E_DATE_ORDER"
+ ],
+ "unbalanced_splits.json": [
+  "E_SPLITS_UNBALANCED"
+ ],
+ "unknown_category.json": [
+  "E_CATEGORY_UNKNOWN"
+ ],
+ "unknown_field_card_number.json": [
+  "E_UNKNOWN_FIELD"
+ ],
+ "valuation_on_liability.json": [
+  "E_ACCOUNT_KIND"
+ ],
+ "version_future_minor.json": [
+  "E_VERSION_UNSUPPORTED"
+ ],
+ "version_major.json": [
+  "E_VERSION_UNSUPPORTED"
+ ]
+}

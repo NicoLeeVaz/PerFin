@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "perfin/1.0/import_profile.schema.json",
+  "title": "CSV import profile: declarative mapping from one institution export format to staging rows",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "document_type",
+    "profile_id",
+    "profile_version",
+    "account_class",
+    "file",
+    "columns",
+    "date_format",
+    "amount"
+  ],
+  "properties": {
+    "contract": {
+      "$ref": "common.schema.json#/$defs/contract"
+    },
+    "contract_version": {
+      "$ref": "common.schema.json#/$defs/semver"
+    },
+    "document_type": {
+      "const": "import_profile"
+    },
+    "profile_id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "profile_version": {
+      "$ref": "common.schema.json#/$defs/semver"
+    },
+    "description": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 1000
+    },
+    "account_class": {
+      "enum": [
+        "checking",
+        "savings",
+        "credit_card"
+      ]
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "encoding",
+        "delimiter",
+        "header_rows"
+      ],
+      "properties": {
+        "encoding": {
+          "enum": [
+            "utf-8",
+            "utf-8-sig",
+            "cp1252",
+            "latin-1"
+          ]
+        },
+        "delimiter": {
+          "enum": [
+            ",",
+            ";",
+            "\t",
+            "|"
+          ]
+        },
+        "quote_char": {
+          "enum": [
+            "\"",
+            "'"
+          ]
+        },
+        "header_rows": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20
+        },
+        "skip_footer_rows": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 20
+        },
+        "expected_field_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 200
+        }
+      }
+    },
+    "columns": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "posted_date",
+        "description"
+      ],
+      "properties": {
+        "posted_date": {
+          "$ref": "common.schema.json#/$defs/short_text"
+        },
+        "transaction_date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 120
+        },
+        "description": {
+          "$ref": "common.schema.json#/$defs/short_text"
+        },
+        "amount": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 120
+        },
+        "debit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 120
+        },
+        "credit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 120
+        },
+        "source_txn_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 120
+        },
+        "running_balance": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 120
+        }
+      },
+      "description": "Header names (or 1-based column numbers as strings when header_rows is 0)."
+    },
+    "date_format": {
+      "enum": [
+        "YYYY-MM-DD",
+        "MM/DD/YYYY",
+        "DD/MM/YYYY",
+        "M/D/YYYY",
+        "D/M/YYYY",
+        "DD.MM.YYYY"
+      ]
+    },
+    "amount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sign_rule",
+        "decimal_separator"
+      ],
+      "properties": {
+        "sign_rule": {
+          "enum": [
+            "as_is",
+            "invert",
+            "debit_credit_columns"
+          ],
+          "description": "Result must follow the canonical sign: + = inflow to the account / reduces a liability; - = outflow / increases a liability."
+        },
+        "decimal_separator": {
+          "enum": [
+            ".",
+            ","
+          ]
+        },
+        "thousands_separator": {
+          "enum": [
+            "",
+            ",",
+            ".",
+            "'",
+            " "
+          ]
+        },
+        "currency": {
+          "$ref": "common.schema.json#/$defs/currency"
+        },
+        "parentheses_negative": {
+          "type": "boolean"
+        }
+      }
+    },
+    "dedupe_key": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "source_txn_id",
+          "posted_date",
+          "transaction_date",
+          "amount_minor",
+          "description",
+          "running_balance",
+          "row_occurrence"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "perfin/1.0/net_worth_report.schema.json",
+  "title": "Personal statements module output (management statement; no GAAP/tax/lender compliance claim)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "document_type",
+    "as_of",
+    "period_start",
+    "base_currency",
+    "liability_view",
+    "lines",
+    "totals",
+    "bridge",
+    "warnings"
+  ],
+  "properties": {
+    "contract": {
+      "$ref": "common.schema.json#/$defs/contract"
+    },
+    "contract_version": {
+      "$ref": "common.schema.json#/$defs/semver"
+    },
+    "document_type": {
+      "const": "net_worth_report"
+    },
+    "as_of": {
+      "$ref": "common.schema.json#/$defs/date"
+    },
+    "period_start": {
+      "$ref": "common.schema.json#/$defs/date"
+    },
+    "base_currency": {
+      "$ref": "common.schema.json#/$defs/currency"
+    },
+    "liability_view": {
+      "enum": [
+        "legal",
+        "economic"
+      ]
+    },
+    "lines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "account_id",
+          "kind",
+          "ledger_balance_minor",
+          "included_minor",
+          "valuation_as_of",
+          "stale",
+          "excluded_reason"
+        ],
+        "properties": {
+          "account_id": {
+            "$ref": "common.schema.json#/$defs/account_id"
+          },
+          "kind": {
+            "enum": [
+              "asset",
+              "liability"
+            ]
+          },
+          "ledger_balance_minor": {
+            "$ref": "common.schema.json#/$defs/money_minor"
+          },
+          "included_minor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "valuation_as_of": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "excluded_reason": {
+            "enum": [
+              null,
+              "not_included",
+              "missing_fx_rate",
+              "missing_valuation",
+              "closed"
+            ]
+          }
+        }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "net_worth_minor",
+        "liquid_net_worth_minor"
+      ],
+      "properties": {
+        "net_worth_minor": {
+          "$ref": "common.schema.json#/$defs/money_minor"
+        },
+        "liquid_net_worth_minor": {
+          "$ref": "common.schema.json#/$defs/money_minor"
+        }
+      }
+    },
+    "bridge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "opening_net_worth_minor",
+        "income_minor",
+        "expenses_minor",
+        "valuation_change_minor",
+        "other_change_minor",
+        "closing_net_worth_minor"
+      ],
+      "properties": {
+        "opening_net_worth_minor": {
+          "$ref": "common.schema.json#/$defs/money_minor"
+        },
+        "income_minor": {
+          "$ref": "common.schema.json#/$defs/money_minor"
+        },
+        "expenses_minor": {
+          "$ref": "common.schema.json#/$defs/money_minor"
+        },
+        "valuation_change_minor": {
+          "$ref": "common.schema.json#/$defs/money_minor"
+        },
+        "other_change_minor": {
+          "$ref": "common.schema.json#/$defs/money_minor"
+        },
+        "closing_net_worth_minor": {
+          "$ref": "common.schema.json#/$defs/money_minor"
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/text"
+      }
+    }
+  }
+}

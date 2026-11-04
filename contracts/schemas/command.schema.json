@@ -1,0 +1,319 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "perfin/1.0/command.schema.json",
+  "title": "Validated write command (the only way Excel or a module changes the ledger)",
+  "$comment": "payload is validated against $defs/payload_<command_type> by perfin_contracts.semantic.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "document_type",
+    "command_id",
+    "command_type",
+    "issued_at",
+    "issued_by",
+    "payload",
+    "expected_versions"
+  ],
+  "properties": {
+    "contract": {
+      "$ref": "common.schema.json#/$defs/contract"
+    },
+    "contract_version": {
+      "$ref": "common.schema.json#/$defs/semver"
+    },
+    "document_type": {
+      "const": "command"
+    },
+    "command_id": {
+      "$ref": "common.schema.json#/$defs/uuid"
+    },
+    "command_type": {
+      "enum": [
+        "approve_rows",
+        "reject_rows",
+        "resolve_duplicate",
+        "commit_batch",
+        "rollback_batch",
+        "edit_transaction",
+        "reverse_transaction",
+        "set_splits",
+        "link_transfer",
+        "unlink_transfer",
+        "record_statement",
+        "reconcile_statement",
+        "record_valuation",
+        "set_card_terms",
+        "save_payoff_scenario"
+      ]
+    },
+    "issued_at": {
+      "$ref": "common.schema.json#/$defs/timestamp"
+    },
+    "issued_by": {
+      "type": "string",
+      "pattern": "^(excel_core|excel_payoff|excel_statements|importer|cli):[A-Za-z0-9_.-]{1,40}$"
+    },
+    "payload": {
+      "type": "object"
+    },
+    "expected_versions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "entity",
+          "entity_id",
+          "row_version"
+        ],
+        "properties": {
+          "entity": {
+            "enum": [
+              "account",
+              "transaction",
+              "transfer_link",
+              "statement",
+              "reconciliation",
+              "card_terms",
+              "asset_valuation",
+              "batch"
+            ]
+          },
+          "entity_id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "row_version": {
+            "$ref": "common.schema.json#/$defs/row_version"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "payload_approve_rows": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "batch_id",
+        "row_numbers"
+      ],
+      "properties": {
+        "batch_id": {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        "row_numbers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "payload_reject_rows": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "batch_id",
+        "row_numbers",
+        "reason"
+      ],
+      "properties": {
+        "batch_id": {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        "row_numbers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "reason": {
+          "$ref": "common.schema.json#/$defs/short_text"
+        }
+      }
+    },
+    "payload_resolve_duplicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "batch_id",
+        "row_number",
+        "resolution"
+      ],
+      "properties": {
+        "batch_id": {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        "row_number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "resolution": {
+          "enum": [
+            "confirmed_duplicate",
+            "confirmed_distinct"
+          ]
+        }
+      }
+    },
+    "payload_commit_batch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "batch_id",
+        "source_file_sha256"
+      ],
+      "properties": {
+        "batch_id": {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        "source_file_sha256": {
+          "$ref": "common.schema.json#/$defs/sha256"
+        }
+      }
+    },
+    "payload_rollback_batch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "batch_id",
+        "reason"
+      ],
+      "properties": {
+        "batch_id": {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        "reason": {
+          "$ref": "common.schema.json#/$defs/short_text"
+        }
+      }
+    },
+    "payload_edit_transaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transaction_id",
+        "changes",
+        "reason"
+      ],
+      "properties": {
+        "transaction_id": {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        "reason": {
+          "$ref": "common.schema.json#/$defs/short_text"
+        },
+        "changes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {
+            "description": {
+              "$ref": "common.schema.json#/$defs/text"
+            },
+            "transaction_date": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "date"
+            },
+            "posted_date": {
+              "$ref": "common.schema.json#/$defs/date"
+            },
+            "amount_minor": {
+              "$ref": "common.schema.json#/$defs/money_minor"
+            }
+          },
+          "minProperties": 1
+        }
+      }
+    },
+    "payload_reverse_transaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transaction_id",
+        "reversal_transaction_id",
+        "posted_date",
+        "reason"
+      ],
+      "properties": {
+        "transaction_id": {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        "reversal_transaction_id": {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        "posted_date": {
+          "$ref": "common.schema.json#/$defs/date"
+        },
+        "reason": {
+          "$ref": "common.schema.json#/$defs/short_text"
+        }
+      }
+    },
+    "payload_set_splits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transaction_id",
+        "splits"
+      ],
+      "properties": {
+        "transaction_id": {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        "splits": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "ledger_bundle.schema.json#/$defs/split"
+          }
+        }
+      }
+    },
+    "payload_link_transfer": {
+      "$ref": "ledger_bundle.schema.json#/$defs/transfer_link"
+    },
+    "payload_unlink_transfer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transfer_link_id",
+        "reason"
+      ],
+      "properties": {
+        "transfer_link_id": {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        "reason": {
+          "$ref": "common.schema.json#/$defs/short_text"
+        }
+      }
+    },
+    "payload_record_statement": {
+      "$ref": "ledger_bundle.schema.json#/$defs/statement"
+    },
+    "payload_reconcile_statement": {
+      "$ref": "ledger_bundle.schema.json#/$defs/reconciliation"
+    },
+    "payload_record_valuation": {
+      "$ref": "ledger_bundle.schema.json#/$defs/asset_valuation"
+    },
+    "payload_set_card_terms": {
+      "$ref": "ledger_bundle.schema.json#/$defs/card_terms"
+    },
+    "payload_save_payoff_scenario": {
+      "$ref": "payoff_scenario.schema.json#/$defs/scenario_body"
+    }
+  }
+}

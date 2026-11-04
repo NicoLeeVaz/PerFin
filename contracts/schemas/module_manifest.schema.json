@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "perfin/1.0/module_manifest.schema.json",
+  "title": "Plugin/module manifest: import profiles, calculation modules and Excel module workbooks",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "document_type",
+    "module_id",
+    "module_version",
+    "module_kind",
+    "contract_versions",
+    "reads",
+    "emits",
+    "commands",
+    "writes_ledger"
+  ],
+  "properties": {
+    "contract": {
+      "$ref": "common.schema.json#/$defs/contract"
+    },
+    "contract_version": {
+      "$ref": "common.schema.json#/$defs/semver"
+    },
+    "document_type": {
+      "const": "module_manifest"
+    },
+    "module_id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "module_version": {
+      "$ref": "common.schema.json#/$defs/semver"
+    },
+    "module_kind": {
+      "enum": [
+        "import_profile",
+        "calculation_module",
+        "excel_workbook"
+      ]
+    },
+    "contract_versions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "min",
+        "max_exclusive"
+      ],
+      "properties": {
+        "min": {
+          "$ref": "common.schema.json#/$defs/semver"
+        },
+        "max_exclusive": {
+          "$ref": "common.schema.json#/$defs/semver"
+        }
+      }
+    },
+    "entry": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 200,
+      "description": "Python module path, profile file or workbook file name relative to the module folder."
+    },
+    "workbook_file": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[A-Za-z0-9_.-]{1,80}\\.(xlsx|xlsm)$",
+      "description": "Each Excel module has its own workbook file; never the core workbook."
+    },
+    "reads": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "rpt_accounts",
+          "rpt_transactions",
+          "rpt_splits",
+          "rpt_card_status",
+          "rpt_statements",
+          "rpt_reconciliation",
+          "rpt_review_queue",
+          "rpt_card_terms",
+          "rpt_valuations",
+          "rpt_payoff_summary",
+          "rpt_payoff_schedule",
+          "rpt_net_worth_lines",
+          "rpt_net_worth_bridge"
+        ]
+      }
+    },
+    "emits": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "staging_batch",
+          "command",
+          "payoff_result",
+          "net_worth_report"
+        ]
+      }
+    },
+    "commands": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "approve_rows",
+          "reject_rows",
+          "resolve_duplicate",
+          "commit_batch",
+          "rollback_batch",
+          "edit_transaction",
+          "reverse_transaction",
+          "set_splits",
+          "link_transfer",
+          "unlink_transfer",
+          "record_statement",
+          "reconcile_statement",
+          "record_valuation",
+          "set_card_terms",
+          "save_payoff_scenario"
+        ]
+      }
+    },
+    "writes_ledger": {
+      "const": false,
+      "description": "Modules never write tables directly; they emit commands."
+    }
+  }
+}

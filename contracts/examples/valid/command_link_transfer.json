@@ -1,0 +1,28 @@
+{
+ "contract": "perfin",
+ "contract_version": "1.0.0",
+ "document_type": "command",
+ "command_id": "1a2b3c4d-0000-4000-8000-000000000002",
+ "command_type": "link_transfer",
+ "issued_at": "2026-07-02T15:11:00Z",
+ "issued_by": "excel_core:review_sheet",
+ "payload": {
+  "transfer_link_id": "L004",
+  "from_transaction_id": "t013",
+  "to_transaction_id": "t014",
+  "link_status": "confirmed",
+  "match_evidence": "user confirmed"
+ },
+ "expected_versions": [
+  {
+   "entity": "transaction",
+   "entity_id": "t013",
+   "row_version": 1
+  },
+  {
+   "entity": "transaction",
+   "entity_id": "t014",
+   "row_version": 1
+  }
+ ]
+}
