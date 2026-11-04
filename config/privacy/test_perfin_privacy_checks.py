@@ -237,6 +237,25 @@ class ExportGateTests(unittest.TestCase):
         resp["records"][0]["memo"] = "split $1,234.56 on [DATE]"
         self.assertIn("r1: dates in memo changed", pc.check_fidelity(req, resp))
 
+    def test_deleted_unscrubbed_field_rejected(self):
+        resp = copy.deepcopy(self.resp)
+        resp["records"][0].pop("category")
+        allowed, reasons = self.gate(response=resp)
+        self.assertFalse(allowed)
+        self.assertIn("r1: unscrubbed field category changed", reasons)
+        resp = copy.deepcopy(self.resp)
+        resp["records"][0].pop("memo")
+        self.assertIn("r1: scrubbed field memo missing", pc.check_fidelity(self.req, resp))
+
+    def test_whole_dollar_amounts_must_survive(self):
+        req = copy.deepcopy(self.req)
+        resp = copy.deepcopy(self.resp)
+        req["records"][0]["memo"] = "I paid $100 for groceries, $1,250 rent"
+        resp["records"][0]["memo"] = "I paid $900 for groceries, $1,250 rent"
+        self.assertIn("r1: money in memo changed", pc.check_fidelity(req, resp))
+        resp["records"][0]["memo"] = "I paid $100.00 for groceries, $1,250 rent"
+        self.assertNotIn("r1: money in memo changed", pc.check_fidelity(req, resp))
+
     def test_record_count_change_rejected(self):
         resp = copy.deepcopy(self.resp)
         resp["records"].pop()

@@ -17,6 +17,7 @@ import io
 import json
 import os
 import re
+from decimal import Decimal
 import subprocess
 import sys
 from collections import Counter
@@ -267,12 +268,27 @@ def validate_envelope(instance, schema=None):
 
 # ------------------------------------------------------------- fidelity
 
-_MONEY = re.compile(r"(?<![\w.])[-+]?\$?\d{1,3}(?:,\d{3})*\.\d{2}(?!\d)|(?<![\w.,])[-+]?\$?\d+\.\d{2}(?!\d)")
+# Monetary tokens: amounts with exactly two decimals (with or without a currency symbol),
+# plus whole amounts that carry a currency symbol ($100, $1,250, EUR-symbol 40).
+# Bare integers without a symbol are not treated as money (they may be scrubbable ids);
+# see docs/privacy/nopii-export-contract.md.
+_MONEY = re.compile(
+    r"(?<![\w.])[-+]?[$\u20ac\u00a3]?\s?\d{1,3}(?:,\d{3})*\.\d{2}(?!\d)"
+    r"|(?<![\w.,])[-+]?[$\u20ac\u00a3]?\s?\d+\.\d{2}(?!\d)"
+    r"|[-+]?[$\u20ac\u00a3]\s?\d{1,3}(?:,\d{3})+(?![\d.,])"
+    r"|[-+]?[$\u20ac\u00a3]\s?\d+(?![\d.,])"
+)
 _ISO_DATE = re.compile(r"(?<!\d)\d{4}-\d{2}-\d{2}(?!\d)")
 
 
 def _money_tokens(text):
-    return Counter(t.replace("$", "").replace(",", "") for t in _MONEY.findall(text))
+    """Multiset of (currency symbol, Decimal value) so $100 and $100.00 compare equal."""
+    out = Counter()
+    for token in _MONEY.findall(text):
+        symbol = next((c for c in token if c in "$\u20ac\u00a3"), "")
+        digits = re.sub(r"[^\d.+-]", "", token)
+        out[(symbol, Decimal(digits).quantize(Decimal("0.01")))] += 1
+    return out
 
 
 def _strings(obj):
@@ -305,10 +321,16 @@ def check_fidelity(request, response):
             for field in request["preserve_fields"]:
                 if a.get(field) != b.get(field):
                     errors.append("%s: %s changed" % (a["record_id"], field))
-            for field in ("description", "memo", "category"):
-                if field in b and field not in request["scrub_fields"] and a.get(field) != b.get(field):
+            for field in a:
+                # every field not selected for scrubbing must come back unchanged; deletion is a change
+                if field in request["scrub_fields"] or field in request["preserve_fields"] or field == "record_id":
+                    continue
+                if field not in b or a[field] != b[field]:
                     errors.append("%s: unscrubbed field %s changed" % (a["record_id"], field))
             for field in request["scrub_fields"]:
+                if field in a and field not in b:
+                    errors.append("%s: scrubbed field %s missing" % (a["record_id"], field))
+                    continue
                 before, after = a.get(field, ""), b.get(field, "")
                 if _money_tokens(before) != _money_tokens(after):
                     errors.append("%s: money in %s changed" % (a["record_id"], field))

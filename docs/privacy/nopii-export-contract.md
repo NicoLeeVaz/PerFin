@@ -37,7 +37,8 @@ Assumptions, to be confirmed by the NoPii owner before integration:
 5. **PerFin's own checks** (independent of the adapter):
    - envelope validation and matching `export_id`;
    - record count and record ids unchanged;
-   - **monetary fidelity:** every `amount_minor` and `currency` identical to the request; for text payloads, the multiset of monetary amounts found in the text is unchanged;
+   - **monetary fidelity:** every `amount_minor` and `currency` identical to the request; for text payloads, the multiset of monetary amounts found in the text is unchanged. Money tokens are two-decimal amounts (with or without a currency symbol) and whole amounts with a `$`, `€` or `£` symbol, compared by value (`$100` = `$100.00`). Bare integers without a symbol are not treated as money, because they may be identifiers that must be scrubbed;
+   - **unscrubbed fields:** every record field not listed in `scrub_fields` or `preserve_fields` comes back unchanged, and deleting it counts as a change. A scrubbed field must still be present;
    - **date fidelity:** every `date` identical and valid `YYYY-MM-DD`; for text payloads, the multiset of ISO dates is unchanged;
    - payload shape: the response carries only the payload field the request selected (`records` for `ledger_rows`, `text` for text); any other payload field cancels the export;
    - residual scan, over every payload field present in the response: no Luhn-valid card number, no run of 6 or more digits, no email address and no field from the request's `sensitive_values` list (strings PerFin knows, such as the user's name and account numbers from settings) appears in the output;
