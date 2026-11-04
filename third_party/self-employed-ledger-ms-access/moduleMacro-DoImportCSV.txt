@@ -1,0 +1,427 @@
+Option Compare Database
+
+'------------------------------------------------------------
+' DoImportCSV
+'
+'------------------------------------------------------------
+Function DoImportCSV()
+
+    With CodeContextObject
+        ' Validate Input Data
+        If (IsNull(Forms![Import CSV]![Account Name_box])) Then
+            MsgBox "Account Name cannot be empty", vbCritical, "Error"
+            Exit Function
+        End If
+        If (IsNull(Forms![Import CSV]![CSV File_box])) Then
+            MsgBox "CSV File cannot be empty", vbCritical, "Error"
+            Exit Function
+        End If
+        
+        ' Try parsing CSV
+        Dim acName As String, csvFilePath As String
+        Forms![Import CSV]![Account Name_box].SetFocus
+        acName = Forms![Import CSV]![Account Name_box].Text
+        csvFilePath = Forms![Import CSV]![CSV File_box]
+        
+        Dim DataLines As Collection
+        If acName Like "Fido*" Then
+            Set DataLines = ImportFidoCSV(csvFilePath)
+        ElseIf acName Like "Costco*" Then
+            Set DataLines = ImportCostcoCSV(csvFilePath)
+        'ElseIf acName = "Scotia Chequing" Then
+        '    Set DataLines = ImportCustomScotiaChequingCSV(csvFilePath)
+        'ElseIf acName = "Scotia Savings" Then
+        '    Set DataLines = ImportCustomScotiaSavingsCSV(csvFilePath)
+        ElseIf acName = "Desjardins Chequing" Then
+            Set DataLines = ImportCustomDesjardinsChequingCSV(csvFilePath)
+        ElseIf acName Like "Manulife*" Then
+            Set DataLines = ImportManulifeChequingCSV(csvFilePath)
+        ElseIf acName Like "BMO Harris*" Then
+            Set DataLines = ImportBMOHarrisChequingCSV(csvFilePath)
+        Else
+            MsgBox "Unimplemented CSV type: " & acName, vbCritical, "SystemError"
+            Exit Function
+        End If
+        
+        ' Check start/end date
+        If DataLines.Count = 0 Then
+            MsgBox "CSV File is blank", vbCritical, "Error"
+            Exit Function
+        End If
+            
+        Dim MinDate As Date
+        Dim MaxDate As Date
+        MinDate = #12/31/2049#
+        MaxDate = #1/1/1900#
+        For i = 1 To DataLines.Count
+            d = CStr(DataLines(i)("tranDate"))
+            If d < MinDate Then
+                MinDate = d
+            End If
+            If d > MaxDate Then
+                MaxDate = d
+            End If
+        Next
+        
+        Dim MinDateStr As String
+        Dim MaxDateStr As String
+        MinDateStr = "#" & Format(MinDate, "mm/dd/yyyy") & "#"
+        MaxDateStr = "#" & Format(MaxDate, "mm/dd/yyyy") & "#"
+        
+        Dim c As Integer
+        c = DCount("ID", "BankCSV", "(Forms![Import CSV]![Account Name_box] = Account) AND ((StartDate <= " & MinDateStr & " AND " & MinDateStr & " <= EndDate) OR (StartDate <= " & MaxDateStr & " AND " & MaxDateStr & " <= EndDate))")
+        If (c > 0) Then
+            MsgBox "CSV Start/End Date (" & Format(MinDate, "yyyy-mm-dd") & " to " & Format(MaxDate, "yyyy-mm-dd") & ") overlaps with an existing record of account " & Forms![Import CSV]![Account Name_box].Text & ".", vbCritical, "Error"
+            Exit Function
+        End If
+        
+        DAO.DBEngine.BeginTrans
+        On Error GoTo trans_Err
+        ' Save to BankCSV
+        Set db = CurrentDb
+        Set rs = db.OpenRecordset("BankCSV")
+        Dim bcsvID As Integer
+        With rs
+            .AddNew
+            bcsvID = ![Id]
+            ![Account] = Forms![Import CSV]![Account Name_box]
+            ![StartDate] = MinDate
+            ![EndDate] = MaxDate
+            attachments = ![CSVFile]
+            attachments.AddNew
+            attachments.Fields("FileData").LoadFromFile Forms![Import CSV]![CSV File_box]
+            attachments.Update
+            attachments.Close
+            .Update
+        End With
+        
+        ' Save to Ledger
+        Set rs = db.OpenRecordset("Ledger")
+        For i = 1 To DataLines.Count
+            Set dl = DataLines(i)
+            With rs
+                .AddNew
+                ![TranDate] = dl("tranDate")
+                ![Desc1] = dl("desc1")
+                ![Desc2] = dl("desc2")
+                ![Amount] = dl("amount")
+                ![BankCSV] = bcsvID
+                .Update
+            End With
+        Next
+        
+        ' Commit
+        DAO.DBEngine.CommitTrans
+        
+        ' Finish
+        If True Then
+            MsgBox "" & DataLines.Count & " record(s) from " & Format(MinDate, "yyyy-mm-dd") & " to " & Format(MaxDate, "yyyy-mm-dd") & " are imported.", vbInformation, "Import successfully"
+        End If
+        
+        Exit Function
+        
+trans_Err:
+        DAO.DBEngine.Rollback
+        MsgBox "RuntimeError during import: " & Err.Description & " - Line: " & Erl, vbCritical, "Error"
+    End With
+
+End Function
+
+
+
+Private Function ParseCSVLine(line As String, Optional delimiter As String = ",", Optional quote_char As String = """", Optional escape_char As String = "\") As Collection
+    ' States:
+    '   0: Outside of a cell
+    '   1: Inside an unquoted cell
+    '   2: Inside a quoted cell
+    ' Valid state transitions: 0->1, 0->2, 1->0, 2->0
+    Dim Items As New Collection
+    Dim Counter As Integer
+    Dim State As Integer
+    Dim Temp As String
+    
+    State = 0
+    Counter = 0
+    line = line & delimiter
+    Do While Counter < Len(line)
+        Counter = Counter + 1
+        thischar = Mid(line, Counter, 1)
+        If State = 0 Then
+            If thischar = delimiter Then
+                ' An empty cell
+                Items.Add ""
+            ElseIf thischar = quote_char Then
+                ' Start a new quoted cell
+                State = 2
+                Temp = ""
+            Else
+                ' Start a new unquoted cell
+                State = 1
+                Temp = "" & thischar
+            End If
+        ElseIf State = 1 Then
+            If thischar = delimiter Then
+                ' Cell ends
+                Items.Add Temp
+                State = 0
+            Else
+                Temp = Temp & thischar
+            End If
+        ElseIf State = 2 Then
+            If thischar = escape_char Then
+                ' Pre-read the next char
+                Counter = Counter + 1
+                nextchar = Mid(line, Counter, 1)
+                Temp = Temp & nextchar
+            ElseIf thischar = quote_char Then
+                ' If next char is also quote_char, this is an escape of quote char
+                Counter = Counter + 1
+                nextchar = Mid(line, Counter, 1)
+                If nextchar = quote_char Then
+                    Temp = Temp & quote_char
+                ' Cell ends. Next char should be delimiter
+                ElseIf nextchar <> delimiter Then
+                    MsgBox "CSV not valid - delimiter should immediately follow the paired quote char. Line: " & line & " (Char " & Counter & ")", vbCritical, "Error"
+                    End
+                Else
+                    State = 0
+                    Items.Add Temp
+                End If
+            Else
+                Temp = Temp & thischar
+            End If
+        End If
+    Loop
+    
+    If State <> 0 Then
+        MsgBox "CSV not valid - incomplete end of line. Line: " & line & " (End of line)", vbCritical, "Error"
+        End
+    End If
+    
+    Set ParseCSVLine = Items
+End Function
+
+
+' CSV import result should be a collection of dictionaries containing:
+'   - tranDate: a Date
+'   - desc1: a string
+'   - desc2: a string
+'   - amount: a decimal (positive=income, negative=spending)
+
+Private Function ImportFidoCSV(csvFilePath As String) As Collection
+    Dim DataLines As New Collection
+
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set objStream = fso.OpenTextFile(csvFilePath, 1, False, 0)
+    ' Skip header row
+    LineFromFile = objStream.ReadLine
+    
+    Do While Not objStream.AtEndOfStream
+        LineFromFile = objStream.ReadLine
+        Set Items = ParseCSVLine(CStr(LineFromFile), ",")
+        Dim dict As Object
+        Set dict = CreateObject("scripting.dictionary")
+        Dim ymds() As String
+        ymds = Split(CStr(Items(1)), "-")
+        dict("tranDate") = CDate("" & ymds(1) & "/" & ymds(2) & "/" & ymds(0))
+        dict("desc1") = Items(3)
+        dict("desc2") = Items(2) & " - " & Items(4)
+        ' Minus the amount because it's credit card
+        dict("amount") = -CDec(Items(5))
+        DataLines.Add dict
+    Loop
+    objStream.Close
+    Set ImportFidoCSV = DataLines
+End Function
+
+Private Function ImportCostcoCSV(csvFilePath As String) As Collection
+    Dim DataLines As New Collection
+
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set objStream = fso.OpenTextFile(csvFilePath, 1, False, 0)
+    ' Skip header row
+    LineFromFile = objStream.ReadLine
+    
+    Do While Not objStream.AtEndOfStream
+        LineFromFile = objStream.ReadLine
+        Set Items = ParseCSVLine(CStr(LineFromFile), ",")
+        Dim dict As Object
+        Set dict = CreateObject("scripting.dictionary")
+        Dim ymds() As String
+        ymds = Split(CStr(Items(1)), "-")
+        dict("tranDate") = CDate("" & ymds(1) & "/" & ymds(2) & "/" & ymds(0))
+        dict("desc1") = Items(4)
+        dict("desc2") = Items(5) & " - " & Items(3)
+        
+        If Len(Items(6)) > 0 Then
+            'debit
+            dict("amount") = -CDec(Items(6))
+        Else
+            'credit
+            dict("amount") = CDec(Items(7))
+        End If
+            
+        DataLines.Add dict
+    Loop
+    objStream.Close
+    Set ImportCostcoCSV = DataLines
+End Function
+
+Private Function ImportCustomScotiaChequingCSV(csvFilePath As String) As Collection
+    Dim DataLines As New Collection
+
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set objStream = fso.OpenTextFile(csvFilePath, 1, False, 0)
+    
+    Do While Not objStream.AtEndOfStream
+        LineFromFile = objStream.ReadLine
+        Set Items = ParseCSVLine(CStr(LineFromFile), ",")
+        Dim dict As Object
+        Set dict = CreateObject("scripting.dictionary")
+        Dim ymds() As String
+        ymds = Split(CStr(Items(1)), "-")
+        dict("tranDate") = CDate("" & ymds(1) & "/" & ymds(2) & "/" & ymds(0))
+        dict("desc1") = Items(2)
+        dict("desc2") = Items(3)
+        dict("amount") = CDec(Items(4))
+                    
+        DataLines.Add dict
+    Loop
+    objStream.Close
+    Set ImportCustomScotiaChequingCSV = DataLines
+End Function
+
+Private Function ImportCustomScotiaSavingsCSV(csvFilePath As String) As Collection
+    Dim DataLines As New Collection
+
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set objStream = fso.OpenTextFile(csvFilePath, 1, False, 0)
+    
+    Do While Not objStream.AtEndOfStream
+        LineFromFile = objStream.ReadLine
+        Set Items = ParseCSVLine(CStr(LineFromFile), ",")
+        Dim dict As Object
+        Set dict = CreateObject("scripting.dictionary")
+        Dim ymds() As String
+        ymds = Split(CStr(Items(1)), "-")
+        dict("tranDate") = CDate("" & ymds(1) & "/" & ymds(2) & "/" & ymds(0))
+        dict("desc1") = Items(2)
+        dict("desc2") = ""
+        
+        If Len(Items(3)) > 0 Then
+            'debit
+            dict("amount") = -CDec(Items(3))
+        Else
+            'credit
+            dict("amount") = CDec(Items(4))
+        End If
+                    
+        DataLines.Add dict
+    Loop
+    objStream.Close
+    Set ImportCustomScotiaSavingsCSV = DataLines
+End Function
+
+
+
+Private Function ImportCustomDesjardinsChequingCSV(csvFilePath As String) As Collection
+    Dim DataLines As New Collection
+
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set objStream = fso.OpenTextFile(csvFilePath, 1, False, 0)
+    
+    Do While Not objStream.AtEndOfStream
+        LineFromFile = objStream.ReadLine
+        Set Items = ParseCSVLine(CStr(LineFromFile), ",")
+        Dim dict As Object
+        Set dict = CreateObject("scripting.dictionary")
+        Dim ymds() As String
+        ymds = Split(CStr(Items(1)), "-")
+        dict("tranDate") = CDate("" & ymds(1) & "/" & ymds(2) & "/" & ymds(0))
+        dict("desc1") = Items(2)
+        dict("desc2") = ""
+        
+        If Len(Items(3)) > 0 Then
+            'debit
+            dict("amount") = -CDec(Items(3))
+        Else
+            'credit
+            dict("amount") = CDec(Items(4))
+        End If
+                    
+        DataLines.Add dict
+    Loop
+    objStream.Close
+    Set ImportCustomDesjardinsChequingCSV = DataLines
+End Function
+
+
+Private Function ImportManulifeChequingCSV(csvFilePath As String) As Collection
+    Dim DataLines As New Collection
+
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set objStream = fso.OpenTextFile(csvFilePath, 1, False, 0)
+    
+    Do While Not objStream.AtEndOfStream
+        LineFromFile = objStream.ReadLine
+        Set Items = ParseCSVLine(CStr(LineFromFile), ",")
+        Dim dict As Object
+        Set dict = CreateObject("scripting.dictionary")
+        Dim dmys() As String
+        mdys = Split(CStr(Items(2)), "/")
+        dict("tranDate") = CDate("" & mdys(0) & "/" & mdys(1) & "/" & mdys(2))
+        dict("desc1") = Items(4)
+        dict("desc2") = ""
+        dict("amount") = CDec(Items(3))
+                    
+        DataLines.Add dict
+    Loop
+    objStream.Close
+    Set ImportManulifeChequingCSV = DataLines
+End Function
+
+
+
+Private Function ImportBMOHarrisChequingCSV(csvFilePath As String) As Collection
+    Dim DataLines As New Collection
+
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Set objStream = fso.OpenTextFile(csvFilePath, 1, False, 0)
+    
+    ' Skip 3 header rows
+    LineFromFile = objStream.ReadLine
+    Set Items_h1 = ParseCSVLine(CStr(LineFromFile), ",")
+    Debug.Assert Items_h1(1) = "Account Type"
+    LineFromFile = objStream.ReadLine
+    Set Items_h2 = ParseCSVLine(CStr(LineFromFile), ",")
+    Debug.Assert Items_h2(1) = "CHECKING"
+    LineFromFile = objStream.ReadLine
+    Set Items_h3 = ParseCSVLine(CStr(LineFromFile), ",")
+    Debug.Assert Items_h3(1) = ""
+    
+    Do While Not objStream.AtEndOfStream
+        LineFromFile = objStream.ReadLine
+        Set Items = ParseCSVLine(CStr(LineFromFile), ",")
+        Dim dict As Object
+        Set dict = CreateObject("scripting.dictionary")
+        ' format: Fri Sep 27 12:00:00 CDT 2019
+        Dim wmdxxy() As String
+        wmdxxy = Split(CStr(Items(2)), " ")
+        dict("tranDate") = CDate("" & wmdxxy(1) & " " & wmdxxy(2) & " " & wmdxxy(5))
+        dict("desc1") = Items(3)
+        dict("desc2") = Items(8)
+                    
+        If Items(9) = "Credit" Then
+            'credit
+            dict("amount") = CDec(Items(4))
+        Else
+            Debug.Assert Items(9) = "Debit"
+            'debit
+            dict("amount") = -CDec(Items(4))
+        End If
+        
+        DataLines.Add dict
+    Loop
+    objStream.Close
+    Set ImportBMOHarrisChequingCSV = DataLines
+End Function
