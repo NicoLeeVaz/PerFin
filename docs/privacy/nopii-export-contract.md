@@ -100,6 +100,6 @@ The JSON Schema is authoritative for structure; PerFin's fidelity rules above ar
 
 ## Items to reconcile at the Wave 1 gate
 
-- Field names `amount_minor`, `currency`, `date` and the id style must match the 1a contract.
+- Aligned with 1a: `posted_date` maps to `date`; `amount_minor` and `currency` are unchanged. Amounts share the ±922337203685477 Access-safe minor-unit bound, and dates must be real calendar dates. The adapter uses export-only `exp-*` / `r*` IDs rather than ledger IDs; their local mapping never leaves the data root.
 - NoPii owner confirms or rejects assumptions A1–A5 and the subprocess JSON-over-stdio transport.
 - 4c decides whether a PDF-text payload is offered; if so it uses `payload_kind: "text"` with the same checks.

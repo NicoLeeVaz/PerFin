@@ -170,6 +170,10 @@ class RedactionTests(unittest.TestCase):
         self.assertEqual(pc.redact_log_text("/Users/Alex Example/Library/x.log"), "%USERPROFILE%/Library/x.log")
         self.assertNotIn("Example", pc.redact_log_text(r'open "C:\Users\Alex Example" failed'))
 
+    def test_profile_apostrophes_and_forward_slashes(self):
+        self.assertEqual(pc.redact_log_text("C:/Users/Alex O'Brien/AppData/x"), "%USERPROFILE%/AppData/x")
+        self.assertEqual(pc.redact_log_text("/home/Alex O'Brien/file"), "%USERPROFILE%/file")
+
     def test_posix_home_and_dates_kept(self):
         out = pc.redact_log_text("batch 2026-10-03 at /home/alex/.local/share/perfin")
         self.assertEqual(out, "batch 2026-10-03 at %USERPROFILE%/.local/share/perfin")
@@ -195,6 +199,24 @@ class ExportGateTests(unittest.TestCase):
     def test_examples_match_schema(self):
         for doc in (self.desc, self.req, self.resp):
             self.assertEqual(pc.validate_envelope(doc), [])
+
+    def test_invalid_calendar_date_refused(self):
+        for invalid in ("2026-02-31", "2025-02-29"):
+            self.req["records"][0]["date"] = invalid
+            self.resp["records"][0]["date"] = invalid
+            self.assertFalse(self.gate()[0])
+        self.req["records"][0]["date"] = "2024-02-29"
+        self.resp["records"][0]["date"] = "2024-02-29"
+        self.assertTrue(self.gate()[0])
+
+    def test_access_money_range_refused(self):
+        for invalid in (-922337203685478, 922337203685478):
+            self.req["records"][0]["amount_minor"] = invalid
+            self.resp["records"][0]["amount_minor"] = invalid
+            self.assertFalse(self.gate()[0])
+
+    def test_malformed_request_fails_closed(self):
+        self.assertEqual(self.gate(request={}), (False, ["invalid request"]))
 
     def test_happy_path_requires_confirmation(self):
         self.assertEqual(self.gate(), (True, []))
