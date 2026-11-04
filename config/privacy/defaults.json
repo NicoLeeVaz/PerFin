@@ -1,0 +1,129 @@
+{
+  "kind": "perfin.privacy.defaults",
+  "version": "1.0.0",
+  "spec": "docs/privacy/privacy-boundary.md",
+  "notes": "Defaults only. Platform-controlled paths (Office, Windows, sync clients) cannot be enforced by PerFin; their entries record the recommended state and how it is verified. No entry here is evidence that a Windows/Office check passed.",
+  "data_dir": {
+    "windows_default": "%LOCALAPPDATA%\\PerFin",
+    "dev_default": "$XDG_DATA_HOME/perfin",
+    "dev_fallback": "~/.local/share/perfin",
+    "override_env": "PERFIN_DATA_DIR",
+    "settings_file": "config/settings.json",
+    "marker_file": "perfin-data-dir.json",
+    "marker_kinds": ["real", "synthetic"],
+    "subdirs": [
+      "statements/originals",
+      "db",
+      "workbooks",
+      "staging",
+      "exports/outbox",
+      "backups",
+      "logs",
+      "temp",
+      "config"
+    ],
+    "refuse_inside_git_checkout": true,
+    "sync_folder_policy": "warn_and_block_until_acknowledged",
+    "network_path_policy": "warn_and_block_until_acknowledged",
+    "sync_markers": [
+      "OneDrive",
+      "Dropbox",
+      "Google Drive",
+      "GoogleDrive",
+      "My Drive",
+      "iCloudDrive",
+      "iCloud Drive",
+      "Mobile Documents",
+      "Box",
+      "Box Sync",
+      "pCloud Drive",
+      "Nextcloud",
+      "ownCloud",
+      "MEGA",
+      "SynologyDrive",
+      "Sync"
+    ],
+    "sync_marker_prefixes": ["OneDrive - "],
+    "sync_env_vars": ["OneDrive", "OneDriveConsumer", "OneDriveCommercial"],
+    "possibly_redirected_user_folders": ["Desktop", "Documents", "Pictures"]
+  },
+  "outbound": {
+    "O1": {"name": "Scrubbed export for external AI via NoPii adapter", "owner": "perfin", "default_enabled": false, "requires": ["feature_flag", "supported_adapter", "fidelity_checks", "scrubbed_preview", "user_confirmation"]},
+    "O2": {"name": "Raw or fallback export to external AI", "owner": "perfin", "default_enabled": false, "prohibited": true},
+    "O3": {"name": "PerFin telemetry, update checks, error reporting", "owner": "perfin", "default_enabled": false, "prohibited": true},
+    "O4": {"name": "Office diagnostic data", "owner": "platform", "default_enabled": false, "recommended_state": "lowest available level", "verification": "pending_manual"},
+    "O5": {"name": "Office connected experiences", "owner": "platform", "default_enabled": false, "recommended_state": "content-analysing and optional experiences off", "verification": "pending_manual"},
+    "O6": {"name": "Python in Excel, Office Scripts, Copilot", "owner": "platform", "default_enabled": false, "recommended_state": "not used by PerFin", "verification": "pending_manual"},
+    "O7": {"name": "Office add-ins", "owner": "platform", "default_enabled": false, "recommended_state": "none shipped; inventory and disable non-essential", "verification": "pending_manual"},
+    "O8": {"name": "VBA network calls", "owner": "perfin", "default_enabled": false, "prohibited": true, "verification": "static_scan"},
+    "O9": {"name": "External links, data connections, web Power Query sources", "owner": "perfin", "default_enabled": false, "recommended_state": "local Access/file sources only", "verification": "pending_manual"},
+    "O10": {"name": "AutoSave and sync clients", "owner": "platform", "default_enabled": false, "recommended_state": "data root outside synced folders; AutoSave off", "verification": "detector_plus_pending_manual"},
+    "O11": {"name": "Crash reports and dumps", "owner": "platform", "default_enabled": false, "recommended_state": "lowest level; no automatic dump submission", "verification": "pending_manual"},
+    "O12": {"name": "Clipboard history sync", "owner": "platform", "default_enabled": false, "recommended_state": "cloud clipboard sync off", "verification": "pending_manual"},
+    "O13": {"name": "Cloud or network backup of data root", "owner": "user", "default_enabled": false, "recommended_state": "local/offline media; encrypted container if it leaves the device", "verification": "pending_manual"},
+    "O14": {"name": "Antivirus cloud sample submission", "owner": "platform", "default_enabled": false, "recommended_state": "prompt before sending files", "verification": "pending_manual"},
+    "O15": {"name": "Git commits to the public repository", "owner": "perfin", "default_enabled": false, "recommended_state": "synthetic only", "verification": "repo_scan"},
+    "O16": {"name": "Manual sharing (email, chat, cloud printing)", "owner": "user", "default_enabled": false, "recommended_state": "no PerFin share feature", "verification": "n/a"}
+  },
+  "nopii": {
+    "required_for_core_local_use": false,
+    "contract_version": "0.1.0",
+    "raw_fallback_allowed": false,
+    "describe_timeout_seconds": 10,
+    "required_preserve_fields": ["date", "amount_minor", "currency"],
+    "allowed_record_fields": ["record_id", "date", "amount_minor", "currency", "account_alias", "category", "description", "memo"],
+    "default_scrub_fields": ["description", "memo"],
+    "outbox_subdir": "exports/outbox"
+  },
+  "retention_days": {
+    "staging": 30,
+    "exports_outbox": 7,
+    "logs": 90,
+    "temp": 0
+  },
+  "log_rotation_max_bytes": 10485760,
+  "backups": {
+    "keep_daily": 7,
+    "keep_monthly": 12,
+    "manifest_hash": "sha256",
+    "require_no_lock_file": true,
+    "require_encryption_when_leaving_device": true
+  },
+  "log_redaction": {
+    "allowed_fields": ["timestamp", "level", "event", "batch_id", "row_number", "field", "count", "duration_ms", "file_sha256", "contract_version", "profile_version", "error_code"],
+    "never_log": ["description", "payee", "memo", "amount", "balance", "account_number", "card_number", "name", "address", "email", "phone", "raw_line", "pdf_text", "user_profile_path"],
+    "backstop_rules": [
+      {"id": "pan", "description": "Luhn-valid 13-19 digit sequence, optional spaces or dashes", "replacement": "[REDACTED-PAN]"},
+      {"id": "iban", "description": "IBAN-like: 2 letters, 2 digits, 11-30 alphanumerics", "replacement": "[REDACTED-IBAN]"},
+      {"id": "ssn", "description": "US SSN pattern NNN-NN-NNNN", "replacement": "[REDACTED-SSN]"},
+      {"id": "email", "description": "Email address", "replacement": "[REDACTED-EMAIL]"},
+      {"id": "digits", "description": "Any other run of 6 or more digits", "replacement": "[REDACTED-DIGITS]"},
+      {"id": "user_path", "description": "Windows or POSIX user-profile prefix", "replacement": "%USERPROFILE%"}
+    ]
+  },
+  "formula_injection": {
+    "triggers": ["=", "+", "-", "@", "\t", "\r"],
+    "conservative_extra_triggers": ["\n", "＝", "＋", "－", "＠"],
+    "check_after_leading_spaces": true,
+    "escape_prefix": "'",
+    "apply_to": ["excel_text_cells", "csv_export_text_fields", "nopii_outbox_text_fields"],
+    "numeric_columns_exempt": true,
+    "store_original_in_access": true
+  },
+  "repo_guard": {
+    "always_forbidden_globs": ["*.log", "*.bak", "*.laccdb", "*.ldb", "~$*", "*.tmp", "perfin-data-dir.json"],
+    "restricted_extensions": {
+      ".pdf": ["fixtures/"],
+      ".csv": ["fixtures/", "contracts/"],
+      ".ofx": ["fixtures/"],
+      ".qfx": ["fixtures/"],
+      ".accdb": ["access/"],
+      ".mdb": ["access/"],
+      ".xlsx": ["excel/"],
+      ".xlsm": ["excel/"],
+      ".xlsb": ["excel/"],
+      ".xls": ["excel/"]
+    },
+    "allowed_test_pans": ["4111111111111111", "4242424242424242", "5555555555554444", "378282246310005", "6011111111111117"]
+  }
+}
