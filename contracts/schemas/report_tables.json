@@ -68,6 +68,26 @@
         "name": "include_in_net_worth",
         "type": "boolean",
         "nullable": 0
+      },
+      {
+        "name": "liquidity",
+        "type": "enum",
+        "nullable": 1
+      },
+      {
+        "name": "ownership_pct",
+        "type": "integer",
+        "nullable": 1
+      },
+      {
+        "name": "legal_liability_pct",
+        "type": "integer",
+        "nullable": 1
+      },
+      {
+        "name": "tax_status",
+        "type": "enum",
+        "nullable": 1
       }
     ],
     "rpt_transactions": [
@@ -367,6 +387,46 @@
         "name": "effective_from",
         "type": "date",
         "nullable": 0
+      },
+      {
+        "name": "terms_source",
+        "type": "enum",
+        "nullable": 0
+      },
+      {
+        "name": "effective_to",
+        "type": "date",
+        "nullable": 1
+      },
+      {
+        "name": "credit_limit_minor",
+        "type": "money_minor",
+        "nullable": 1
+      },
+      {
+        "name": "min_rule_type",
+        "type": "enum",
+        "nullable": 0
+      },
+      {
+        "name": "min_amount_minor",
+        "type": "money_minor",
+        "nullable": 1
+      },
+      {
+        "name": "min_pct",
+        "type": "decimal_string",
+        "nullable": 1
+      },
+      {
+        "name": "min_floor_minor",
+        "type": "money_minor",
+        "nullable": 1
+      },
+      {
+        "name": "post_promo_apr",
+        "type": "decimal_string",
+        "nullable": 1
       }
     ],
     "rpt_valuations": [
@@ -404,6 +464,11 @@
         "name": "valuation_source",
         "type": "text",
         "nullable": 0
+      },
+      {
+        "name": "cost_basis_minor",
+        "type": "money_minor",
+        "nullable": 1
       }
     ],
     "rpt_payoff_summary": [
@@ -580,6 +645,33 @@
       },
       {
         "name": "amount_minor",
+        "type": "money_minor",
+        "nullable": 0
+      }
+    ],
+    "rpt_statement_buckets": [
+      {
+        "name": "statement_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "account_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "period_end",
+        "type": "date",
+        "nullable": 0
+      },
+      {
+        "name": "bucket_id",
+        "type": "id",
+        "nullable": 0
+      },
+      {
+        "name": "balance_minor",
         "type": "money_minor",
         "nullable": 0
       }

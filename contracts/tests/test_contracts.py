@@ -126,6 +126,30 @@ class Rules(unittest.TestCase):
                                       "amount_minor": 7000, "category_id": "exp.groceries"}], "row_version": 1})
         self.assertIn("E_TRANSFER_AMOUNT", self.mutate(f))
 
+    def _adjustment(self, d):
+        d["transactions"].append({"transaction_id": "t020", "account_id": "chk:main", "posted_date": "2026-06-29",
+                                  "amount_minor": -100, "currency": "USD", "description": "RECON ADJUSTMENT",
+                                  "entry_method": "manual", "splits": [{"split_id": "s020", "split_kind": "adjustment",
+                                  "amount_minor": -100}], "row_version": 1})
+
+    def _reversal_of(self, d, orig, amount):
+        d["transactions"].append({"transaction_id": "t021", "account_id": "chk:main", "posted_date": "2026-06-30",
+                                  "amount_minor": amount, "currency": "USD", "description": "REVERSAL",
+                                  "entry_method": "reversal", "reverses_transaction_id": orig,
+                                  "splits": [{"split_id": "s021", "split_kind": "adjustment", "amount_minor": amount}],
+                                  "row_version": 1})
+
+    def test_reversal_of_manual_adjustment_is_valid(self):
+        def f(d):
+            self._adjustment(d)
+            self._reversal_of(d, "t020", 100)
+        self.assertEqual(self.mutate(f), [])
+
+    def test_reversal_cannot_turn_category_into_adjustment(self):
+        def f(d):
+            self._reversal_of(d, "t001", -300000)
+        self.assertIn("E_SPLIT_KIND", self.mutate(f))
+
     def test_deferred_promo_needs_deadline(self):
         self.assertIn("E_REQUIRED", self.mutate(lambda d: d["card_terms"][1]["apr_buckets"][1].pop("promo_end_date")))
 
@@ -199,6 +223,20 @@ class AccessAndReports(unittest.TestCase):
             m = re.match(r"\s+(\w+_minor) (\w+)", line)
             if m:
                 self.assertEqual(m.group(2), "CURRENCY", line)
+
+    def test_report_tables_carry_module_inputs(self):
+        """Modules read only rpt_* tables, so every payoff/net-worth input must be exposed there."""
+        rt = {t: {c["name"] for c in cols} for t, cols in load(os.path.join(ROOT, "schemas", "report_tables.json"))["tables"].items()}
+        card = load_schema("payoff_scenario.schema.json")["$defs"]["scenario_body"]["properties"]["cards"]["items"]
+        rule = set(load_schema("ledger_bundle.schema.json")["$defs"]["card_terms"]["properties"]["min_payment_rule"]["properties"])
+        self.assertEqual(rule, {"rule_type", "amount_minor", "pct", "floor_minor"})
+        self.assertTrue({"min_rule_type", "min_amount_minor", "min_pct", "min_floor_minor"} <= rt["rpt_card_terms"])
+        bucket = card["properties"]["buckets"]["items"]["properties"]
+        self.assertTrue({"apr", "post_promo_apr", "deferred_interest", "promo_end_date", "bucket_id"} <= rt["rpt_card_terms"])
+        self.assertIn("promo_end_month", bucket)  # derived from promo_end_date and the scenario as_of
+        self.assertTrue({"statement_id", "account_id", "bucket_id", "balance_minor"} <= rt["rpt_statement_buckets"])
+        self.assertTrue({"ownership_pct", "legal_liability_pct", "liquidity", "include_in_net_worth", "kind"} <= rt["rpt_accounts"])
+        self.assertIn("cost_basis_minor", rt["rpt_valuations"])
 
     def test_report_tables(self):
         rt = load(os.path.join(ROOT, "schemas", "report_tables.json"))

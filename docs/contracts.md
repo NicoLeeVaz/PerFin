@@ -59,7 +59,7 @@ python3 -m unittest discover -s contracts/tests -v
 | `account` | Kind must agree with class (credit_card/loan/mortgage/other_liability are liabilities) → `E_ACCOUNT_KIND`. Holds ownership %, legal liability %, liquidity, tax status and the net-worth include flag. |
 | `category` | Kind is one of `income`, `expense`, `interest` or `fee`; interest and fee are expenses reported separately. A parent must exist. |
 | `transaction` | Account must exist (`E_ACCOUNT_UNKNOWN`) and currencies match. `transaction_date ≤ posted_date`. **Splits must sum to the amount** (`E_SPLITS_UNBALANCED`). Imported transactions carry `source` (batch, row, source transaction ID). Edits bump `row_version`. Reversals are new transactions that negate the original (`entry_method: reversal`). |
-| `split` | `category` splits need a category. `transfer` splits need a `transfer_link_id` and **no category** (`E_SPLIT_KIND`), so they never count as income or expense. `adjustment` splits are manual, uncategorized and unlinked (explicit reconciliation adjustments). |
+| `split` | `category` splits need a category. `transfer` splits need a `transfer_link_id` and **no category** (`E_SPLIT_KIND`), so they never count as income or expense. `adjustment` splits are uncategorized and unlinked (explicit reconciliation adjustments), and appear only on a manual transaction or on the reversal of a manual adjustment. |
 | `transfer_link` | Joins two transactions on different accounts (`E_TRANSFER_SAME_ACCOUNT`). Each leg has transfer splits for the link (`E_TRANSFER_UNPAIRED`). The from-leg is negative and equals minus the to-leg (`E_TRANSFER_AMOUNT`). The legs may be days apart. Only `confirmed` links are ledger records; candidates live in staging. |
 | `statement` | `period_start ≤ period_end ≤ due_date`. Balances use the ledger sign. Optional APR-bucket balances must sum to the closing balance (`E_BUCKET_SUM`). Minimum, interest and fees are as disclosed. |
 | `statement_payment` | Allocates a confirmed payment (an inflow on the same card) to a statement. Allocations never exceed the payment (`E_ALLOCATION_EXCEEDS`). A plan is not a payment. |
@@ -94,6 +94,12 @@ These are proven by the tests in `Semantics`:
 
 ## 5. Module interfaces (frozen)
 
+- **Read interface.** Modules read only the `rpt_*` tables.
+  - `rpt_card_terms`: one row per APR bucket, carrying the minimum rule, the post-promotion APR, the credit limit and the terms source.
+  - `rpt_statement_buckets`: per-statement bucket balances.
+  - `rpt_accounts`: ownership, legal liability, liquidity and tax status.
+  - `rpt_valuations`: cost basis.
+  - Together these are enough to build `payoff_scenario` and `net_worth_report` without reading Access directly. `promo_end_month` is derived from `promo_end_date` relative to the scenario's `as_of`.
 - **Payoff.**
   - **Input: `payoff_scenario`.** Cards come from reconciled statements (`source_statement_id`), with APR buckets and owed balances, a minimum rule, assumed charges and fees, a cash plan, strategies (`largest_balance`, `snowball`, `avalanche`, `near_apr_hybrid` with `gap_pp`/`prefer`, optional `lock_target`) and tolerance limits.
   - **Tolerance.** `null` means unset, and unset never means approved.

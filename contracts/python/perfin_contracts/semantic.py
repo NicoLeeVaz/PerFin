@@ -124,8 +124,11 @@ def ledger_rules(b: Dict) -> List[Error]:
                 else:
                     link_splits[s["transfer_link_id"]].append((t, s))
             elif k == "adjustment":
-                if s.get("category_id") or s.get("transfer_link_id") or t["entry_method"] != "manual":
-                    e.append(("E_SPLIT_KIND", sp, "adjustment splits are manual, uncategorized, unlinked"))
+                orig = txns.get(t.get("reverses_transaction_id") or "")
+                reverses_adjustment = (t["entry_method"] == "reversal" and orig is not None and orig["entry_method"] == "manual"
+                                       and any(x["split_kind"] == "adjustment" for x in orig["splits"]))
+                if s.get("category_id") or s.get("transfer_link_id") or not (t["entry_method"] == "manual" or reverses_adjustment):
+                    e.append(("E_SPLIT_KIND", sp, "adjustment splits are uncategorized, unlinked, and manual or a reversal of a manual adjustment"))
 
     for i, l in enumerate(b.get("transfer_links", [])):
         p = f"$.transfer_links[{i}]"

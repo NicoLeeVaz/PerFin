@@ -85,6 +85,7 @@
           "rpt_reconciliation",
           "rpt_review_queue",
           "rpt_card_terms",
+          "rpt_statement_buckets",
           "rpt_valuations",
           "rpt_payoff_summary",
           "rpt_payoff_schedule",
