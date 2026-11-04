@@ -415,6 +415,16 @@ def _classify_duplicate(row, parsed, account_id, repo, window, earlier_rows, sou
     """Return the row's duplicate object. Source ids are scoped to ``account_id``."""
     sid = parsed.get("source_txn_id")
     fp = row["fingerprint"]
+    # Within the file: same date, amount and description. This comparison key leaves
+    # out source_txn_id on purpose, so a row with an id and an identical row without
+    # one are still compared. Only two non-empty, different ids prove distinct rows.
+    # (row_occurrence keeps every fingerprint distinct either way.)
+    # Every parsed row is registered here, before any early return below, so a row
+    # classified by its source id still counts as "earlier" for the rows after it.
+    ck = (parsed["posted_date"], parsed["amount_minor"], parsed["description"])
+    prior = earlier_rows.setdefault(ck, [])
+    match = next((n for n, other_sid in prior if not (sid and other_sid and sid != other_sid)), None)
+    prior.append((row["row_number"], sid))
     if sid is not None:
         for t in sorted(repo.find_by_source_txn_id(account_id, sid), key=lambda t: t["transaction_id"]):
             if t.get("account_id") != account_id:
@@ -429,14 +439,6 @@ def _classify_duplicate(row, parsed, account_id, repo, window, earlier_rows, sou
                     "evidence": "same source transaction id earlier in this file"}
         source_first[sid] = row["row_number"]
 
-    # Within the file: same date, amount and description. This comparison key leaves
-    # out source_txn_id on purpose, so a row with an id and an identical row without
-    # one are still compared. Only two non-empty, different ids prove distinct rows.
-    # (row_occurrence keeps every fingerprint distinct either way.)
-    ck = (parsed["posted_date"], parsed["amount_minor"], parsed["description"])
-    prior = earlier_rows.setdefault(ck, [])
-    match = next((n for n, other_sid in prior if not (sid and other_sid and sid != other_sid)), None)
-    prior.append((row["row_number"], sid))
     if match is not None:
         return {"status": "possible", "matched_row_number": match,
                 "evidence": "same date, amount and description earlier in this file; "

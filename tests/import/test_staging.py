@@ -100,6 +100,20 @@ class DuplicateTests(unittest.TestCase):
             self.assertEqual(b["duplicate"]["matched_row_number"], 1)
             self.assertNotEqual(a["fingerprint"], b["fingerprint"])
 
+    def test_row_classified_by_source_id_still_counts_for_later_repeats(self):
+        # Codex review on #19 @ 41dd149: the second row returns early on its repeated
+        # source id; the third row (same date/amount/description, no id) must still match it.
+        text = ("Date,Description,Amount,Balance,Transaction ID\r\n"
+                "07/01/2026,A,-1.00,,REF1\r\n"
+                "07/02/2026,B,-2.00,,REF1\r\n"
+                "07/02/2026,B,-2.00,,\r\n")
+        result = stage(self, csv_bytes(text), "three.csv", profile("synthetic_checking_signed"), "chk:main")
+        rows = result.document["rows"]
+        self.assertEqual(rows[1]["duplicate"]["status"], "possible")
+        self.assertEqual(rows[2]["duplicate"]["status"], "possible")
+        self.assertEqual(rows[2]["duplicate"].get("matched_row_number"), 2)
+        self.assertEqual(rows[2]["review_state"], "needs_review")
+
     def test_within_file_repeat_skips_only_rows_with_different_ids(self):
         res = stage(self, card_bytes("07/01/2026,07/01/2026,SYNTHETIC COFFEE,20.00,R-1",
                                      "07/01/2026,07/01/2026,SYNTHETIC COFFEE,20.00,R-2",
