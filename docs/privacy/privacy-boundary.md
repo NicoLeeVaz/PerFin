@@ -187,7 +187,7 @@ Diagnostic log rules (machine-readable in `defaults.json` → `log_redaction`):
 1. Structured events with allow-listed fields only: timestamp, level, event code, import batch id, row number, field name, counts, durations, file SHA-256, contract/profile versions and error codes.
 2. Never log: descriptions/payees/memos, amounts, balances, full or partial account or card numbers, names, addresses, email addresses, phone numbers, raw CSV lines, PDF text, exception messages that embed values, or the user's profile path.
 3. Paths are logged relative to the data root (`<data>\staging\...`); the user-profile part is replaced with `%USERPROFILE%`.
-4. A regex backstop runs on every message before it is written: Luhn-valid 13 to 19 digit sequences → `[REDACTED-PAN]`; other runs of 6 or more digits → `[REDACTED-DIGITS]`; email → `[REDACTED-EMAIL]`; US SSN pattern → `[REDACTED-SSN]`; IBAN-like strings → `[REDACTED-IBAN]`; user profile paths → `%USERPROFILE%`, including profile folder names with spaces (if no path separator follows, the rest of the line is redacted). The backstop is a safety net, not the main control.
+4. A regex backstop runs on every message before it is written: Luhn-valid 13 to 19 digit sequences → `[REDACTED-PAN]`; other runs of 6 or more digits → `[REDACTED-DIGITS]`; email → `[REDACTED-EMAIL]`; US SSN pattern → `[REDACTED-SSN]`; IBAN-like strings → `[REDACTED-IBAN]`; user profile paths → `%USERPROFILE%`, including profile folder names with spaces or apostrophes (if no path separator follows, the rest of the line is redacted). The backstop is a safety net, not the main control.
 5. Debug logging that includes values is not provided.
 
 Reference implementation: `redact_log_text()`.
@@ -205,7 +205,7 @@ Reference implementation: `escape_spreadsheet_text()` and `needs_formula_escape(
 
 ## Assumptions to reconcile at the Wave 1 gate
 
-- Money is integer minor units (`amount_minor`, signed integer) with an ISO 4217 `currency`; dates are ISO `YYYY-MM-DD`. The field names used in the NoPii envelope are provisional and must be aligned with the 1a contract (`contracts/**`).
-- Import batch ids, transaction ids and file SHA-256 identity are assumed to exist in the 1a contract; diagnostic logs refer to them.
+- Aligned with 1a: money is integer minor units (`amount_minor`, signed integer within ±922337203685477) and `currency` is unchanged; ledger `posted_date` maps to envelope `date` (a real ISO calendar date). Export IDs are newly generated aliases, not ledger IDs.
+- 1a defines import batch IDs, transaction IDs and file SHA-256 identity. Diagnostic logs use only their allow-listed fields; transaction IDs and financial content are not added to that allow-list. Local `number_hint`, base `source_file_name` and opaque `evidence_ref` never enter the NoPii envelope or diagnostic logs.
 - The data-root layout and `perfin-data-dir.json` marker are proposed here; 2a/2b/3a implement them.
-- The ledger audit trail is assumed to be an Access table owned by 2b.
+- 1a defines the Access `audit_log` table for 2b: before/after JSON remains intact inside the protected ledger, distinct from redacted diagnostics. NoPii assumptions remain pending; the optional export feature stays disabled without a verified adapter.

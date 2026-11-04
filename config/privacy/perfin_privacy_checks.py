@@ -18,6 +18,7 @@ import json
 import os
 import re
 from decimal import Decimal
+from datetime import date
 import subprocess
 import sys
 from collections import Counter
@@ -181,10 +182,10 @@ def luhn_valid(digits):
     return total % 10 == 0
 
 
-# The profile-directory component may contain spaces ("Alex Example"); it ends at the next
-# path separator, line break or quote. Without a following separator the rest of the line is
-# redacted, which deliberately over-redacts rather than leaking part of a name.
-_USER_PATH = re.compile(r"(?i)(?:[A-Z]:\\Users\\[^\\/\r\n\"'<>|]+|/home/[^/\r\n\"'<>|]+|/Users/[^/\r\n\"'<>|]+)")
+# Profile components may contain spaces or apostrophes. Stop at a path separator,
+# line break or double-quote delimiter. Without a following separator, deliberately
+# over-redact the rest of the line rather than expose part of a name.
+_USER_PATH = re.compile(r"(?i)(?:[A-Z]:[\\/]Users[\\/][^\\/\r\n\t\"<>|]+|/(?:home|Users)/[^/\r\n\t\"<>|]+)")
 _EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 _IBAN = re.compile(r"\b[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}\b")
 _SSN = re.compile(r"(?<!\d)\d{3}-\d{2}-\d{4}(?!\d)")
@@ -272,6 +273,13 @@ def validate_schema(instance, schema, root=None, where="$"):
             errors.append("%s: does not match %s" % (where, schema["pattern"]))
         if len(instance) < schema.get("minLength", 0):
             errors.append("%s: too short" % where)
+    if isinstance(instance, str) and schema.get("format") == "date":
+        try:
+            date.fromisoformat(instance)
+        except ValueError:
+            errors.append("%s: invalid calendar date" % where)
+    if isinstance(instance, int) and "maximum" in schema and instance > schema["maximum"]:
+        errors.append("%s: above maximum" % where)
     if isinstance(instance, int) and "minimum" in schema and instance < schema["minimum"]:
         errors.append("%s: below minimum" % where)
     if isinstance(instance, dict):
@@ -421,10 +429,10 @@ def decide_export(defaults, feature_flag, description, request, response, user_c
         return False, ["unsupported contract version - export disabled"]
     if description["adapter"]["offline"] is not True:
         return False, ["adapter not offline - export disabled"]
+    if validate_envelope(request) or request.get("kind") != "perfin.nopii.export_request":
+        return False, ["invalid request"]
     if request["payload_kind"] not in description["payload_kinds"]:
         return False, ["payload kind unsupported - export disabled"]
-    if validate_envelope(request):
-        return False, ["invalid request"]
     if response is None or validate_envelope(response) or response.get("kind") != "perfin.nopii.export_response":
         return False, ["invalid or missing adapter response - export cancelled"]
     if response.get("adapter", {}).get("offline") is not True:

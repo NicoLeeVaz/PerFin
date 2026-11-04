@@ -10,7 +10,7 @@
   ],
   "$defs": {
     "version": {"type": "string", "pattern": "^0\\.1\\.[0-9]+$"},
-    "isoDate": {"type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"},
+    "isoDate": {"type": "string", "format": "date", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"},
     "exportId": {"type": "string", "pattern": "^exp-[A-Za-z0-9-]{1,64}$"},
     "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
     "adapter": {
@@ -30,7 +30,7 @@
       "properties": {
         "record_id": {"type": "string", "pattern": "^r[0-9]{1,9}$"},
         "date": {"$ref": "#/$defs/isoDate"},
-        "amount_minor": {"type": "integer"},
+        "amount_minor": {"type": "integer", "minimum": -922337203685477, "maximum": 922337203685477},
         "currency": {"$ref": "#/$defs/currency"},
         "account_alias": {"type": "string"},
         "category": {"type": "string"},
