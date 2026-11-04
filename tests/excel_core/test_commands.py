@@ -81,6 +81,31 @@ class Outbox(unittest.TestCase):
             rejected = sorted(p.name for p in (root / "commands" / "rejected").iterdir())
             self.assertEqual(len(rejected), 4)  # each draft plus its .errors.json
 
+    def test_promote_rejects_non_object_drafts(self):
+        """Codex P2: JSON null (and other non-objects) must never reach the outbox."""
+        uid = "6f1c2d3e-4b5a-4c6d-8e7f-90a1b2c3d4e5"
+        for body in ("null", "[]", "[1, 2]", "5", "-0.5", '"x"', "true"):
+            with _support.temp_dir() as root:
+                drafts = root / "commands" / "drafts"
+                drafts.mkdir(parents=True)
+                (drafts / (uid + ".json")).write_text(body, encoding="utf-8")
+                report = commands.promote_drafts(root)
+                self.assertEqual(report["promoted"], [], body)
+                self.assertEqual([n for n, _ in report["rejected"]], [uid + ".json"], body)
+                self.assertEqual(report["rejected"][0][1][0][0], "E_TYPE", body)
+                self.assertFalse((root / "commands" / "outbox").exists() and
+                                 any((root / "commands" / "outbox").iterdir()), body)
+                rejected = root / "commands" / "rejected"
+                self.assertEqual((rejected / (uid + ".json")).read_text(encoding="utf-8"), body)
+                errs = json.loads((rejected / (uid + ".json.errors.json")).read_text(encoding="utf-8"))
+                self.assertEqual(errs[0][0], "E_TYPE")
+                self.assertEqual(list(drafts.iterdir()), [])
+        for bad in (None, [], 5, "x"):
+            with self.assertRaises(commands.CommandError):
+                commands.validate(bad)
+            with _support.temp_dir() as root, self.assertRaises(commands.CommandError):
+                commands.write_to_outbox(bad, root)
+
     def test_vba_builder_emits_every_required_field(self):
         text = (_support.CORE / "vba" / "PerFinCommands.bas").read_text(encoding="utf-8")
         schema = _support.load_json(_support.REPO / "contracts" / "schemas" / "command.schema.json")

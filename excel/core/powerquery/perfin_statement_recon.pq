@@ -9,11 +9,17 @@ let
     Open = Table.SelectRows(rpt_transactions, each [reconciled] = false),
     PickRec = (sid as text) as nullable record =>
         let
+            // Rule (same as reports.derive_views): a balanced reconciliation wins over
+            // in_progress; ties go to the highest reconciliation_id. Table.Sort gets column
+            // criteria only, so the priority is a temporary numeric column.
             Rows = Table.SelectRows(rpt_reconciliation, each [statement_id] = sid),
-            Sorted = Table.Sort(Rows, {{each if [recon_status] = "balanced" then 1 else 0, Order.Descending},
-                                       {"reconciliation_id", Order.Descending}})
+            Ranked = Table.AddColumn(Rows, "__perfin_priority",
+                each if [recon_status] = "balanced" then 0 else 1, Int64.Type),
+            Sorted = Table.Sort(Ranked, {{"__perfin_priority", Order.Ascending},
+                                         {"reconciliation_id", Order.Descending}}),
+            Best = Table.RemoveColumns(Table.FirstN(Sorted, 1), {"__perfin_priority"})
         in
-            if Table.RowCount(Sorted) = 0 then null else Sorted{0},
+            if Table.RowCount(Best) = 0 then null else Best{0},
     Statements = Table.Sort(rpt_statements, {{"account_id", Order.Ascending}, {"period_end", Order.Ascending},
                                              {"statement_id", Order.Ascending}}),
     Rows = Table.TransformRows(Statements, (s) =>

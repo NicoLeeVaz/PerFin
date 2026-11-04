@@ -61,6 +61,8 @@ def build_review_command(command_type, batch_id, row_numbers, reason=None, batch
 
 
 def validate(doc):
+    if not isinstance(doc, dict):
+        raise CommandError("a command must be a JSON object", [("E_TYPE", "$", "not a JSON object")])
     errs = _deps.validate_document(doc)
     if not errs and doc.get("document_type") != "command":
         errs = [("E_DOCUMENT_TYPE", "$.document_type", "only command documents go to the outbox")]
@@ -126,6 +128,26 @@ def write_to_outbox(doc, data_root, acknowledged=False):
 _DRAFT_NAME = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.json$")
 
 
+def _draft_errors(path):
+    """Contract errors for one draft file; [] only for a valid command named <command_id>.json.
+
+    Every parsed value is validated: JSON null, arrays, numbers and strings are not
+    command documents and are rejected (never promoted).
+    """
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8-sig"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        return [("E_SCHEMA", "$", "not valid JSON (%s)" % type(exc).__name__)]
+    if not isinstance(doc, dict):
+        return [("E_TYPE", "$", "draft must be a JSON object, found %s" % type(doc).__name__)]
+    errors = list(_deps.validate_document(doc))
+    if not errors and doc.get("document_type") != "command":
+        errors = [("E_DOCUMENT_TYPE", "$.document_type", "only command documents are accepted")]
+    if not errors and (not _DRAFT_NAME.match(path.name) or path.stem != doc["command_id"]):
+        errors = [("E_SCHEMA", "$.command_id", "draft file name must be <command_id>.json")]
+    return errors
+
+
 def promote_drafts(data_root, acknowledged=False):
     """Validate VBA drafts; move valid ones to the outbox and invalid ones to rejected/."""
     check_data_root(data_root, acknowledged)
@@ -134,17 +156,7 @@ def promote_drafts(data_root, acknowledged=False):
     for path in sorted(drafts.iterdir()):
         if not path.is_file() or not path.name.endswith(".json"):
             continue
-        errors = []
-        try:
-            doc = json.loads(path.read_text(encoding="utf-8-sig"))
-        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            doc, errors = None, [("E_SCHEMA", "$", "not valid JSON (%s)" % type(exc).__name__)]
-        if doc is not None:
-            errors = list(_deps.validate_document(doc))
-            if not errors and doc.get("document_type") != "command":
-                errors = [("E_DOCUMENT_TYPE", "$.document_type", "only command documents are accepted")]
-            if not errors and (not _DRAFT_NAME.match(path.name) or path.stem != doc["command_id"]):
-                errors = [("E_SCHEMA", "$.command_id", "draft file name must be <command_id>.json")]
+        errors = _draft_errors(path)
         if errors:
             dest = _folder(data_root, "rejected") / path.name
             os.replace(path, dest)
@@ -152,6 +164,8 @@ def promote_drafts(data_root, acknowledged=False):
                        json.dumps([list(e) for e in errors], indent=1) + "\n")
             report["rejected"].append((path.name, errors))
         else:
+            doc = json.loads(path.read_text(encoding="utf-8-sig"))
+            validate(doc)  # defence in depth: only a validated object reaches the outbox
             dest = _folder(data_root, "outbox") / path.name
             if dest.exists():
                 raise CommandError("outbox already holds %s" % path.name)

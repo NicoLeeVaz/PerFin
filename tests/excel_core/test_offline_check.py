@@ -1,6 +1,7 @@
 """The offline-compatibility checker passes the generated workbook and catches every rule."""
 import base64
 import io
+import re
 import unittest
 import zipfile
 
@@ -181,6 +182,71 @@ class PowerQuery(unittest.TestCase):
         for rel, text in expected.items():
             raw = (root / rel).read_bytes()
             self.assertEqual(raw, text.replace("\n", "\r\n").encode("ascii"), rel)
+
+    def test_sort_and_group_criteria_are_columns(self):
+        """Codex P1: Table.Sort/Table.Group/List.Sort criteria must be column names or
+        {column, Order.*} pairs, never a function (each/lambda)."""
+        def calls(code, fn):
+            i = code.find(fn + "(")
+            while i >= 0:
+                j, depth = i + len(fn), 0
+                for k in range(j, len(code)):
+                    depth += {"(": 1, ")": -1, "{": 1, "}": -1}.get(code[k], 0)
+                    if depth == 0:
+                        yield code[j + 1:k]
+                        break
+                i = code.find(fn + "(", i + 1)
+        pair = r'\{\s*"[A-Za-z0-9_]+"\s*,\s*Order\.(?:Ascending|Descending)\s*\}'
+        crit = re.compile(r'^\s*\{\s*(?:%s|"[A-Za-z0-9_]+")(?:\s*,\s*(?:%s|"[A-Za-z0-9_]+"))*\s*\}\s*$' % (pair, pair))
+        found = 0
+        for p in sorted((_support.CORE / "powerquery").rglob("*.pq")):
+            code = oc._strip_m_comments(p.read_text(encoding="ascii"))
+            self.assertNotIn("List.Sort(", code, p.name)
+            for fn in ("Table.Sort", "Table.Group"):
+                for args in calls(code, fn):
+                    depth, split = 0, None
+                    for k, ch in enumerate(args):
+                        depth += {"(": 1, ")": -1, "{": 1, "}": -1, "[": 1, "]": -1}.get(ch, 0)
+                        if ch == "," and depth == 0:
+                            split = k
+                            break
+                    criteria = args[split + 1:] if fn == "Table.Sort" else args[split + 1:].split("},", 1)[0] + "}"
+                    if fn == "Table.Sort":
+                        self.assertRegex(criteria, crit, "%s in %s" % (fn, p.name))
+                        self.assertNotIn("each", criteria)
+                        found += 1
+        self.assertGreaterEqual(found, 4)
+        # the regex rejects the old function-criteria form
+        old = '{{each if [recon_status] = "balanced" then 1 else 0, Order.Descending}, {"reconciliation_id", Order.Descending}}'
+        self.assertNotRegex(old, crit)
+
+    def test_recon_pick_rule_matches_python(self):
+        text = (_support.CORE / "powerquery" / "perfin_statement_recon.pq").read_text(encoding="ascii")
+        self.assertIn('each if [recon_status] = "balanced" then 0 else 1, Int64.Type', text)
+        self.assertIn('{{"__perfin_priority", Order.Ascending},', text)
+        self.assertIn('{"reconciliation_id", Order.Descending}}', text)
+        self.assertIn('Table.RemoveColumns(Table.FirstN(Sorted, 1), {"__perfin_priority"})', text)
+        from perfin_excel_core import reports
+        import datetime as dt
+
+        def pick(recs):
+            tables = {"rpt_accounts": [{"account_id": "card:a", "kind": "liability"}], "rpt_transactions": [],
+                      "rpt_statements": [{"statement_id": "s1", "account_id": "card:a", "period_start": dt.date(2026, 6, 1),
+                                          "period_end": dt.date(2026, 6, 30), "due_date": None,
+                                          "opening_balance_minor": 0, "closing_balance_minor": 0}],
+                      "rpt_reconciliation": [{"reconciliation_id": r, "statement_id": "s1", "included_count": 0,
+                                              "difference_minor": 0, "recon_status": st} for r, st in recs]}
+            status = [{"source": n, "status": "OK"} for n in tables]
+            return reports.derive_views(tables, status)["perfin_statement_recon"][0]["reconciliation_id"]
+
+        def m_rule(recs):  # the M rule: priority asc (balanced = 0), then id desc, first row
+            return sorted(recs, key=lambda x: (0 if x[1] == "balanced" else 1, [-ord(c) for c in x[0]]))[0][0]
+
+        for recs in ([("r9", "in_progress"), ("r1", "balanced")], [("r2", "in_progress"), ("r3", "in_progress")],
+                     [("r1", "balanced"), ("r5", "balanced"), ("r7", "in_progress")], [("r4", "in_progress")]):
+            self.assertEqual(pick(recs), m_rule(recs), recs)
+        self.assertEqual(pick([("r9", "in_progress"), ("r1", "balanced")]), "r1")
+        self.assertEqual(pick([("r2", "in_progress"), ("r3", "in_progress")]), "r3")
 
     def test_queries_follow_the_contract(self):
         from perfin_excel_core import spec

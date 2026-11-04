@@ -67,6 +67,94 @@ Public Function PerFin_IsPlainName(ByVal s As String) As Boolean
     PerFin_IsPlainName = (Left$(s, 1) <> ".")
 End Function
 
+' ---------------------------------------------------------------- data-root location guard (1c)
+' Same rules as evaluate_data_dir in config/privacy/perfin_privacy_checks.py. The lists are
+' copied from config/privacy/defaults.json (data_dir.*); a Linux test keeps them equal.
+' Sync folders and network paths are refused outright here (1c says "warn and block until
+' acknowledged"; VBA has no acknowledgement store). Python promote re-checks every time.
+
+Public Const PERFIN_SYNC_MARKERS As String = _
+    "OneDrive|Dropbox|Google Drive|GoogleDrive|My Drive|iCloudDrive|iCloud Drive|Mobile Documents|" & _
+    "Box|Box Sync|pCloud Drive|Nextcloud|ownCloud|MEGA|SynologyDrive|Sync"
+Public Const PERFIN_SYNC_MARKER_PREFIXES As String = "OneDrive - "
+Public Const PERFIN_SYNC_ENV_VARS As String = "OneDrive|OneDriveConsumer|OneDriveCommercial"
+Public Const PERFIN_DATA_DIR_MARKER As String = "perfin-data-dir.json"
+
+Private Function PathExists(ByVal p As String) As Boolean
+    On Error GoTo Nope
+    PathExists = Len(Dir$(p, vbDirectory Or vbHidden Or vbSystem Or vbReadOnly)) > 0
+    Exit Function
+Nope:
+    PathExists = False
+End Function
+
+Public Function PerFin_IsUnder(ByVal child As String, ByVal parent As String) As Boolean
+    Do While Len(parent) > 3 And Right$(parent, 1) = "\"
+        parent = Left$(parent, Len(parent) - 1)
+    Loop
+    If Len(parent) = 0 Then Exit Function
+    PerFin_IsUnder = (LCase$(child) = LCase$(parent)) Or _
+        (LCase$(Left$(child, Len(parent) + 1)) = LCase$(parent & "\"))
+End Function
+
+Public Function PerFin_DataRootProblem(ByVal root As String) As String
+    ' "" when root may hold PerFin data; otherwise the reason it is refused.
+    Dim parts() As String, markers() As String, prefixes() As String, envs() As String
+    Dim i As Long, j As Long, cur As String, v As String
+    If Left$(root, 2) = "\\" Or Left$(root, 2) = "//" Then
+        PerFin_DataRootProblem = "network (UNC) path": Exit Function
+    End If
+    If Not PerFin_IsLocalPath(root) Then
+        PerFin_DataRootProblem = "not an absolute local drive path": Exit Function
+    End If
+    markers = Split(PERFIN_SYNC_MARKERS, "|")
+    prefixes = Split(PERFIN_SYNC_MARKER_PREFIXES, "|")
+    parts = Split(root, "\")
+    For i = 1 To UBound(parts)
+        For j = LBound(markers) To UBound(markers)
+            If LCase$(parts(i)) = LCase$(markers(j)) Then
+                PerFin_DataRootProblem = "sync folder segment: " & parts(i): Exit Function
+            End If
+        Next j
+        For j = LBound(prefixes) To UBound(prefixes)
+            If LCase$(Left$(parts(i), Len(prefixes(j)))) = LCase$(prefixes(j)) Then
+                PerFin_DataRootProblem = "sync folder segment: " & parts(i): Exit Function
+            End If
+        Next j
+    Next i
+    envs = Split(PERFIN_SYNC_ENV_VARS, "|")
+    For j = LBound(envs) To UBound(envs)
+        v = Environ$(envs(j))
+        If Len(v) > 0 Then
+            If PerFin_IsUnder(root, v) Then PerFin_DataRootProblem = "under %" & envs(j) & "%": Exit Function
+        End If
+    Next j
+    ' Walk the data root and every ancestor looking for a .git folder or file.
+    cur = parts(0)
+    If PathExists(cur & "\.git") Then PerFin_DataRootProblem = "inside a Git checkout: " & cur: Exit Function
+    For i = 1 To UBound(parts)
+        If Len(parts(i)) > 0 Then
+            cur = cur & "\" & parts(i)
+            If PathExists(cur & "\.git") Then
+                PerFin_DataRootProblem = "inside a Git checkout: " & cur: Exit Function
+            End If
+        End If
+    Next i
+    If Not PathExists(root & "\" & PERFIN_DATA_DIR_MARKER) Then
+        PerFin_DataRootProblem = "no " & PERFIN_DATA_DIR_MARKER & " marker; set the data root up first": Exit Function
+    End If
+End Function
+
+Public Function PerFin_CheckedDataRoot() As String
+    ' The data root, or an error when the location guard refuses it. Call before any write.
+    Dim root As String, why As String
+    root = PerFin_DataRoot()
+    why = PerFin_DataRootProblem(root)
+    If Len(why) > 0 Then Err.Raise vbObjectError + 530, "PerFin location check", _
+        "PerFin data root refused (" & why & "): " & root
+    PerFin_CheckedDataRoot = root
+End Function
+
 ' ---------------------------------------------------------------- tables and protection
 
 Public Function PerFin_FindTable(ByVal name As String) As ListObject
@@ -215,7 +303,9 @@ Public Function PerFin_NewUuid() As String
 End Function
 
 Public Sub PerFin_EnsureFolder(ByVal p As String)
-    Dim parts() As String, i As Long, cur As String
+    Dim parts() As String, i As Long, cur As String, root As String
+    root = PerFin_CheckedDataRoot()          ' location guard before any MkDir
+    If Not PerFin_IsUnder(p, root) Then Err.Raise vbObjectError + 532, "PerFin", "refusing to create folders outside the data root"
     parts = Split(p, "\")
     cur = parts(0)
     For i = 1 To UBound(parts)
@@ -227,7 +317,9 @@ Public Sub PerFin_EnsureFolder(ByVal p As String)
 End Sub
 
 Public Sub PerFin_WriteNewAsciiFile(ByVal path As String, ByVal text As String)
-    Dim f As Integer
+    Dim f As Integer, root As String
+    root = PerFin_CheckedDataRoot()          ' location guard before any Open/Print
+    If Not PerFin_IsUnder(path, root) Then Err.Raise vbObjectError + 531, "PerFin", "refusing to write outside the data root"
     If Len(Dir$(path)) > 0 Then Err.Raise vbObjectError + 514, "PerFin", "file already exists: " & path
     f = FreeFile
     Open path For Output As #f

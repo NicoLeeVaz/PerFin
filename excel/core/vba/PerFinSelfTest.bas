@@ -130,6 +130,10 @@ Public Sub PerFin_SelfTest()
     Report "only Power Query workbook connections", ok
 
     results = results & failures & " failure(s)" & vbCrLf
+    If Len(PerFin_DataRootProblem(root)) > 0 Then
+        MsgBox results & "(log not written: data root refused by the location guard)", vbCritical, "PerFin self-test"
+        Exit Sub
+    End If
     PerFin_EnsureFolder root & "\logs"
     f = FreeFile
     Open root & "\logs\perfin-selftest.txt" For Output As #f

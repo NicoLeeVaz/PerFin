@@ -34,8 +34,17 @@ Private Sub BuildReviewDraft(ByVal commandType As String)
     Dim cBatch As Long, cRow As Long, cErr As Long, cDup As Long, idx As Long
     Dim batch As String, b As String, v As Variant, problems As String
     Dim nums() As Long, n As Long, i As Long, j As Long, t As Long, dup As Boolean
-    Dim reason As String, id As String, json As String, list As String, folder As String
+    Dim reason As String, id As String, json As String, list As String, folder As String, why As String
 
+    ' Location guard first: nothing (batch id, reason) is written to a Git checkout,
+    ' sync folder, network path or a folder without the 1c data-root marker.
+    why = PerFin_DataRootProblem(PerFin_DataRoot())
+    If Len(why) > 0 Then
+        MsgBox "No command written. The PerFin data root is refused: " & why & "." & vbLf & _
+               "Choose a local folder outside Git checkouts and sync folders (Settings!B4) that holds " & _
+               PERFIN_DATA_DIR_MARKER & ".", vbCritical, "PerFin review"
+        Exit Sub
+    End If
     Set lo = PerFin_FindTable("rpt_review_queue")
     If lo Is Nothing Then Exit Sub
     If lo.DataBodyRange Is Nothing Or TypeName(Selection) <> "Range" Then
@@ -121,11 +130,7 @@ Private Sub BuildReviewDraft(ByVal commandType As String)
         IIf(commandType = "reject_rows", ", ""reason"": " & PerFin_JsonString(reason), "") & _
         "}, ""expected_versions"": []}"
 
-    folder = PerFin_DataRoot() & "\commands\drafts"
-    If Not PerFin_IsLocalPath(folder) Then
-        MsgBox "No command written: the data root is not a local folder.", vbExclamation, "PerFin review"
-        Exit Sub
-    End If
+    folder = PerFin_CheckedDataRoot() & "\commands\drafts"   ' guard re-checked just before writing
     PerFin_EnsureFolder folder
     PerFin_WriteNewAsciiFile folder & "\" & id & ".json", json
     MsgBox "Command draft written (" & commandType & ", " & n & " row(s))." & vbLf & _

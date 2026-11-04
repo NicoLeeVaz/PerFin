@@ -129,11 +129,21 @@ All sheets are protected and the workbook structure is locked, with **no passwor
 The workbook never writes the ledger. The repository (2b/3a) is not implemented here.
 
 1. **VBA draft.** Select rows of `rpt_review_queue` and run `PerFin_ApproveSelectedRows` or `PerFin_RejectSelectedRows`. The macro:
+   - **first runs the data-root location guard** (`PerFin_DataRootProblem` in `PerFinCore.bas`) and writes nothing if it fails. The guard refuses:
+     - a UNC or other non-drive path;
+     - any path segment equal to a 1c sync marker (`OneDrive`, `Dropbox`, `Google Drive`, … `Sync`) or starting with `OneDrive - `;
+     - a path under `%OneDrive%`, `%OneDriveConsumer%` or `%OneDriveCommercial%`;
+     - a data root where it or any ancestor contains `.git` (a folder or a file);
+     - a data root without the 1c marker file `perfin-data-dir.json`, which 2c requires so that only a deliberately set-up root receives drafts.
+     - The lists are copied from `config/privacy/defaults.json`, and a Linux test fails if they drift.
+     - VBA has no acknowledgement store, so sync and network roots are refused outright rather than "warn until acknowledged". Use the Python path with `--acknowledged` for an acknowledged root.
+     - Symlink or junction targets are not resolved in VBA [Unverified]; the Python check at promote time resolves them.
+     - `PerFin_EnsureFolder` and `PerFin_WriteNewAsciiFile` call the guard again before any `MkDir`/`Open`, and refuse paths outside the data root. The self-test log uses the same guard.
    - checks the batch id, the row numbers and that all rows come from one batch;
    - refuses to approve rows with errors or unresolved possible duplicates, matching the repository's `E_ROW_UNRESOLVED`/`E_DUPLICATE_UNRESOLVED`;
    - asks for a 1–120 character reason when rejecting;
    - writes a one-line, ASCII-only JSON draft (`\u` escapes) to `<data root>\commands\drafts\<uuid>.json`. The UUID comes from `CoCreateGuid` and `issued_at` comes from `GetSystemTime` (UTC).
-2. **Validation.** `python -m perfin_excel_core command promote --data-root <root>` runs the 1c location check on the data root, which refuses a Git checkout and blocks unacknowledged sync or network folders. It then validates each draft with `perfin_contracts.validate_document`. Valid drafts move to `commands\outbox\`. Invalid ones move to `commands\rejected\` with an `.errors.json` file. Files are never overwritten.
+2. **Validation.** `python -m perfin_excel_core command promote --data-root <root>` runs the 1c location check on the data root again (defence in depth), which refuses a Git checkout and blocks unacknowledged sync or network folders. It then validates each draft with `perfin_contracts.validate_document`; any draft that is not a JSON object (`null`, an array, a number, a string) is rejected with `E_TYPE`. Valid drafts move to `commands\outbox\`. Invalid ones move to `commands\rejected\` with an `.errors.json` file. Files are never overwritten.
 3. **Python path.** `python -m perfin_excel_core command approve|reject --data-root … --batch-id … --rows 1,4 [--reason …] [--batch-version N]` builds, validates and writes straight to the outbox. With `--batch-version 1`, the built document is identical to `contracts/examples/valid/command_approve_rows.json`.
 
 The outbox and drafts are inside the user's data root and never in the repository; the tests check that a root inside the checkout is refused.
@@ -172,6 +182,7 @@ Run it on the generated template on Linux. On Windows, run it again on the saved
 
 - **Generator plus text sources instead of a committed binary.** This avoids binary merge collisions and makes the content reviewable. Modules have separate workbooks (execution plan rule).
 - **Power Query parameters instead of reading a cell from M.** `PerFin_Refresh` writes the Settings data root into the `PerFinDataRoot` parameter query. This avoids combining `Excel.CurrentWorkbook` with file access, which can trigger the Formula.Firewall [Unverified]. It also keeps user paths out of the template.
+- **Sort criteria are column names only.** M `Table.Sort` gets `{column, Order.*}` pairs, never a function. The reconciliation pick (balanced first, then the highest `reconciliation_id`) uses a temporary numeric `__perfin_priority` column that is removed afterwards. A test scans every `.pq` file for this.
 - **Failing whole queries.** Error cells and partial loads are never accepted. This replaces the WealthFinPilot patterns that 1b reproduced:
   - `SafeConvertToNumber` returned 0;
   - `SplitCSV` dropped a trailing empty field and rows were then skipped silently;
