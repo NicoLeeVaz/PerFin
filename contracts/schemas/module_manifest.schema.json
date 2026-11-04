@@ -122,6 +122,8 @@
           "link_transfer",
           "unlink_transfer",
           "record_statement",
+          "allocate_statement_payment",
+          "remove_statement_payment",
           "reconcile_statement",
           "record_valuation",
           "set_card_terms",

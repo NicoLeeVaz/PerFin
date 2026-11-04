@@ -42,6 +42,8 @@
         "link_transfer",
         "unlink_transfer",
         "record_statement",
+        "allocate_statement_payment",
+        "remove_statement_payment",
         "reconcile_statement",
         "record_valuation",
         "set_card_terms",
@@ -75,6 +77,7 @@
               "transaction",
               "transfer_link",
               "statement",
+              "statement_payment",
               "reconciliation",
               "card_terms",
               "asset_valuation",
@@ -314,6 +317,25 @@
     },
     "payload_save_payoff_scenario": {
       "$ref": "payoff_scenario.schema.json#/$defs/scenario_body"
+    },
+    "payload_allocate_statement_payment": {
+      "$ref": "ledger_bundle.schema.json#/$defs/statement_payment"
+    },
+    "payload_remove_statement_payment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allocation_id",
+        "reason"
+      ],
+      "properties": {
+        "allocation_id": {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        "reason": {
+          "$ref": "common.schema.json#/$defs/short_text"
+        }
+      }
     }
   }
 }

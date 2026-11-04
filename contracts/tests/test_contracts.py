@@ -188,6 +188,13 @@ class Rules(unittest.TestCase):
     def test_deferred_promo_needs_deadline(self):
         self.assertIn("E_REQUIRED", self.mutate(lambda d: d["card_terms"][1]["apr_buckets"][1].pop("promo_end_date")))
 
+    def test_non_base_currency_account_rejected(self):
+        def f(d):
+            d["accounts"].append({"account_id": "cash:eur", "kind": "asset", "account_class": "cash",
+                                  "display_name": "EUR cash", "currency": "EUR", "opening_balance_minor": 0,
+                                  "opening_balance_date": "2026-05-31", "row_version": 1})
+        self.assertEqual(self.mutate(f), ["E_CURRENCY_MISMATCH"])
+
     def test_currency_mismatch(self):
         self.assertIn("E_CURRENCY_MISMATCH", self.mutate(lambda d: d["transactions"][0].update(currency="EUR")))
 
@@ -206,6 +213,14 @@ class CommandPayloadRules(unittest.TestCase):
         self.assertEqual(validate_document(self.command("save_payoff_scenario", sc)), [])
         sc["strategies"][3].pop("gap_pp")
         self.assertEqual(codes(self.command("save_payoff_scenario", sc)), ["E_COMMAND_PAYLOAD"])
+
+    def test_statement_payment_allocation_commands(self):
+        alloc = copy.deepcopy(LEDGER["statement_payments"][0])
+        self.assertEqual(validate_document(self.command("allocate_statement_payment", alloc)), [])
+        alloc["amount_minor"] = 0
+        self.assertEqual(codes(self.command("allocate_statement_payment", alloc)), ["E_COMMAND_PAYLOAD"])
+        self.assertEqual(validate_document(self.command("remove_statement_payment",
+                                                        {"allocation_id": "a001", "reason": "allocated to wrong cycle"})), [])
 
     def test_set_card_terms_applies_terms_rules(self):
         ct = copy.deepcopy(LEDGER["card_terms"][1])

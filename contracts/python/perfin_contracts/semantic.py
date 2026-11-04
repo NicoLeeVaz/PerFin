@@ -77,6 +77,9 @@ def ledger_rules(b: Dict) -> List[Error]:
 
     for i, a in enumerate(b["accounts"]):
         p = f"$.accounts[{i}]"
+        if a["currency"] != b["base_currency"]:
+            e.append(("E_CURRENCY_MISMATCH", f"{p}.currency",
+                      f"{a['currency']} account in a {b['base_currency']} ledger; multi-currency is unsupported in 1.0"))
         if (a["account_class"] in LIABILITY_CLASSES) != (a["kind"] == "liability"):
             e.append(("E_ACCOUNT_KIND", p, f"class {a['account_class']} inconsistent with kind {a['kind']}"))
         if a.get("closed_date") and a["closed_date"] < a["opening_balance_date"]:
