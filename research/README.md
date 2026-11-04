@@ -31,6 +31,15 @@ Detailed evidence, licenses, limitations and further candidates: [candidate comp
 4. [Source inspection](source-review.md): concrete findings and what remains untested.
 5. [Evidence manifest](evidence.json): observed commit and file identities for follow-up work.
 
+## Payoff planning and personal statements
+
+The next research phase compares largest-balance-first, snowball, avalanche and near-APR hybrid payoff strategies, then specifies an optional personal statements/net-worth module.
+
+- [Research plan and mathematical acceptance criteria](payoff-and-net-worth-plan.md)
+- [Ready-to-paste Claude Code prompt](claude-code-research-prompt.md)
+
+These documents define the next work; the payoff engine and financial statements module have not been implemented.
+
 ## First implementation experiment
 
 Use synthetic data for one checking account and two cards over two statement cycles. Compare the Access seed against a minimal Python/SQLite ledger using the same [acceptance scenarios](credit-card-mvp.md#acceptance-scenarios). Keep whichever requires less custom repair while preserving Excel usability. Do not build both production paths.
