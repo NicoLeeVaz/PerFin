@@ -1,5 +1,7 @@
 # PerFin: local personal finance research
 
+**Current execution direction:** Excel frontend + Access authoritative local database. The user's subsequent decision supersedes the alternative-backend recommendations below. Start with the [wave plan](../docs/EXECUTION-PLAN.md) and [tracker #1](https://github.com/NicoLeeVaz/PerFin/issues/1). Wave 1 is ready; later waves require merged and verified predecessors.
+
 Research date: **2026-11-04**. Scope: personal finances and credit cards first; additional modules later.
 
 **Recommendation: keep Excel as the interface, use one local database as the ledger, and reuse selected components rather than assume a downloaded workbook already handles credit cards correctly.** There is a real open-source Access starting point worth evaluating.
@@ -38,11 +40,11 @@ The next research phase compares largest-balance-first, snowball, avalanche and 
 - [Research plan and mathematical acceptance criteria](payoff-and-net-worth-plan.md)
 - [Ready-to-paste Claude Code prompt](claude-code-research-prompt.md)
 
-These documents define the next work; the payoff engine and financial statements module have not been implemented.
+These research documents support tasks 3b/3c in the current execution plan; the engines have not been implemented. The historical research-only prompt is retained for reference, while the wave-plan prompt governs implementation.
 
 ## First implementation experiment
 
-Use synthetic data for one checking account and two cards over two statement cycles. Compare the Access seed against a minimal Python/SQLite ledger using the same [acceptance scenarios](credit-card-mvp.md#acceptance-scenarios). Keep whichever requires less custom repair while preserving Excel usability. Do not build both production paths.
+Use synthetic data for one checking account and two cards over two statement cycles. Task 1b evaluates the Access seed; task 2b builds the selected Access backend. Task 3a integrates imports and Excel against the [acceptance scenarios](credit-card-mvp.md#acceptance-scenarios). SQLite is not a parallel build target.
 
 The machine's Windows/Office versions, Office bitness, Access availability and bank export formats still need checking during implementation. Research does not depend on those answers.
 

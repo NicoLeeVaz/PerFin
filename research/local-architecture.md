@@ -1,6 +1,6 @@
 # Local architecture and automation
 
-Proposed design, 2026-11-04. These choices are recommendations, not an implemented system.
+Decision update, 2026-11-04: **Excel frontend + Microsoft Access authoritative local data layer**, as requested by the user. The comparison below is retained as research. Use the [execution plan](../docs/EXECUTION-PLAN.md) for current work; no application is implemented yet.
 
 ## Storage decision
 
@@ -12,7 +12,7 @@ Proposed design, 2026-11-04. These choices are recommendations, not an implement
 
 Evidence: [Access connector](https://learn.microsoft.com/en-us/power-query/connectors/access-database), [Access limits](https://support.microsoft.com/en-us/access/access-specifications), [SQLite application file format](https://www.sqlite.org/appfileformat.html).
 
-**Recommendation:** evaluate the Access seed first because it directly matches the proposed approach. If it saves little form/import work, use SQLite with Excel. In either case, keep one authoritative ledger. Excel reports are refreshed views; approved edits go through one controlled write path. Power Query import is not database write-back.
+**Selected implementation:** evaluate the Access seed and reuse what passes inspection; build a small fresh Access backend if that requires less repair. Do not switch to SQLite without a revised project decision. Keep one authoritative ledger. Excel reports are refreshed views; approved edits go through one controlled write path. Power Query import is not database write-back.
 
 For SQLite, a first version can export typed report tables to `.xlsx` or CSV for Excel refresh, avoiding an extra SQLite ODBC installation. Imported text must remain text, including descriptions beginning with formula characters. A later Access frontend could use ODBC, but that introduces a driver and is not necessary for v1.
 

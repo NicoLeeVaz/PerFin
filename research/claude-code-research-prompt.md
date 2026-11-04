@@ -1,6 +1,6 @@
 # Claude Code prompt: PerFin payoff and net-worth research
 
-Copy the text below into Claude Code from the PerFin repository.
+**Historical research-only brief.** The user has since selected Excel + Access and authorized implementation through numbered waves. For current agent work, use the [execution plan and pickup prompt](../docs/EXECUTION-PLAN.md#copy-paste-agent-prompt) and [tracker #1](https://github.com/NicoLeeVaz/PerFin/issues/1). The text below preserves the earlier research assignment and does not override current issues.
 
 ---
 
