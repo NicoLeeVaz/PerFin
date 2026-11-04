@@ -36,4 +36,10 @@ class ImportRepository(Protocol):
     def find_transfer_candidates(self, exclude_account_id: str, amount_minor: int, posted_date: str,
                                  window_days: int) -> Iterable[Mapping]:
         """Unlinked transactions on *other* accounts with exactly ``amount_minor`` (the
-        caller passes the opposite of the staged amount) within +/- window_days."""
+        caller passes the opposite of the staged amount) within +/- window_days.
+
+        The importer then keeps only candidates whose account (looked up with
+        ``get_account``) has the same currency as the target account: contract 1.0
+        rejects cross-currency transfer links (E_CURRENCY_MISMATCH), so a 100-minor-unit
+        EUR inflow is never a candidate for a 100-minor-unit USD outflow. An
+        implementation may pre-filter by currency, but must return ``account_id``."""

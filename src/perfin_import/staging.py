@@ -280,7 +280,7 @@ def stage_file(data, source_file_name, profile, account_id, repository, *, stage
     dedupe_key = list(profile.get("dedupe_key") or DEFAULT_DEDUPE_KEY)
     key_fields = [k for k in dedupe_key if k != "row_occurrence"]
 
-    rows, seen_keys, natural_first, source_first = [], Counter(), {}, {}
+    rows, seen_keys, earlier_rows, source_first = [], Counter(), {}, {}
     for n, record in enumerate(body, start=1):
         row = {"row_number": n}
         if record.bad_fields:
@@ -326,7 +326,7 @@ def stage_file(data, source_file_name, profile, account_id, repository, *, stage
         if parsed is None:
             continue
         row["duplicate"] = _classify_duplicate(row, parsed, account_id, repository, duplicate_window_days,
-                                               natural_first, source_first)
+                                               earlier_rows, source_first)
 
     if read.structural_error_line is not None:
         n = len(rows) + 1
@@ -340,6 +340,17 @@ def stage_file(data, source_file_name, profile, account_id, repository, *, stage
         if replay:
             rows[-1]["duplicate"]["evidence"] = "same account and source file SHA-256 as batch %s" % replay[0]["batch_id"]
 
+    # Contract 1.0 has no cross-currency transfers (E_CURRENCY_MISMATCH): a leg on an
+    # account in another (or unknown) currency is never a candidate, nor counted as one.
+    account_currency = account.get("currency")
+    currency_cache = {}
+
+    def _same_currency(other_id):
+        if other_id not in currency_cache:
+            other = repository.get_account(other_id) if other_id else None
+            currency_cache[other_id] = other.get("currency") if other else None
+        return account_currency is not None and currency_cache[other_id] == account_currency
+
     ambiguous_transfers = []
     for row in rows:
         row.pop("_natural")
@@ -348,7 +359,8 @@ def stage_file(data, source_file_name, profile, account_id, repository, *, stage
         if parsed is not None and status != "exact_reimport" and parsed["amount_minor"] != 0:
             cands = [c for c in repository.find_transfer_candidates(
                 account_id, -parsed["amount_minor"], parsed["posted_date"], transfer_window_days)
-                if c.get("account_id") != account_id and c.get("amount_minor") == -parsed["amount_minor"]]
+                if c.get("account_id") != account_id and c.get("amount_minor") == -parsed["amount_minor"]
+                and _same_currency(c.get("account_id"))]
             if len(cands) == 1:
                 row["transfer_candidate_transaction_id"] = cands[0]["transaction_id"]
             elif len(cands) > 1:
@@ -399,7 +411,7 @@ def stage_file(data, source_file_name, profile, account_id, repository, *, stage
     return StageResult(document, summary)
 
 
-def _classify_duplicate(row, parsed, account_id, repo, window, natural_first, source_first):
+def _classify_duplicate(row, parsed, account_id, repo, window, earlier_rows, source_first):
     """Return the row's duplicate object. Source ids are scoped to ``account_id``."""
     sid = parsed.get("source_txn_id")
     fp = row["fingerprint"]
@@ -417,16 +429,18 @@ def _classify_duplicate(row, parsed, account_id, repo, window, natural_first, so
                     "evidence": "same source transaction id earlier in this file"}
         source_first[sid] = row["row_number"]
 
-    # Within the file: identical natural key (row_occurrence keeps fingerprints distinct).
-    nk = row["_natural"]
-    if nk in natural_first:
-        first_row, first_sid = natural_first[nk]
-        if not (sid and first_sid and sid != first_sid):
-            return {"status": "possible", "matched_row_number": first_row,
-                    "evidence": "same date, amount and description earlier in this file; "
-                                "legitimate repeated purchases are possible"}
-    else:
-        natural_first[nk] = (row["row_number"], sid)
+    # Within the file: same date, amount and description. This comparison key leaves
+    # out source_txn_id on purpose, so a row with an id and an identical row without
+    # one are still compared. Only two non-empty, different ids prove distinct rows.
+    # (row_occurrence keeps every fingerprint distinct either way.)
+    ck = (parsed["posted_date"], parsed["amount_minor"], parsed["description"])
+    prior = earlier_rows.setdefault(ck, [])
+    match = next((n for n, other_sid in prior if not (sid and other_sid and sid != other_sid)), None)
+    prior.append((row["row_number"], sid))
+    if match is not None:
+        return {"status": "possible", "matched_row_number": match,
+                "evidence": "same date, amount and description earlier in this file; "
+                            "legitimate repeated purchases are possible"}
 
     best = None
     for t in repo.find_candidates(account_id, parsed["posted_date"], parsed["amount_minor"], window):

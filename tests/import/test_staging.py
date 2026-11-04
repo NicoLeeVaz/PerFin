@@ -88,6 +88,43 @@ class DuplicateTests(unittest.TestCase):
         self.assertEqual(b["review_state"], "needs_review")
         self.assertEqual(len(res.rows), 6)
 
+    def test_within_file_repeat_with_one_source_id_is_possible(self):
+        # Codex review #19: the natural key held source_txn_id, so REF1 vs empty slipped through.
+        for refs in (("REF1", ""), ("", "REF1")):
+            res = stage(self, card_bytes("07/01/2026,07/01/2026,SYNTHETIC COFFEE,20.00,%s" % refs[0],
+                                         "07/01/2026,07/01/2026,SYNTHETIC COFFEE,20.00,%s" % refs[1]),
+                        "c.csv", profile(CARD), "card:alpha")
+            a, b = res.rows
+            self.assertEqual((a["duplicate"]["status"], a["review_state"]), ("none", "pending"), refs)
+            self.assertEqual((b["duplicate"]["status"], b["review_state"]), ("possible", "needs_review"), refs)
+            self.assertEqual(b["duplicate"]["matched_row_number"], 1)
+            self.assertNotEqual(a["fingerprint"], b["fingerprint"])
+
+    def test_within_file_repeat_skips_only_rows_with_different_ids(self):
+        res = stage(self, card_bytes("07/01/2026,07/01/2026,SYNTHETIC COFFEE,20.00,R-1",
+                                     "07/01/2026,07/01/2026,SYNTHETIC COFFEE,20.00,R-2",
+                                     "07/01/2026,07/01/2026,SYNTHETIC COFFEE,20.00,"),
+                    "c.csv", profile(CARD), "card:alpha")
+        self.assertEqual([r["duplicate"]["status"] for r in res.rows], ["none", "none", "possible"])
+        self.assertEqual(res.rows[2]["duplicate"]["matched_row_number"], 1)
+
+    def test_ledger_candidate_with_one_sided_source_id_is_possible(self):
+        for ledger_sid, file_sid in (("REF1", ""), (None, "REF1")):
+            repo = FakeRepository(transactions=[
+                {"transaction_id": "tl1", "account_id": "card:alpha", "posted_date": "2026-07-01",
+                 "amount_minor": -2000, "description": "SYNTHETIC COFFEE", "source_txn_id": ledger_sid}])
+            res = stage(self, card_bytes("07/01/2026,07/01/2026,SYNTHETIC COFFEE,20.00,%s" % file_sid),
+                        "c.csv", profile(CARD), "card:alpha", repo)
+            d = res.rows[0]["duplicate"]
+            self.assertEqual((d["status"], d.get("matched_transaction_id")), ("possible", "tl1"), ledger_sid)
+            self.assertEqual(res.rows[0]["review_state"], "needs_review")
+        repo = FakeRepository(transactions=[
+            {"transaction_id": "tl2", "account_id": "card:alpha", "posted_date": "2026-07-01",
+             "amount_minor": -2000, "description": "SYNTHETIC COFFEE", "source_txn_id": "REF2"}])
+        res = stage(self, card_bytes("07/01/2026,07/01/2026,SYNTHETIC COFFEE,20.00,REF1"), "c.csv",
+                    profile(CARD), "card:alpha", repo)
+        self.assertEqual(res.rows[0]["duplicate"]["status"], "none", "two different non-empty ids are distinct")
+
     def test_identical_rows_with_distinct_source_ids_are_not_flagged(self):
         res = stage(self, card_bytes("07/01/2026,07/01/2026,SYNTHETIC COFFEE,20.00,R-1",
                                      "07/01/2026,07/01/2026,SYNTHETIC COFFEE,20.00,R-2"),
@@ -214,6 +251,30 @@ class TransferTests(unittest.TestCase):
         self.assertNotIn("proposed_splits", row, "a transfer candidate is never proposed as an expense")
         self.assertEqual(row["review_state"], "pending")
         self.assertEqual(res.summary["transfer_candidates"], 1)
+
+    def test_cross_currency_leg_is_never_a_candidate(self):
+        # Codex review #19: a EUR +100 minor-unit inflow was chosen for a USD -100 outflow.
+        accounts = [{"account_id": "chk:main", "account_class": "checking", "currency": "USD"},
+                    {"account_id": "card:eur", "account_class": "credit_card", "currency": "EUR"},
+                    {"account_id": "card:usd", "account_class": "credit_card", "currency": "USD"}]
+        eur_leg = {"transaction_id": "te1", "account_id": "card:eur", "posted_date": "2026-07-01",
+                   "amount_minor": 100, "description": "SYNTHETIC EUR"}
+        unknown_leg = dict(eur_leg, transaction_id="tu1", account_id="card:gone")
+        usd_leg = dict(eur_leg, transaction_id="td1", account_id="card:usd")
+        data = chk_bytes("07/01/2026,SYNTHETIC SHOP,-1.00,1.00,X-1")
+        rules = [{"category_id": "exp.shop", "contains": ["shop"]}]
+        res = stage(self, data, "x.csv", profile(CHK), "chk:main",
+                    FakeRepository(accounts=accounts, transactions=[eur_leg, unknown_leg]), category_rules=rules)
+        row = res.rows[0]
+        self.assertNotIn("transfer_candidate_transaction_id", row)
+        self.assertEqual(row["proposed_splits"][0]["category_id"], "exp.shop", "category proposal not suppressed")
+        self.assertEqual(row["review_state"], "pending")
+        self.assertEqual(res.summary["transfer_ambiguous_rows"], [])
+        res = stage(self, data, "x.csv", profile(CHK), "chk:main",
+                    FakeRepository(accounts=accounts, transactions=[eur_leg, usd_leg]))
+        self.assertEqual(res.rows[0]["transfer_candidate_transaction_id"], "td1",
+                         "a foreign-currency leg does not make a same-currency match ambiguous")
+        self.assertEqual(res.rows[0]["review_state"], "pending")
 
     def test_ambiguous_transfer_needs_review(self):
         legs = [{"transaction_id": tid, "account_id": acct, "posted_date": "2026-07-03", "amount_minor": 10000,

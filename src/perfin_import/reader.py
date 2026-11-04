@@ -7,7 +7,9 @@
   delimiters and quoted newlines are kept exactly; trailing empty fields are kept.
   Backslash is not an escape character.
 * A structural CSV error (for example an unterminated quote) stops reading at
-  that point; the caller stages what was read plus an error record.
+  that point; the caller stages what was read plus an error record. Field size
+  is not a structural error: oversized fields are read and flagged E_LENGTH by
+  the caller, and the global csv.field_size_limit is restored after each read.
 """
 import csv
 import io
@@ -58,17 +60,27 @@ def read_records(data, file_spec):
     records, blank = [], 0
     structural_error_line = None
     start_line = 1
-    while True:
-        try:
-            fields = next(reader)
-        except StopIteration:
-            break
-        except csv.Error:
-            structural_error_line = start_line
-            break
-        if fields == []:
-            blank += 1
-        else:
-            records.append(Record(fields, start_line))
-        start_line = reader.line_num + 1
+    # csv.field_size_limit (131072 by default) is process-wide. An oversized field
+    # must become an E_LENGTH row, not a "malformed" stop, so the limit is raised to
+    # the text length only while this reader runs and is always restored. With that
+    # limit csv never fails on size, so any csv.Error left is a real structural error.
+    # (The staging layer bounds every field to the contract's 4000 characters.)
+    previous_limit = csv.field_size_limit()
+    csv.field_size_limit(max(previous_limit, len(text) + 1))
+    try:
+        while True:
+            try:
+                fields = next(reader)
+            except StopIteration:
+                break
+            except csv.Error:
+                structural_error_line = start_line
+                break
+            if fields == []:
+                blank += 1
+            else:
+                records.append(Record(fields, start_line))
+            start_line = reader.line_num + 1
+    finally:
+        csv.field_size_limit(previous_limit)
     return ReadResult(records, blank, structural_error_line, bom_mismatch)

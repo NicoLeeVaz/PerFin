@@ -65,6 +65,36 @@ class QuotingTests(unittest.TestCase):
         self.assertEqual(last["review_state"], "needs_review")
         self.assertFalse(res.summary["file_complete"])
 
+    def test_oversized_field_flagged_and_later_rows_kept(self):
+        # Codex review #19: a field over csv.field_size_limit raised csv.Error and lost the rest.
+        import csv
+        before = csv.field_size_limit()
+        big = "X" * 140000
+        self.assertGreater(len(big), before)
+        data = csv_bytes(HEADER + "07/01/2026,%s,-1.00,1.00,B-1\n" % big
+                         + "07/02/2026,SYNTHETIC AFTER,-2.00,1.00,B-2\n"
+                         + '07/03/2026,"%s",-3.00,1.00,B-3\n' % big
+                         + "07/04/2026,SYNTHETIC LAST,-4.00,1.00,B-4\n")
+        res = stage(self, data, "big.csv", profile("synthetic_checking_signed"), "chk:main")
+        self.assertTrue(res.summary["file_complete"])
+        self.assertEqual([[e["code"] for e in r["errors"]] for r in res.rows],
+                         [["E_LENGTH"], [], ["E_LENGTH"], []])
+        self.assertEqual(res.rows[0]["errors"][0]["path"], "raw_fields[1]")
+        self.assertEqual(res.rows[0]["raw_fields"], [])
+        self.assertEqual(res.rows[0]["review_state"], "needs_review")
+        self.assertEqual([r["parsed"]["amount_minor"] for r in (res.rows[1], res.rows[3])], [-200, -400])
+        self.assertEqual(csv.field_size_limit(), before, "process-wide csv limit restored")
+
+    def test_field_size_limit_restored_after_malformed_quoting(self):
+        import csv
+        before = csv.field_size_limit()
+        data = csv_bytes(HEADER + '07/01/2026,"SYNTHETIC "BROKEN" QUOTE",-1.00,1.00,Q-1\n'
+                         "07/02/2026,SYNTHETIC LATER,-2.00,1.00,Q-2\n")
+        res = stage(self, data, "q.csv", profile("synthetic_checking_signed"), "chk:main")
+        self.assertFalse(res.summary["file_complete"], "genuinely malformed quoting is still reported")
+        self.assertEqual(res.rows[-1]["errors"][0]["code"], "E_PARSE_FIELD_COUNT")
+        self.assertEqual(csv.field_size_limit(), before)
+
     def test_blank_lines_skipped_and_counted(self):
         data = csv_bytes(HEADER + "\n07/01/2026,SYNTHETIC A,-1.00,1.00,L-1\n\n\n07/02/2026,SYNTHETIC B,-2.00,1.00,L-2\n")
         res = stage(self, data, "l.csv", profile("synthetic_checking_signed"), "chk:main")
