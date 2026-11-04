@@ -172,6 +172,8 @@ def ledger_rules(b: Dict) -> List[Error]:
             e.append(("E_DATE_ORDER", p, "need period_start <= period_end <= due_date"))
         if s.get("bucket_balances") and sum(x["balance_minor"] for x in s["bucket_balances"]) != s["closing_balance_minor"]:
             e.append(("E_BUCKET_SUM", p, "bucket balances must sum to closing_balance_minor"))
+        # Access primary key statement_bucket_balance(statement_id, bucket_id): one row per bucket
+        e += _dupes(s.get("bucket_balances", []), "bucket_id", f"{p}.bucket_balances")
 
     alloc = Counter()
     for i, sp in enumerate(b.get("statement_payments", [])):

@@ -1,4 +1,4 @@
-# PerFin contracts 1.0.0
+# PerFin contracts 1.0.1
 
 Task 1a ([#2](https://github.com/NicoLeeVaz/PerFin/issues/2)). Status: **proposed freeze for Wave 2**. The freeze takes effect when the coordinator records the Wave 1 gate in [tracker #1](https://github.com/NicoLeeVaz/PerFin/issues/1).
 
@@ -6,7 +6,7 @@ The contracts let the importer (2a), the Access backend (2b) and the Excel shell
 
 | Artifact | Path |
 | --- | --- |
-| Version | [`contracts/VERSION`](../contracts/VERSION): `1.0.0` |
+| Version | [`contracts/VERSION`](../contracts/VERSION): `1.0.1` (frozen 1.0.0 plus the patch in section 9) |
 | JSON schemas (exchange documents) | [`contracts/schemas/*.schema.json`](../contracts/schemas/) |
 | Excel read-only report tables (CSV/table columns) | [`contracts/schemas/report_tables.json`](../contracts/schemas/report_tables.json) |
 | Reference Access DDL (**not executed**) | [`contracts/access/perfin_v1_reference.sql`](../contracts/access/perfin_v1_reference.sql) |
@@ -63,7 +63,7 @@ Every entity ID is unique within its collection (`E_DUPLICATE_ID`), matching the
 | `transaction` | Account must exist (`E_ACCOUNT_UNKNOWN`) and currencies match. `transaction_date ≤ posted_date`. **Splits must sum to the amount** (`E_SPLITS_UNBALANCED`). Imported transactions carry `source` (batch, row, source transaction ID). Edits bump `row_version`. Reversals are new transactions that negate the original (`entry_method: reversal`): the total **and every split** (same kinds, categories and links, opposite amounts), so a reversal cannot re-categorize. A transaction is reversed at most once (`E_DUPLICATE_ID`). A linked transfer leg is corrected with `unlink_transfer` + `set_splits` rather than reversed while linked (1.0 limit). |
 | `split` | `category` splits need a category. `transfer` splits need a `transfer_link_id` and **no category** (`E_SPLIT_KIND`), so they never count as income or expense. `adjustment` splits are uncategorized and unlinked (explicit reconciliation adjustments), and appear only on a manual transaction or on the reversal of a manual adjustment. |
 | `transfer_link` | Joins two transactions on different accounts (`E_TRANSFER_SAME_ACCOUNT`). Each leg has transfer splits for the link (`E_TRANSFER_UNPAIRED`). The from-leg is negative and equals minus the to-leg, and each leg's splits for one link share one sign (`E_TRANSFER_AMOUNT`). The legs may be days apart. Only `confirmed` links are ledger records; candidates live in staging. |
-| `statement` | `period_start ≤ period_end ≤ due_date`. Balances use the ledger sign. Optional APR-bucket balances must sum to the closing balance (`E_BUCKET_SUM`). Minimum, interest and fees are as disclosed. |
+| `statement` | `period_start ≤ period_end ≤ due_date`. Balances use the ledger sign. Optional APR-bucket balances must sum to the closing balance (`E_BUCKET_SUM`), with each `bucket_id` at most once per statement (`E_DUPLICATE_ID`, since 1.0.1). Minimum, interest and fees are as disclosed. |
 | `statement_payment` | Allocates a confirmed payment to a statement. A payment is the **inbound transfer portion** of a transaction on the same card, i.e. money linked from another account. Refunds, credits and reversals are not payments (`E_ACCOUNT_KIND`). Allocations never exceed that portion, measured as the net inbound amount per link (`E_ALLOCATION_EXCEEDS`). A plan is not a payment. |
 | `reconciliation` | `difference = closing − (opening + Σ included posted transactions in the period)`. It is recomputed and must match. `balanced` requires 0 (`E_RECON_MISMATCH`). |
 | `card_terms` | Credit-card accounts only. Holds the minimum rule (`fixed`, `pct`, or `pct_plus_interest` with a floor) and APR buckets. A promotion needs `promo_end_date` and `post_promo_apr`; deferred interest needs a deadline. `credit_limit_minor: null` means unknown, and utilization is then unknown, never computed. |
@@ -147,3 +147,10 @@ None of these were run here; this task was executed on Linux only.
 - **1c alignment:** real ledger/staging data follows the local data-root rules in `docs/privacy/privacy-boundary.md`. `number_hint` is local-only and never logged/exported; `source_file_name` is a local base name and remains sensitive; `evidence_ref` is an opaque local reference, never an outbound path. `before_json`/`after_json` stay intact inside the protected Access audit trail, while diagnostic logs use the privacy allow-list and redaction. NoPii uses export-only `exp-*` and `r*` IDs, not ledger IDs, and maps `posted_date` to `date`; amounts/currency pass through unchanged within the shared money bound. Batch IDs and file hashes are local provenance/diagnostic identifiers only. NoPii owner confirmation and integration remain future work with export disabled.
 - **1b alignment:** PR #17 selected a fresh Access backend. Archived-template patterns are reference only and do not replace these entities.
 - The validator implements a declared JSON Schema subset and rejects unknown keywords. Other languages may use any draft 2020-12 validator for the structural part, but the cross-record rules live in `semantic.py` and must be ported or called.
+
+## 9. Change log
+
+| Version | Change | Compatibility |
+| --- | --- | --- |
+| 1.0.0 | Frozen for Wave 2 at the Wave 1 gate. | — |
+| 1.0.1 | A statement's `bucket_balances` may list each `bucket_id` only once (`E_DUPLICATE_ID`). | Patch. It enforces the existing reference Access primary key `statement_bucket_balance(statement_id, bucket_id)`. Only documents that Access could never store become invalid. No fields, enums or document types change, and documents declaring `contract_version` 1.0.0 are still read. |

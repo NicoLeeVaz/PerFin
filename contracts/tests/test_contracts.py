@@ -213,6 +213,13 @@ class Rules(unittest.TestCase):
         for coll in ("statement_payments", "reconciliations", "card_terms", "asset_valuations"):
             self.assertIn("E_DUPLICATE_ID", self.mutate(lambda d: d[coll].append(copy.deepcopy(d[coll][0]))), coll)
 
+    def test_statement_bucket_ids_unique(self):
+        # contract 1.0.1: Access primary key statement_bucket_balance(statement_id, bucket_id)
+        def f(d):
+            d["statements"][0]["bucket_balances"] = [{"bucket_id": "purchase", "balance_minor": -27500},
+                                                     {"bucket_id": "purchase", "balance_minor": -27500}]
+        self.assertEqual(self.mutate(f), ["E_DUPLICATE_ID"])
+
     def test_deferred_promo_needs_deadline(self):
         self.assertIn("E_REQUIRED", self.mutate(lambda d: d["card_terms"][1]["apr_buckets"][1].pop("promo_end_date")))
 
