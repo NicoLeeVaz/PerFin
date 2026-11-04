@@ -108,6 +108,10 @@ def ledger_rules(b: Dict) -> List[Error]:
                 e.append(("E_REF_UNKNOWN", f"{p}.reverses_transaction_id", "reversal must reference an existing transaction"))
             elif o["amount_minor"] != -t["amount_minor"] or o["account_id"] != t["account_id"]:
                 e.append(("E_TRANSFER_AMOUNT", p, "reversal must negate the original on the same account"))
+            else:
+                key = lambda x, sign: (x["split_kind"], x.get("category_id"), x.get("transfer_link_id"), sign * x["amount_minor"])
+                if Counter(key(x, 1) for x in t["splits"]) != Counter(key(x, -1) for x in o["splits"]):
+                    e.append(("E_SPLIT_KIND", f"{p}.splits", "reversal splits must negate the original's splits (same kinds and categories)"))
         for j, s in enumerate(t["splits"]):
             sp = f"{p}.splits[{j}]"
             k = s["split_kind"]
@@ -194,15 +198,7 @@ def ledger_rules(b: Dict) -> List[Error]:
             e.append(("E_ACCOUNT_UNKNOWN", p, "unknown account"))
         elif a["account_class"] != "credit_card":
             e.append(("E_ACCOUNT_KIND", p, "card terms need a credit_card account"))
-        if ct.get("effective_to") and ct["effective_to"] < ct["effective_from"]:
-            e.append(("E_DATE_ORDER", p, "effective_to before effective_from"))
-        e += _min_rule(ct["min_payment_rule"], f"{p}.min_payment_rule")
-        e += _dupes(ct["apr_buckets"], "bucket_id", f"{p}.apr_buckets")
-        for j, bk in enumerate(ct["apr_buckets"]):
-            if bk["deferred_interest"] and not bk.get("promo_end_date"):
-                e.append(("E_REQUIRED", f"{p}.apr_buckets[{j}].promo_end_date", "deferred interest needs a deadline"))
-            if bk.get("promo_end_date") and not bk.get("post_promo_apr"):
-                e.append(("E_REQUIRED", f"{p}.apr_buckets[{j}].post_promo_apr", "promotion needs its post-promotion APR"))
+        e += card_terms_local_rules(ct, p)
 
     for i, v in enumerate(b.get("asset_valuations", [])):
         p = f"$.asset_valuations[{i}]"
@@ -213,6 +209,21 @@ def ledger_rules(b: Dict) -> List[Error]:
             e.append(("E_ACCOUNT_KIND", p, "valuations apply to asset accounts"))
         elif v["currency"] != a["currency"]:
             e.append(("E_CURRENCY_MISMATCH", p, "valuation currency differs from account"))
+    return e
+
+
+def card_terms_local_rules(ct: Dict, p: str) -> List[Error]:
+    """Rules checkable from one card_terms record alone (shared with set_card_terms commands)."""
+    e: List[Error] = []
+    if ct.get("effective_to") and ct["effective_to"] < ct["effective_from"]:
+        e.append(("E_DATE_ORDER", p, "effective_to before effective_from"))
+    e += _min_rule(ct["min_payment_rule"], f"{p}.min_payment_rule")
+    e += _dupes(ct["apr_buckets"], "bucket_id", f"{p}.apr_buckets")
+    for j, bk in enumerate(ct["apr_buckets"]):
+        if bk["deferred_interest"] and not bk.get("promo_end_date"):
+            e.append(("E_REQUIRED", f"{p}.apr_buckets[{j}].promo_end_date", "deferred interest needs a deadline"))
+        if bk.get("promo_end_date") and not bk.get("post_promo_apr"):
+            e.append(("E_REQUIRED", f"{p}.apr_buckets[{j}].post_promo_apr", "promotion needs its post-promotion APR"))
     return e
 
 
@@ -240,6 +251,13 @@ def command_rules(c: Dict) -> List[Error]:
     name = "command.schema.json"
     sub = load_schema(name)["$defs"][f"payload_{c['command_type']}"]
     errs = validate(c["payload"], sub, name, "$.payload")
+    if not errs:  # payload-local semantic rules, identical to the standalone documents
+        if c["command_type"] == "save_payoff_scenario":
+            errs = scenario_rules(c["payload"], "$.payload")
+        elif c["command_type"] == "set_card_terms":
+            errs = card_terms_local_rules(c["payload"], "$.payload")
+        elif c["command_type"] == "set_splits":
+            errs = _dupes(c["payload"]["splits"], "split_id", "$.payload.splits")
     return [("E_COMMAND_PAYLOAD", p, f"{code}: {m}") for code, p, m in errs]
 
 
@@ -256,18 +274,21 @@ def profile_rules(d: Dict) -> List[Error]:
 
 
 def payoff_rules(d: Dict) -> List[Error]:
-    s = d["scenario"]
-    e = _dupes(s["cards"], "account_id", "$.scenario.cards")
+    return scenario_rules(d["scenario"], "$.scenario")
+
+
+def scenario_rules(s: Dict, root: str) -> List[Error]:
+    e = _dupes(s["cards"], "account_id", f"{root}.cards")
     for i, c in enumerate(s["cards"]):
-        e += _min_rule(c["min_payment_rule"], f"$.scenario.cards[{i}].min_payment_rule")
+        e += _min_rule(c["min_payment_rule"], f"{root}.cards[{i}].min_payment_rule")
         for j, bk in enumerate(c["buckets"]):
             if (bk.get("promo_end_month") is None) != (bk.get("post_promo_apr") is None) or (bk["deferred_interest"] and bk.get("promo_end_month") is None):
-                e.append(("E_REQUIRED", f"$.scenario.cards[{i}].buckets[{j}]", "promotion needs end month and post-promo APR"))
+                e.append(("E_REQUIRED", f"{root}.cards[{i}].buckets[{j}]", "promotion needs end month and post-promo APR"))
     for i, st in enumerate(s["strategies"]):
         if st["kind"] == "near_apr_hybrid" and ("gap_pp" not in st or "prefer" not in st):
-            e.append(("E_REQUIRED", f"$.scenario.strategies[{i}]", "hybrid needs gap_pp and prefer"))
+            e.append(("E_REQUIRED", f"{root}.strategies[{i}]", "hybrid needs gap_pp and prefer"))
         if st["kind"] != "near_apr_hybrid" and ("gap_pp" in st or "prefer" in st):
-            e.append(("E_UNKNOWN_FIELD", f"$.scenario.strategies[{i}]", "gap_pp/prefer apply to the hybrid only"))
+            e.append(("E_UNKNOWN_FIELD", f"{root}.strategies[{i}]", "gap_pp/prefer apply to the hybrid only"))
     return e
 
 

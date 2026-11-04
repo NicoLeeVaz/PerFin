@@ -150,11 +150,51 @@ class Rules(unittest.TestCase):
             self._reversal_of(d, "t001", -300000)
         self.assertIn("E_SPLIT_KIND", self.mutate(f))
 
+    def _reverse_purchase(self, d, split):
+        d["transactions"].append({"transaction_id": "t030", "account_id": "card:alpha", "posted_date": "2026-06-29",
+                                  "amount_minor": 10000, "currency": "USD", "description": "REVERSAL OF t002",
+                                  "entry_method": "reversal", "reverses_transaction_id": "t002",
+                                  "splits": [split], "row_version": 1})
+
+    def test_reversal_negating_splits_is_valid(self):
+        self.assertEqual(self.mutate(lambda d: self._reverse_purchase(
+            d, {"split_id": "s030", "split_kind": "category", "amount_minor": 10000, "category_id": "exp.groceries"})), [])
+
+    def test_reversal_cannot_recategorize(self):
+        # negates the total but books income instead of reversing the grocery expense
+        self.assertIn("E_SPLIT_KIND", self.mutate(lambda d: self._reverse_purchase(
+            d, {"split_id": "s030", "split_kind": "category", "amount_minor": 10000, "category_id": "inc.salary"})))
+
     def test_deferred_promo_needs_deadline(self):
         self.assertIn("E_REQUIRED", self.mutate(lambda d: d["card_terms"][1]["apr_buckets"][1].pop("promo_end_date")))
 
     def test_currency_mismatch(self):
         self.assertIn("E_CURRENCY_MISMATCH", self.mutate(lambda d: d["transactions"][0].update(currency="EUR")))
+
+
+class CommandPayloadRules(unittest.TestCase):
+    """Commands apply the same payload-local rules as the standalone documents."""
+
+    def command(self, ctype, payload):
+        return {"contract": "perfin", "contract_version": "1.0.0", "document_type": "command",
+                "command_id": "1a2b3c4d-0000-4000-8000-000000000009", "command_type": ctype,
+                "issued_at": "2026-07-02T15:11:00Z", "issued_by": "excel_payoff:planner",
+                "payload": payload, "expected_versions": []}
+
+    def test_save_payoff_scenario_applies_scenario_rules(self):
+        sc = copy.deepcopy(load(os.path.join(ROOT, "examples", "valid", "payoff_scenario.json"))["scenario"])
+        self.assertEqual(validate_document(self.command("save_payoff_scenario", sc)), [])
+        sc["strategies"][3].pop("gap_pp")
+        self.assertEqual(codes(self.command("save_payoff_scenario", sc)), ["E_COMMAND_PAYLOAD"])
+
+    def test_set_card_terms_applies_terms_rules(self):
+        ct = copy.deepcopy(LEDGER["card_terms"][1])
+        self.assertEqual(validate_document(self.command("set_card_terms", ct)), [])
+        ct["apr_buckets"][1].pop("promo_end_date")
+        self.assertEqual(codes(self.command("set_card_terms", ct)), ["E_COMMAND_PAYLOAD"])
+        ct = copy.deepcopy(LEDGER["card_terms"][1])
+        ct["min_payment_rule"] = {"rule_type": "pct_plus_interest", "floor_minor": 2500}
+        self.assertEqual(codes(self.command("set_card_terms", ct)), ["E_COMMAND_PAYLOAD"])
 
 
 class Semantics(unittest.TestCase):
