@@ -165,6 +165,26 @@ class Rules(unittest.TestCase):
         self.assertIn("E_SPLIT_KIND", self.mutate(lambda d: self._reverse_purchase(
             d, {"split_id": "s030", "split_kind": "category", "amount_minor": 10000, "category_id": "inc.salary"})))
 
+    def test_transaction_reversed_at_most_once(self):
+        def f(d):
+            for tid in ("t050", "t051"):
+                d["transactions"].append({"transaction_id": tid, "account_id": "card:alpha", "posted_date": "2026-06-29",
+                                          "amount_minor": 10000, "currency": "USD", "description": "REVERSAL OF t002",
+                                          "entry_method": "reversal", "reverses_transaction_id": "t002",
+                                          "splits": [{"split_id": "s" + tid, "split_kind": "category", "amount_minor": 10000,
+                                                      "category_id": "exp.groceries"}], "row_version": 1})
+        self.assertIn("E_DUPLICATE_ID", self.mutate(f))
+
+    def test_refund_is_not_a_payment_allocation(self):
+        def f(d):
+            d["transactions"].append({"transaction_id": "t040", "account_id": "card:alpha", "posted_date": "2026-07-02",
+                                      "amount_minor": 2500, "currency": "USD", "description": "MERCHANT REFUND",
+                                      "entry_method": "manual", "splits": [{"split_id": "s040", "split_kind": "category",
+                                      "amount_minor": 2500, "category_id": "exp.groceries"}], "row_version": 1})
+            d["statement_payments"].append({"allocation_id": "a040", "statement_id": "st_alpha_2026_06",
+                                            "transaction_id": "t040", "amount_minor": 2500})
+        self.assertIn("E_ACCOUNT_KIND", self.mutate(f))
+
     def test_deferred_promo_needs_deadline(self):
         self.assertIn("E_REQUIRED", self.mutate(lambda d: d["card_terms"][1]["apr_buckets"][1].pop("promo_end_date")))
 

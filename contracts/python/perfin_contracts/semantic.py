@@ -85,6 +85,10 @@ def ledger_rules(b: Dict) -> List[Error]:
         if c.get("parent_category_id") and c["parent_category_id"] not in cats:
             e.append(("E_CATEGORY_UNKNOWN", f"$.categories[{i}]", "unknown parent category"))
 
+    reversed_by = Counter(t["reverses_transaction_id"] for t in b["transactions"] if t.get("reverses_transaction_id"))
+    for tid, n in reversed_by.items():
+        if n > 1:
+            e.append(("E_DUPLICATE_ID", "$.transactions", f"transaction {tid!r} is reversed {n} times; reverse at most once"))
     link_splits = defaultdict(list)  # link id -> [(txn, split)]
     for i, t in enumerate(b["transactions"]):
         p = f"$.transactions[{i}]"
@@ -168,11 +172,15 @@ def ledger_rules(b: Dict) -> List[Error]:
         if s is None or t is None:
             e.append(("E_REF_UNKNOWN", p, "unknown statement or transaction"))
             continue
-        if t["account_id"] != s["account_id"] or t["amount_minor"] <= 0:
-            e.append(("E_ACCOUNT_KIND", p, "allocation needs a payment (inflow) on the statement's account"))
+        # The payment portion is the inbound transfer splits (a linked payment from another
+        # account); refunds, credits and reversals on the card are not payments.
+        paid = sum(x["amount_minor"] for x in t["splits"] if x["split_kind"] == "transfer" and x["amount_minor"] > 0)
+        if t["account_id"] != s["account_id"] or paid <= 0:
+            e.append(("E_ACCOUNT_KIND", p, "allocation needs a payment: an inbound transfer on the statement's account"))
+            continue
         alloc[t["transaction_id"]] += sp["amount_minor"]
-        if alloc[t["transaction_id"]] > t["amount_minor"]:
-            e.append(("E_ALLOCATION_EXCEEDS", p, "allocations exceed the payment amount"))
+        if alloc[t["transaction_id"]] > paid:
+            e.append(("E_ALLOCATION_EXCEEDS", p, "allocations exceed the payment portion of the transaction"))
 
     for i, r in enumerate(b.get("reconciliations", [])):
         p = f"$.reconciliations[{i}]"

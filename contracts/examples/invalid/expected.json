@@ -84,6 +84,7 @@
   "E_TRANSFER_AMOUNT"
  ],
  "transfer_one_leg.json": [
+  "E_ACCOUNT_KIND",
   "E_TRANSFER_UNPAIRED"
  ],
  "transfer_same_account.json": [
