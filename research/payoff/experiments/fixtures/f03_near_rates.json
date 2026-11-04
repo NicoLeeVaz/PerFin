@@ -1,0 +1,38 @@
+{
+ "name": "f03_near_rates",
+ "notes": "APRs 24.0/24.5/29.0: the band is measured from the current highest eligible APR, not chained.",
+ "budget_cents": 45000,
+ "horizon": 240,
+ "cards": [
+  {
+   "id": "A",
+   "balance_cents": 600000,
+   "apr": "0.24",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  },
+  {
+   "id": "B",
+   "balance_cents": 120000,
+   "apr": "0.245",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  },
+  {
+   "id": "C",
+   "balance_cents": 300000,
+   "apr": "0.29",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  }
+ ]
+}

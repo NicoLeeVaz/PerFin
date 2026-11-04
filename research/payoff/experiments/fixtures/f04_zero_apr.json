@@ -1,0 +1,26 @@
+{
+ "name": "f04_zero_apr",
+ "notes": "All 0% APR, fixed minimums: exact principal conservation, no interest, spillover within month.",
+ "budget_cents": 50000,
+ "horizon": 12,
+ "cards": [
+  {
+   "id": "A",
+   "balance_cents": 30000,
+   "apr": "0",
+   "min_rule": {
+    "type": "fixed",
+    "amount_cents": 2500
+   }
+  },
+  {
+   "id": "B",
+   "balance_cents": 100000,
+   "apr": "0",
+   "min_rule": {
+    "type": "fixed",
+    "amount_cents": 2500
+   }
+  }
+ ]
+}

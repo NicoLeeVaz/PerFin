@@ -1,0 +1,48 @@
+{
+ "name": "f03b_near_rates_close_top",
+ "notes": "Top two APRs 0.4 pp apart with very different balances: where the 0.5/1/2 pp bands change the target.",
+ "budget_cents": 55000,
+ "horizon": 240,
+ "cards": [
+  {
+   "id": "A",
+   "balance_cents": 700000,
+   "apr": "0.2699",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  },
+  {
+   "id": "B",
+   "balance_cents": 150000,
+   "apr": "0.2659",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  },
+  {
+   "id": "C",
+   "balance_cents": 400000,
+   "apr": "0.2549",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  },
+  {
+   "id": "D",
+   "balance_cents": 80000,
+   "apr": "0.1999",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  }
+ ]
+}

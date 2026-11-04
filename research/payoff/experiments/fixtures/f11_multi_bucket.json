@@ -1,0 +1,48 @@
+{
+ "name": "f11_multi_bucket",
+ "notes": "Card X has purchase 22.99%, cash advance 29.99% and a 0% balance transfer to month 12 (then 22.99%), plus a $60 transfer fee in month 1; card Y 25.99%.",
+ "budget_cents": 60000,
+ "horizon": 240,
+ "cards": [
+  {
+   "id": "X",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   },
+   "fees": {
+    "1": 6000
+   },
+   "buckets": [
+    {
+     "id": "purchase",
+     "balance_cents": 300000,
+     "apr": "0.2299"
+    },
+    {
+     "id": "cash_adv",
+     "balance_cents": 50000,
+     "apr": "0.2999"
+    },
+    {
+     "id": "bal_xfer",
+     "balance_cents": 200000,
+     "apr": "0",
+     "post_apr": "0.2299",
+     "promo_end_month": 12
+    }
+   ]
+  },
+  {
+   "id": "Y",
+   "balance_cents": 250000,
+   "apr": "0.2599",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  }
+ ]
+}

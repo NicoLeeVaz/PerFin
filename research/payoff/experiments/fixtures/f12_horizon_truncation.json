@@ -1,0 +1,38 @@
+{
+ "name": "f12_horizon_truncation",
+ "notes": "f02 truncated at 6 months: remaining debt must be shown with no payoff date.",
+ "budget_cents": 50000,
+ "horizon": 6,
+ "cards": [
+  {
+   "id": "BIG",
+   "balance_cents": 900000,
+   "apr": "0.189",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  },
+  {
+   "id": "MID",
+   "balance_cents": 300000,
+   "apr": "0.24",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  },
+  {
+   "id": "SMALL",
+   "balance_cents": 150000,
+   "apr": "0.2999",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  }
+ ]
+}

@@ -1,0 +1,87 @@
+{
+  "review_date": "2026-11-04",
+  "scope": "Payoff-planner source audit; research only; synthetic data",
+  "method": "Full git clones outside the PerFin checkout; source, license and test files read; upstream tests and PerFin reproduction harnesses executed locally (Python 3.13.18, Node 22.23.4). No upstream code copied.",
+  "network_note": "consumerfinance.gov, ecfr.gov, govinfo.gov, federalregister.gov and law.cornell.edu were blocked by the session network policy; regulatory statements are marked [Unverified] in math-spec.md.",
+  "repositories": [
+    {
+      "repository": "tomithy83/debt-simulator",
+      "url": "https://github.com/tomithy83/debt-simulator",
+      "observed_head": "3c03137cde51d82bd15628cadcb59a29ba79888b",
+      "head_commit_date": "2025-05-16T17:09:16-05:00",
+      "license": "MIT",
+      "files": {
+        "LICENSE": "8dbc5be52c1b651db07ea294863e74ddf7858743",
+        "strategies.py": "5ec7dd1fc79b31a33ee732553915098ea20ee17d",
+        "simulator.py": "f385f7c87048016ebcd2d158da3e4761280b9a78",
+        "main.py": "4cd9b78d2c79d7ea1ed52d41dad188cffd545776",
+        "tests/test_strategies.py": "637150e198bf57f6a464b27c27bfe453a5084390"
+      },
+      "executed": true,
+      "upstream_tests": "1 test, 1 error (TypeError)",
+      "reproduced": [
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7"
+      ],
+      "decision": "reference only; do not fork"
+    },
+    {
+      "repository": "duaneking/unburyme",
+      "url": "https://github.com/duaneking/unburyme",
+      "observed_head": "c4e6119f2ea7575de5144275e4795dea28231b24",
+      "head_commit_date": "2011-06-26T15:37:36-04:00",
+      "license": "MIT (Jordan Santell, 2011)",
+      "files": {
+        "LICENSE": "d88a76fdfc6597ee3cc4aadc038eb26dde71b7d5",
+        "src/LoanApp.js": "d03f0ebdef9daf9b8bb83601400c1b0bda957212",
+        "src/Date.js": "06aa33a1a62991e5ade0840653be79863166838a",
+        "src/Config.js": "f54ec74cc0594a36bc367cda682918895c4d126a",
+        "src/Loan.js": "9602f1d914ee0d9606a07160d273052a8d4f87e1"
+      },
+      "executed": true,
+      "upstream_tests": "none present",
+      "reproduced": [
+        "U1",
+        "U2",
+        "U3"
+      ],
+      "decision": "do not reuse"
+    },
+    {
+      "repository": "bryankemp/financial-debt-optimizer",
+      "url": "https://github.com/bryankemp/financial-debt-optimizer",
+      "observed_head": "16b6691bce77f036a81625c9f9b02995cb4129a9",
+      "head_commit_date": "2026-10-04T13:05:16-05:00",
+      "license": "BSD-3-Clause",
+      "files": {
+        "LICENSE": "32af4fe2a208120df7865a5d307aef881226a2de",
+        "debt_optimizer/core/debt_optimizer.py": "32fb812451c3f6f6cd65b3f0b161ed1c62d61445",
+        "debt_optimizer/core/financial_calc.py": "061f6efb1d7bc71d9d27b4972d71d910a54bf680",
+        "debt_optimizer/core/balance_updater.py": "eea1033ce1bbb618e88d2fc84c5dfa017ab5362a"
+      },
+      "executed": true,
+      "upstream_tests": "304 passed, 2 failed (tests/test_visualization.py, matplotlib 3.11.2 PieContainer TypeError)",
+      "reproduced": [
+        "F1",
+        "F2",
+        "F3"
+      ],
+      "decision": "not the engine; possible Excel I/O reference"
+    },
+    {
+      "repository": "jsantell/unburyme",
+      "executed": false,
+      "note": "direct request returned HTTP 403 from the session proxy (inconclusive); earlier review recorded 404"
+    }
+  ],
+  "perfin_experiments": {
+    "run_experiments": "OVERALL PASS; 210 schedules, 0 invariant violations; oracle E1-E6 pass",
+    "payoff_unit_tests": "26/26 passed",
+    "net_worth_tests": "12/12 passed"
+  }
+}

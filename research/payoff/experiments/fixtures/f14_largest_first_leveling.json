@@ -1,0 +1,28 @@
+{
+ "name": "f14_largest_first_leveling",
+ "notes": "Two near-equal balances: literal largest-first with monthly re-ranking alternates targets; lock-until-paid does not.",
+ "budget_cents": 40000,
+ "horizon": 240,
+ "cards": [
+  {
+   "id": "A",
+   "balance_cents": 400000,
+   "apr": "0.22",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  },
+  {
+   "id": "B",
+   "balance_cents": 390000,
+   "apr": "0.18",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  }
+ ]
+}

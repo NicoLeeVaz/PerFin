@@ -1,0 +1,38 @@
+{
+ "name": "f01_equal_apr",
+ "notes": "Equal 20% APRs: aggregate cost should match across orderings up to rounding; payoff order differs.",
+ "budget_cents": 60000,
+ "horizon": 240,
+ "cards": [
+  {
+   "id": "A",
+   "balance_cents": 200000,
+   "apr": "0.20",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  },
+  {
+   "id": "B",
+   "balance_cents": 500000,
+   "apr": "0.20",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  },
+  {
+   "id": "C",
+   "balance_cents": 100000,
+   "apr": "0.20",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  }
+ ]
+}

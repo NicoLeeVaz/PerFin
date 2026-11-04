@@ -1,6 +1,6 @@
 # Research plan: credit-card payoff and personal financial statements
 
-Date: 2026-11-04. Status: research brief and proposed acceptance criteria, not a completed payoff model. Extends the [original research](README.md) and [credit-card MVP](credit-card-mvp.md).
+Date: 2026-11-04. Status: research brief and proposed acceptance criteria, not a completed payoff model. **Update:** the section F deliverables now exist; see [research results](README.md#research-results-2026-11-04). Extends the [original research](README.md) and [credit-card MVP](credit-card-mvp.md).
 
 ## Outcomes and priorities
 

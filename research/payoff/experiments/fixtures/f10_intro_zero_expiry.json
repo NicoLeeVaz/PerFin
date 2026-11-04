@@ -1,0 +1,35 @@
+{
+ "name": "f10_intro_zero_expiry",
+ "notes": "True 0% intro APR (no retroactive interest) expiring after month 3 into 27.99%, vs 22.99% card. Avalanche ranks on the current rate only.",
+ "budget_cents": 40000,
+ "horizon": 240,
+ "cards": [
+  {
+   "id": "INTRO",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   },
+   "buckets": [
+    {
+     "id": "intro",
+     "balance_cents": 600000,
+     "apr": "0",
+     "post_apr": "0.2799",
+     "promo_end_month": 3
+    }
+   ]
+  },
+  {
+   "id": "STD",
+   "balance_cents": 500000,
+   "apr": "0.2299",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  }
+ ]
+}

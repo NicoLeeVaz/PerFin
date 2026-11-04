@@ -1,0 +1,46 @@
+{
+ "name": "f08_lump_sum_and_budget_change",
+ "notes": "f02 plus a $2,000 lump sum in month 3 and a reduced budget in months 7-9.",
+ "budget_cents": 50000,
+ "horizon": 240,
+ "lump_sums": {
+  "3": 200000
+ },
+ "budget_overrides": {
+  "7": 35000,
+  "8": 35000,
+  "9": 35000
+ },
+ "cards": [
+  {
+   "id": "BIG",
+   "balance_cents": 900000,
+   "apr": "0.189",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  },
+  {
+   "id": "MID",
+   "balance_cents": 300000,
+   "apr": "0.24",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  },
+  {
+   "id": "SMALL",
+   "balance_cents": 150000,
+   "apr": "0.2999",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  }
+ ]
+}

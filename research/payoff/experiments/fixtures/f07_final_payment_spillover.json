@@ -1,0 +1,38 @@
+{
+ "name": "f07_final_payment_spillover",
+ "notes": "Two small cards are paid off in month 1; residual capacity must spill to the third without exceeding budget.",
+ "budget_cents": 50000,
+ "horizon": 60,
+ "cards": [
+  {
+   "id": "A",
+   "balance_cents": 12000,
+   "apr": "0.20",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  },
+  {
+   "id": "B",
+   "balance_cents": 13000,
+   "apr": "0.22",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  },
+  {
+   "id": "C",
+   "balance_cents": 400000,
+   "apr": "0.15",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  }
+ ]
+}

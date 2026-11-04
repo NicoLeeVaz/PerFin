@@ -1,0 +1,34 @@
+{
+ "name": "f09_deferred_interest_deadline",
+ "notes": "Deferred-interest card (0% shown, 26.99% retroactive if not paid in full by end of month 6) vs a 21.99% card. Fixed minimums so the oracle grid is exact.",
+ "budget_cents": 30500,
+ "horizon": 36,
+ "cards": [
+  {
+   "id": "DEF",
+   "min_rule": {
+    "type": "fixed",
+    "amount_cents": 2500
+   },
+   "buckets": [
+    {
+     "id": "promo",
+     "balance_cents": 120000,
+     "apr": "0",
+     "post_apr": "0.2699",
+     "promo_end_month": 6,
+     "deferred": true
+    }
+   ]
+  },
+  {
+   "id": "HIGH",
+   "balance_cents": 300000,
+   "apr": "0.2199",
+   "min_rule": {
+    "type": "fixed",
+    "amount_cents": 8000
+   }
+  }
+ ]
+}

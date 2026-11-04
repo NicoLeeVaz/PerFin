@@ -1,0 +1,28 @@
+{
+ "name": "f05_insufficient_budget",
+ "notes": "Budget below required minimums: must be reported infeasible, not as a plan.",
+ "budget_cents": 10000,
+ "horizon": 60,
+ "cards": [
+  {
+   "id": "A",
+   "balance_cents": 500000,
+   "apr": "0.25",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  },
+  {
+   "id": "B",
+   "balance_cents": 400000,
+   "apr": "0.22",
+   "min_rule": {
+    "type": "pct_plus_interest",
+    "pct": "0.01",
+    "floor_cents": 2500
+   }
+  }
+ ]
+}

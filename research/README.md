@@ -38,7 +38,19 @@ The next research phase compares largest-balance-first, snowball, avalanche and 
 - [Research plan and mathematical acceptance criteria](payoff-and-net-worth-plan.md)
 - [Ready-to-paste Claude Code prompt](claude-code-research-prompt.md)
 
-These documents define the next work; the payoff engine and financial statements module have not been implemented.
+These documents define the next work.
+
+### Research results (2026-11-04)
+
+Research deliverables and isolated synthetic experiments, not a production app:
+
+1. [Payoff source audit](payoff/source-audit.md): three upstream calculators were executed against pinned commits and 13 defects reproduced. None of them is recommended for forking.
+2. [Payoff math specification](payoff/math-spec.md): integer-cent model, event order, strategies and ties, the near-APR band, the limits of optimality, and unsupported cases.
+3. [Payoff experiments](payoff/experiments.md): a reproducible reference engine, an independent enumeration oracle, 15 synthetic fixtures and the [generated results](payoff/experiments/results/results.md).
+4. [Personal statements module spec](net-worth/module-spec.md): balance sheet, income/expense, cash flow and net-worth bridge, with a [synthetic worked example](net-worth/example/statements_demo.py).
+5. [Implementation roadmap](implementation-roadmap.md): recommended sequence, reuse decisions, the Windows/Excel/Access trial still needed, and open user choices.
+
+Executed locally: payoff checks pass (210 schedules, 0 invariant violations, 26/26 unit tests) and net-worth tests pass (12/12). Avalanche matched or beat every enumerated plan under fixed terms. It was beaten in the deferred-interest and 0%-expiry counterexamples. The production payoff engine and statements module have not been implemented.
 
 ## First implementation experiment
 
