@@ -1,0 +1,40 @@
+{
+  "contract": "perfin",
+  "contract_version": "1.0.0",
+  "document_type": "import_profile",
+  "profile_id": "synthetic_checking_debit_credit",
+  "profile_version": "1.0.0",
+  "description": "Checking export in Windows-1252 with separate unsigned Debit and Credit columns; the unused column is left empty. SYNTHETIC profile for tests and examples; not verified against any real institution's export.",
+  "account_class": "checking",
+  "file": {
+    "encoding": "cp1252",
+    "delimiter": ",",
+    "quote_char": "\"",
+    "header_rows": 1,
+    "skip_footer_rows": 0,
+    "expected_field_count": 5
+  },
+  "columns": {
+    "posted_date": "Posting Date",
+    "transaction_date": "Transaction Date",
+    "description": "Details",
+    "debit": "Debit",
+    "credit": "Credit",
+    "amount": null
+  },
+  "date_format": "M/D/YYYY",
+  "amount": {
+    "sign_rule": "debit_credit_columns",
+    "decimal_separator": ".",
+    "thousands_separator": ",",
+    "currency": "USD",
+    "parentheses_negative": false
+  },
+  "dedupe_key": [
+    "posted_date",
+    "transaction_date",
+    "amount_minor",
+    "description",
+    "row_occurrence"
+  ]
+}

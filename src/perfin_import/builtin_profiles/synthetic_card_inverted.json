@@ -1,0 +1,39 @@
+{
+  "contract": "perfin",
+  "contract_version": "1.0.0",
+  "document_type": "import_profile",
+  "profile_id": "synthetic_card_inverted",
+  "profile_version": "1.0.0",
+  "description": "Credit-card export (UTF-8 with BOM) where charges are positive and payments/refunds negative; the sign is inverted to the canonical ledger sign. SYNTHETIC profile for tests and examples; not verified against any real institution's export.",
+  "account_class": "credit_card",
+  "file": {
+    "encoding": "utf-8-sig",
+    "delimiter": ",",
+    "quote_char": "\"",
+    "header_rows": 1,
+    "skip_footer_rows": 0,
+    "expected_field_count": 5
+  },
+  "columns": {
+    "transaction_date": "Trans Date",
+    "posted_date": "Post Date",
+    "description": "Description",
+    "amount": "Amount",
+    "source_txn_id": "Reference"
+  },
+  "date_format": "MM/DD/YYYY",
+  "amount": {
+    "sign_rule": "invert",
+    "decimal_separator": ".",
+    "thousands_separator": ",",
+    "currency": "USD",
+    "parentheses_negative": false
+  },
+  "dedupe_key": [
+    "source_txn_id",
+    "posted_date",
+    "amount_minor",
+    "description",
+    "row_occurrence"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "contract": "perfin",
+  "contract_version": "1.0.0",
+  "document_type": "import_profile",
+  "profile_id": "synthetic_eu_semicolon",
+  "profile_version": "1.0.0",
+  "description": "Worked extension example (docs/import/README.md): semicolon-delimited Windows-1252 export, DD.MM.YYYY dates, decimal comma, dot thousands separator, one footer line. SYNTHETIC profile for tests and examples; not verified against any real institution's export.",
+  "account_class": "savings",
+  "file": {
+    "encoding": "cp1252",
+    "delimiter": ";",
+    "quote_char": "\"",
+    "header_rows": 2,
+    "skip_footer_rows": 1,
+    "expected_field_count": 3
+  },
+  "columns": {
+    "posted_date": "Booking Date",
+    "description": "Narrative",
+    "amount": "Amount"
+  },
+  "date_format": "DD.MM.YYYY",
+  "amount": {
+    "sign_rule": "as_is",
+    "decimal_separator": ",",
+    "thousands_separator": ".",
+    "parentheses_negative": false
+  },
+  "dedupe_key": [
+    "posted_date",
+    "amount_minor",
+    "description",
+    "row_occurrence"
+  ]
+}
