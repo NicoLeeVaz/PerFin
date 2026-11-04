@@ -1,0 +1,326 @@
+{
+  "review_date": "2026-11-04",
+  "scope": "Local personal finance and credit-card management; research only",
+  "method": "Connected GitHub metadata and selected source files; official project and Microsoft documentation; no binary execution",
+  "repositories": [
+    {
+      "repository": "WealthFinPilot/Financial-management-tool",
+      "url": "https://github.com/WealthFinPilot/Financial-management-tool",
+      "observed_head": "a5ad1d023152db1aac67579d5c452c6b9c10107e",
+      "head_commit_date_utc": "2026-06-06T15:04:46Z",
+      "root_inventory": [
+        {
+          "path": "LICENSE",
+          "blob_sha": "ab89678f0dbd53d355d72b985a062dff0a86588d",
+          "size_bytes": 1072
+        },
+        {
+          "path": "README.md",
+          "blob_sha": "463669cf7a05d73d56f6fced7075c105637817f8",
+          "size_bytes": 7942
+        },
+        {
+          "path": "WealthFinPilot_v3.0.xlsm",
+          "blob_sha": "8802656475ea598f77f4b9f5a30ae2c60e6fc25f",
+          "size_bytes": 2882053
+        }
+      ],
+      "runtime_tested": false
+    },
+    {
+      "repository": "lingxiaoyang/self-employed-ledger-ms-access",
+      "url": "https://github.com/lingxiaoyang/self-employed-ledger-ms-access",
+      "observed_head": "4065602606602a0781873f7ac05dac67e69f9291",
+      "head_commit_date_utc": "2019-09-29T04:14:32Z",
+      "root_inventory": [
+        {
+          "path": "CHANGELOG.md",
+          "blob_sha": "f4c09299ca24f1848df31da363554bc8feb3e0b0",
+          "size_bytes": 210
+        },
+        {
+          "path": "LICENSE",
+          "blob_sha": "94599bef35e8cfba503b60ab38e0ac60806e06ab",
+          "size_bytes": 1069
+        },
+        {
+          "path": "README.md",
+          "blob_sha": "96f0508b7461cd1e4193d9ba6ba2857c6864095b",
+          "size_bytes": 1719
+        },
+        {
+          "path": "Self-Employed Ledger.accdt",
+          "blob_sha": "de6e4ab9bcc4822a8e21f06ffc90d33006451519",
+          "size_bytes": 71552
+        }
+      ],
+      "runtime_tested": false
+    },
+    {
+      "repository": "martin-pthomas/credit-card-spend-tracker",
+      "url": "https://github.com/martin-pthomas/credit-card-spend-tracker",
+      "observed_head": "46142914b1be399beb1fc691adc3c0477915d244",
+      "head_commit_date_utc": "2026-08-28T20:47:35Z",
+      "root_inventory": [
+        {
+          "path": "README.md",
+          "blob_sha": "a90685d0595ceb977be62a8d9159bff26a4263d3",
+          "size_bytes": 11942
+        }
+      ],
+      "runtime_tested": false
+    },
+    {
+      "repository": "actualbudget/actual",
+      "url": "https://github.com/actualbudget/actual",
+      "observed_head": "c9096f00ed9e83f20175920561916b4dde980cab",
+      "head_commit_date_utc": "2026-11-04T20:28:37Z",
+      "root_inventory": [
+        {
+          "path": "LICENSE.txt",
+          "blob_sha": "3898f370d3cef6eaa0cbe60b936512bba6383cfa",
+          "size_bytes": 1045
+        },
+        {
+          "path": "README.md",
+          "blob_sha": "57e95060c5009be43140f4140eaf8c3d170a4a79",
+          "size_bytes": 4377
+        }
+      ],
+      "runtime_tested": false
+    },
+    {
+      "repository": "moneymanagerex/moneymanagerex",
+      "url": "https://github.com/moneymanagerex/moneymanagerex",
+      "observed_head": "d0d1eaab73e9b53dc04c54d6da2b68714f71b8bb",
+      "head_commit_date_utc": "2026-11-04T00:58:25Z",
+      "root_inventory": [
+        {
+          "path": "LICENSE",
+          "blob_sha": "8159d9e699d4bd241500b9fe87550785c9442189",
+          "size_bytes": 15218
+        },
+        {
+          "path": "README.TXT",
+          "blob_sha": "4fa5f9483a9a2145589ae1252b718b985b46a28b",
+          "size_bytes": 4489
+        },
+        {
+          "path": "README.md",
+          "blob_sha": "ed53df8a0e1c0eafc0007b0a6c33b1808fcc1392",
+          "size_bytes": 15061
+        },
+        {
+          "path": "license.txt",
+          "blob_sha": "726ccd6c3bdbfbc1ce7da4f58750d94c3083af5c",
+          "size_bytes": 3334
+        }
+      ],
+      "runtime_tested": false
+    }
+  ],
+  "source_files": [
+    {
+      "repository": "WealthFinPilot/Financial-management-tool",
+      "path": "LICENSE",
+      "blob_sha": "ab89678f0dbd53d355d72b985a062dff0a86588d",
+      "read_ref": "HEAD",
+      "url": "https://github.com/WealthFinPilot/Financial-management-tool/blob/HEAD/LICENSE"
+    },
+    {
+      "repository": "WealthFinPilot/Financial-management-tool",
+      "path": "vba/Automate.bas",
+      "blob_sha": "1789873ea96e38817c3fd5d8958c7385356cbc44",
+      "read_ref": "HEAD",
+      "url": "https://github.com/WealthFinPilot/Financial-management-tool/blob/HEAD/vba/Automate.bas"
+    },
+    {
+      "repository": "WealthFinPilot/Financial-management-tool",
+      "path": "vba/Triage.bas",
+      "blob_sha": "6733ecc61157a5b48b0feabf98ca060c0d900aa9",
+      "read_ref": "HEAD",
+      "url": "https://github.com/WealthFinPilot/Financial-management-tool/blob/HEAD/vba/Triage.bas"
+    },
+    {
+      "repository": "lingxiaoyang/self-employed-ledger-ms-access",
+      "path": "LICENSE",
+      "blob_sha": "94599bef35e8cfba503b60ab38e0ac60806e06ab",
+      "read_ref": "HEAD",
+      "url": "https://github.com/lingxiaoyang/self-employed-ledger-ms-access/blob/HEAD/LICENSE"
+    },
+    {
+      "repository": "lingxiaoyang/self-employed-ledger-ms-access",
+      "path": "CHANGELOG.md",
+      "blob_sha": "f4c09299ca24f1848df31da363554bc8feb3e0b0",
+      "read_ref": "HEAD",
+      "url": "https://github.com/lingxiaoyang/self-employed-ledger-ms-access/blob/HEAD/CHANGELOG.md"
+    },
+    {
+      "repository": "lingxiaoyang/self-employed-ledger-ms-access",
+      "path": "docs/VBA-Programming-Guide.md",
+      "blob_sha": "cf52f1878ec5aa75b1c2971ee2e698284607cc5f",
+      "read_ref": "HEAD",
+      "url": "https://github.com/lingxiaoyang/self-employed-ledger-ms-access/blob/HEAD/docs/VBA-Programming-Guide.md"
+    },
+    {
+      "repository": "lingxiaoyang/self-employed-ledger-ms-access",
+      "path": "docs/Base-Data-Example.md",
+      "blob_sha": "54ec4455cbc480f661f79bfd7a8f216c9274e4d1",
+      "read_ref": "HEAD",
+      "url": "https://github.com/lingxiaoyang/self-employed-ledger-ms-access/blob/HEAD/docs/Base-Data-Example.md"
+    },
+    {
+      "repository": "martin-pthomas/credit-card-spend-tracker",
+      "path": "README.md",
+      "blob_sha": "a90685d0595ceb977be62a8d9159bff26a4263d3",
+      "read_ref": "HEAD",
+      "url": "https://github.com/martin-pthomas/credit-card-spend-tracker/blob/HEAD/README.md"
+    },
+    {
+      "repository": "actualbudget/actual",
+      "path": "README.md",
+      "blob_sha": "57e95060c5009be43140f4140eaf8c3d170a4a79",
+      "read_ref": "HEAD",
+      "url": "https://github.com/actualbudget/actual/blob/HEAD/README.md"
+    },
+    {
+      "repository": "actualbudget/actual",
+      "path": "LICENSE.txt",
+      "blob_sha": "3898f370d3cef6eaa0cbe60b936512bba6383cfa",
+      "read_ref": "HEAD",
+      "url": "https://github.com/actualbudget/actual/blob/HEAD/LICENSE.txt"
+    },
+    {
+      "repository": "moneymanagerex/moneymanagerex",
+      "path": "README.md",
+      "blob_sha": "ed53df8a0e1c0eafc0007b0a6c33b1808fcc1392",
+      "read_ref": "HEAD",
+      "url": "https://github.com/moneymanagerex/moneymanagerex/blob/HEAD/README.md"
+    },
+    {
+      "repository": "moneymanagerex/moneymanagerex",
+      "path": "license.txt",
+      "blob_sha": "726ccd6c3bdbfbc1ce7da4f58750d94c3083af5c",
+      "read_ref": "HEAD",
+      "url": "https://github.com/moneymanagerex/moneymanagerex/blob/HEAD/license.txt"
+    },
+    {
+      "repository": "Gnucash/gnucash",
+      "path": "README",
+      "blob_sha": "8a54abfe1cf5a4a40789615dd02fe368bbc9f605",
+      "read_ref": "HEAD",
+      "url": "https://github.com/Gnucash/gnucash/blob/HEAD/README"
+    },
+    {
+      "repository": "Gnucash/gnucash",
+      "path": "LICENSE",
+      "blob_sha": "60cd5dc3fa2836f6fb334ba22eb22d5edbebb7dc",
+      "read_ref": "HEAD",
+      "url": "https://github.com/Gnucash/gnucash/blob/HEAD/LICENSE"
+    },
+    {
+      "repository": "firefly-iii/firefly-iii",
+      "path": "readme.md",
+      "blob_sha": "2cc76d511ff9d0f170e5d8b7371cf7640d12e8f3",
+      "read_ref": "HEAD",
+      "url": "https://github.com/firefly-iii/firefly-iii/blob/HEAD/readme.md"
+    },
+    {
+      "repository": "xlwings/xlwings",
+      "path": "LICENSE.txt",
+      "blob_sha": "aff7f2f4e506b30b40fb9e4daaf94aab06aab2c0",
+      "read_ref": "HEAD",
+      "url": "https://github.com/xlwings/xlwings/blob/HEAD/LICENSE.txt"
+    },
+    {
+      "repository": "csingley/ofxtools",
+      "path": "LICENSE",
+      "blob_sha": "f688b29306e8248534e45518d941799961dbbae3",
+      "read_ref": "HEAD",
+      "url": "https://github.com/csingley/ofxtools/blob/HEAD/LICENSE"
+    },
+    {
+      "repository": "jseutter/ofxparse",
+      "path": "LICENSE",
+      "blob_sha": "5fce5b4465d7eb1fa3b816916e18c157de119ca0",
+      "read_ref": "HEAD",
+      "url": "https://github.com/jseutter/ofxparse/blob/HEAD/LICENSE"
+    },
+    {
+      "repository": "mkleehammer/pyodbc",
+      "path": "LICENSE.txt",
+      "blob_sha": "f41936f65665a1d2ca2cc693ac243ec4c54802a6",
+      "read_ref": "HEAD",
+      "url": "https://github.com/mkleehammer/pyodbc/blob/HEAD/LICENSE.txt"
+    },
+    {
+      "repository": "joyfullservice/msaccess-vcs-addin",
+      "path": "LICENSE.txt",
+      "blob_sha": "8cea08cdfbec858ddb3ab72ea702c50d0e18e9fb",
+      "read_ref": "HEAD",
+      "url": "https://github.com/joyfullservice/msaccess-vcs-addin/blob/HEAD/LICENSE.txt"
+    }
+  ],
+  "documentation": [
+    {
+      "url": "https://support.microsoft.com/en-us/access/featured-access-templates",
+      "purpose": "Microsoft Personal account ledger; not established as open source"
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/power-query/connectors/access-database",
+      "purpose": "Local Access import to Excel"
+    },
+    {
+      "url": "https://support.microsoft.com/en-us/excel/python/introduction-to-python-in-excel",
+      "purpose": "Python in Excel executes in cloud"
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/office/dev/scripts/testing/platform-limits",
+      "purpose": "Office Scripts connectivity requirements"
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/office/dev/scripts/overview/script-storage",
+      "purpose": "Office Scripts storage"
+    },
+    {
+      "url": "https://support.microsoft.com/en-us/access/access-specifications",
+      "purpose": "Access file size limit"
+    },
+    {
+      "url": "https://support.microsoft.com/en-us/access/download-and-install-microsoft-365-access-runtime",
+      "purpose": "Access connectivity and bitness/install compatibility"
+    },
+    {
+      "url": "https://actualbudget.org/docs/install/",
+      "purpose": "Desktop offline support and server-dependent API"
+    },
+    {
+      "url": "https://actualbudget.org/docs/budgeting/credit-cards/",
+      "purpose": "Credit-card behavior reference"
+    },
+    {
+      "url": "https://actualbudget.org/docs/transactions/transfers/",
+      "purpose": "Inter-account transfers"
+    },
+    {
+      "url": "https://www.gnucash.org/docs/v5/C/gnucash-guide/cc-concepts1.html",
+      "purpose": "Credit purchases versus payments and reconciliation"
+    },
+    {
+      "url": "https://www.sqlite.org/appfileformat.html",
+      "purpose": "Local portable storage"
+    },
+    {
+      "url": "https://xlsxwriter.readthedocs.io/faq.html",
+      "purpose": "Writer-only and formula-calculation limits"
+    }
+  ],
+  "limitations": [
+    "No Excel or Access runtime trial",
+    "Access template internals not extracted",
+    "Published workbook versus exported VBA equivalence not verified",
+    "No code copied or dependency installed",
+    "No full security audit",
+    "HEAD commits are not pinned release recommendations"
+  ]
+}
