@@ -117,6 +117,16 @@ class Status(unittest.TestCase):
             self.assertEqual(recon["st_beta_2026_06"]["difference_minor"], 2500)
             self.assertEqual(sorted(i["transaction_id"] for i in tables["perfin_unreconciled_items"]), ["t005", "t006"])
 
+    def test_timezone_aware_checked_at_accepted(self):
+        # contract timestamps are UTC "...Z"; an aware value must not crash the
+        # comparison with naive local file times and must give the same result
+        aware = _support.CHECKED_AT.astimezone(dt.timezone.utc)
+        with _support.temp_dir() as d:
+            _support.copy_reports(d)
+            _, naive_status = reports.load_reports(d, _support.CHECKED_AT)
+            _, aware_status = reports.load_reports(d, aware)
+            self.assertEqual([s["status"] for s in aware_status], [s["status"] for s in naive_status])
+
     def test_missing_invalid_stale(self):
         with _support.temp_dir() as d:
             _support.copy_reports(d)

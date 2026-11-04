@@ -157,6 +157,10 @@ def load_reports(report_dir, checked_at, stale_days=spec.DEFAULT_STALE_DAYS):
     `checked_at` is the local refresh time (datetime). A source is STALE when its file
     or its data-as-of date is older than `stale_days` before `checked_at`.
     """
+    if checked_at.tzinfo is not None:
+        # A timezone-aware value (e.g. a contract "...Z" timestamp) is converted to local
+        # time, matching the naive local file-modification times it is compared with.
+        checked_at = checked_at.astimezone().replace(tzinfo=None)
     tables, status = {}, []
     horizon = checked_at - dt.timedelta(days=stale_days)
     for source in spec.CORE_SOURCES:
