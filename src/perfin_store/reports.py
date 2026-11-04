@@ -78,9 +78,11 @@ def build_tables(repo, as_of: Optional[str] = None) -> Dict[str, List[Dict[str, 
                          for x in sort(s["split"], "transaction_id", "split_id")]
 
     stmts = sort(s["statement"], "statement_id")
+    posted = {t["transaction_id"]: t["posted_date"] for t in s["ledger_txn"]}
     paid = defaultdict(int)
-    for p in s["statement_payment"]:
-        paid[p["statement_id"]] += p["amount_minor"]
+    for p in s["statement_payment"]:  # a payment counts only once it has posted (same rule as the balances)
+        if posted[p["transaction_id"]] <= as_of:
+            paid[p["statement_id"]] += p["amount_minor"]
     cards = []
     for a in accounts:
         if a["account_class"] != "credit_card":

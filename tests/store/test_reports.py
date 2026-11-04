@@ -128,5 +128,51 @@ class ReportTables(unittest.TestCase):
         self.assertFalse((ROOT / "tmp-reports").exists())
 
 
+class AsOfPayments(unittest.TestCase):
+    """Codex P2: a historical report must not count an allocated payment that posts after as_of."""
+
+    def setUp(self):
+        self.repo, _, _ = new_fake_store()
+        self.repo.import_bundle(S.reference_bundle())
+        leg = lambda tid, acct, amt: {"transaction_id": tid, "account_id": acct, "posted_date": "2026-07-12",  # noqa: E731
+                                      "amount_minor": amt, "currency": "USD", "description": "SYNTHETIC PAYMENT",
+                                      "entry_method": "manual", "row_version": 1,
+                                      "splits": [{"split_id": tid + ".s", "split_kind": "transfer", "amount_minor": amt,
+                                                  "transfer_link_id": "L1"}]}
+        r = self.repo.import_bundle({
+            "contract": "perfin", "contract_version": "1.0.0", "document_type": "ledger_bundle", "base_currency": "USD",
+            "accounts": [], "categories": [], "transactions": [leg("m1", "chk:main", -10000), leg("m2", "card:alpha", 10000)],
+            "transfer_links": [{"transfer_link_id": "L1", "from_transaction_id": "m1", "to_transaction_id": "m2",
+                                "link_status": "confirmed"}],
+            "statements": [{"statement_id": "st6", "account_id": "card:alpha", "period_start": "2026-06-01",
+                            "period_end": "2026-06-30", "opening_balance_minor": -45000, "closing_balance_minor": -45000}],
+            "statement_payments": [{"allocation_id": "a1", "statement_id": "st6", "transaction_id": "m2", "amount_minor": 10000}]})
+        assert r["result_status"] == "accepted", r
+
+    def card(self, as_of):
+        return reports.build_tables(self.repo, as_of)["rpt_card_status"][0]
+
+    def test_payment_after_as_of_not_counted(self):
+        c = self.card("2026-07-01")
+        self.assertEqual((c["current_owed_minor"], c["confirmed_payments_minor"], c["unpaid_statement_minor"]),
+                         (45000, 0, 45000))
+        c = self.card("2026-07-11")
+        self.assertEqual(c["confirmed_payments_minor"], 0)
+
+    def test_payment_counted_from_its_posted_date(self):
+        c = self.card("2026-07-12")
+        self.assertEqual((c["current_owed_minor"], c["confirmed_payments_minor"], c["unpaid_statement_minor"]),
+                         (35000, 10000, 35000))
+
+    def test_statement_after_as_of_not_used(self):
+        self.assertIsNone(reports.build_tables(self.repo, "2026-06-29")["rpt_card_status"][0]["statement_id"])
+
+    def test_view_filters_payments_by_posted_date(self):
+        from perfin_store import ddl
+        sql = " ".join(dict(ddl.views())["rpt_card_status"].split())
+        self.assertIn("INNER JOIN [ledger_txn] AS pt ON sp.transaction_id = pt.transaction_id WHERE pt.posted_date <= Date()",
+                      sql)
+
+
 if __name__ == "__main__":
     unittest.main()

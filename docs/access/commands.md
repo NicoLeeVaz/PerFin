@@ -71,7 +71,7 @@ All three are logged in `command_log` with their own `command_type` (`stage_batc
 - **What is written.** Each approved row becomes one `ledger_txn` with `source` (batch, row, source transaction id), plus its splits. Proposed split ids are renumbered. The batch is marked `committed` with `committed_at`. All of this happens in **one database transaction**.
 - **Guards.** These rules are applied again at commit time:
   - errors, duplicates, split sums and references;
-  - a `source_txn_id` already in the ledger for the account is `E_DUPLICATE_UNRESOLVED` unless the row is `confirmed_distinct`.
+  - a `source_txn_id` already in the ledger for the account, or repeating an earlier approved row of the same batch, is `E_DUPLICATE_UNRESOLVED` unless the row is `confirmed_distinct`. The whole commit is rejected.
 - **Failure.** Any engine failure rolls back the whole batch.
 
 ### rollback_batch
@@ -112,7 +112,7 @@ None of these changed the contract. Each needs a coordinator decision before 1.1
 | T9 | Access compares text keys case-insensitively [Unverified], but contract ids are case-sensitive. | `T001` and `t001` collide (the fake models this). Suggest a contract rule that ids are unique case-insensitively. |
 | T10 | `uq_batch_file (account_id, source_file_sha256)` blocks re-staging a file after `rollback_batch`. | Re-importing a rolled-back file needs a contract decision. |
 | T11 | The format of `rpt_review_queue.error_codes` is unspecified. | The CSV uses `;`-joined codes; the view returns raw JSON. |
-| T12 | `rpt_card_status` derivations are unspecified. | Latest statement with `period_end ≤ as_of`; terms effective on `as_of`; `unpaid = max(0, statement owed − allocations)`; utilization in basis points, rounded half-to-even; null when the limit is null or 0. To be confirmed with 2c/3b. |
+| T12 | `rpt_card_status` derivations are unspecified. | Latest statement with `period_end ≤ as_of`; terms effective on `as_of`; payments are allocations whose transaction posted on or before `as_of`; `unpaid = max(0, statement owed − those payments)`; utilization in basis points, rounded half-to-even; null when the limit is null or 0. To be confirmed with 2c/3b. |
 | T13 | `command_result` has no warnings field. | Dropped staging fields (T2) cannot be reported back. |
 | T14 | Contract 1.0.1 (PR #18) rejects duplicate bucket ids. | Already enforced. Compatible; no change is needed when it merges. |
 | T15 | `scan_repo_for_forbidden()` (1c) reports the nil UUID `00000000-…-000000000000` as a Luhn-valid card number. | 2b builds the nil UUID in code instead of writing it out. Suggest a 1c fix: exclude all-zero sequences. |

@@ -184,7 +184,26 @@ def main(argv=None) -> int:
         run.record("optimistic concurrency: stale row_version rejected", st["result_status"] == "rejected"
                    and st["errors"][0]["code"] == "E_STALE_VERSION")
 
+        # A payment allocated to a past statement but posted in the future: the views and the CSV export must
+        # both leave it out of confirmed_payments_minor (as-of rule, Codex review finding).
+        leg = lambda tid, acct, amt: {"transaction_id": tid, "account_id": acct, "posted_date": "2099-01-02",  # noqa: E731
+                                      "amount_minor": amt, "currency": "USD", "description": "FUTURE PAYMENT",
+                                      "entry_method": "manual", "row_version": 1,
+                                      "splits": [{"split_id": tid + ".s", "split_kind": "transfer", "amount_minor": amt,
+                                                  "transfer_link_id": "Lfut"}]}
+        fut = repo.import_bundle({
+            "contract": "perfin", "contract_version": "1.0.0", "document_type": "ledger_bundle", "base_currency": "USD",
+            "accounts": [], "categories": [], "transactions": [leg("fut1", "chk:main", -10000), leg("fut2", "card:alpha", 10000)],
+            "transfer_links": [{"transfer_link_id": "Lfut", "from_transaction_id": "fut1", "to_transaction_id": "fut2",
+                                "link_status": "confirmed"}],
+            "statements": [{"statement_id": "st_jun", "account_id": "card:alpha", "period_start": "2026-06-01",
+                            "period_end": "2026-06-30", "opening_balance_minor": -45000, "closing_balance_minor": -45000}],
+            "statement_payments": [{"allocation_id": "afut", "statement_id": "st_jun", "transaction_id": "fut2",
+                                    "amount_minor": 10000}]})
         today = date.today().isoformat()
+        card_now = reports.build_tables(repo, today)["rpt_card_status"][0]
+        run.record("as-of: a payment posted after the report date is not counted", fut["result_status"] == "accepted"
+                   and card_now["confirmed_payments_minor"] == 0, fut["errors"] or None)
         py = reports.build_tables(repo, today)
         spec = reports.report_spec()
         view_problems = {}

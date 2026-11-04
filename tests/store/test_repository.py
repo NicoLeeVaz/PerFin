@@ -226,6 +226,49 @@ class Commit(Base):
                                    [self.ev("batch", "b.alpha.08")]), "E_DUPLICATE_UNRESOLVED")
 
 
+class SourceIdsWithinBatch(Base):
+    """Codex P2: two approved rows of one batch with the same source_txn_id must not both commit."""
+
+    def stage(self, dup2="none", state1="approved"):
+        b = S.batch("b.dup", "chk:main", [
+            S.row(1, "2026-07-01", -5000, "SYNTHETIC SHOP", state=state1, source_txn_id="bank-1"),
+            S.row(2, "2026-07-01", -5000, "SYNTHETIC SHOP", state="approved", dup=dup2, source_txn_id="bank-1"),
+            S.row(3, "2026-07-02", -700, "OTHER", state="approved", source_txn_id="bank-2")])
+        self.ok(self.repo.stage_batch(b))
+        return self.run_cmd("commit_batch", {"batch_id": "b.dup", "source_file_sha256": b["batch"]["source_file_sha256"]},
+                            [self.ev("batch", "b.dup")])
+
+    def test_repeat_inside_batch_rejected_atomically(self):
+        b = S.batch("b.dup", "chk:main", [
+            S.row(1, "2026-07-01", -5000, "SYNTHETIC SHOP", state="approved", source_txn_id="bank-1"),
+            S.row(2, "2026-07-01", -5000, "SYNTHETIC SHOP", state="approved", source_txn_id="bank-1"),
+            S.row(3, "2026-07-02", -700, "OTHER", state="approved", source_txn_id="bank-2")])
+        self.ok(self.repo.stage_batch(b))
+        before = self.state()
+        r = self.rejected(self.run_cmd("commit_batch", {"batch_id": "b.dup", "source_file_sha256": b["batch"]["source_file_sha256"]},
+                                       [self.ev("batch", "b.dup")]), "E_DUPLICATE_UNRESOLVED")
+        self.assertEqual([e["path"] for e in r["errors"]], ["$.rows[row_number=2]"])
+        self.assertIn("repeats row 1", r["errors"][0]["message"])
+        self.assertEqual(before, self.state())  # nothing committed, not even rows 1 and 3
+        self.assertEqual(self.repo.summary()["account_balances_minor"]["chk:main"], 250000)
+
+    def test_confirmed_distinct_repeat_is_kept(self):
+        self.ok(self.stage(dup2="confirmed_distinct"))
+        self.assertEqual(self.repo.summary()["account_balances_minor"]["chk:main"], 239300)  # 250000 opening, two 50.00 rows, one 7.00
+        self.assertEqual(validate_document(self.repo.export_bundle()), [])
+
+    def test_rejected_first_occurrence_does_not_block(self):
+        self.ok(self.stage(state1="rejected"))
+        self.assertEqual(self.repo.summary()["account_balances_minor"]["chk:main"], 250000 - 5000 - 700)
+
+    def test_same_source_id_on_another_account_is_independent(self):
+        self.ok(self.stage(dup2="confirmed_distinct"))
+        b = S.batch("b.sav", "sav:reserve", [S.row(1, "2026-07-01", -5000, "x", state="approved", source_txn_id="bank-1")])
+        self.ok(self.repo.stage_batch(b))
+        self.ok(self.run_cmd("commit_batch", {"batch_id": "b.sav", "source_file_sha256": b["batch"]["source_file_sha256"]},
+                             [self.ev("batch", "b.sav")]))
+
+
 class ConcurrencyAndValidation(Base):
     def test_stale_version_rejected_and_changes_nothing(self):
         self.ok(self.repo.stage_batch(S.card_batch()))

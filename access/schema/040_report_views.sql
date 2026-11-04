@@ -9,6 +9,9 @@
 -- "As of" is Date() (today). The CSV export takes an explicit --as-of date instead.
 -- Known difference: in rpt_review_queue the view's error_codes column holds the stored
 -- errors_json text (Access SQL cannot parse JSON); the CSV export holds ';'-joined codes.
+-- As of: balances and confirmed payments count only transactions posted on or before the as-of date;
+-- statement and card terms are those in effect on it. Listing views (transactions, splits, statements,
+-- reconciliation, review queue, card terms, valuations, buckets) have no as-of column and list every row.
 -- Rounding: utilization uses Access Round() (half-to-even); the Python export matches it.
 -- Table names are bracketed in case a name is reserved in Access SQL [Unverified].
 -- Nothing here writes: refresh is read-only.
@@ -89,7 +92,9 @@ FROM ((
   FROM [account] AS a WHERE a.account_class = 'credit_card'
 ) AS q LEFT JOIN [statement] AS s ON q.statement_id = s.statement_id)
 LEFT JOIN (
-  SELECT sp.statement_id, SUM(sp.amount_minor) AS paid_minor FROM [statement_payment] AS sp GROUP BY sp.statement_id
+  SELECT sp.statement_id, SUM(sp.amount_minor) AS paid_minor
+  FROM [statement_payment] AS sp INNER JOIN [ledger_txn] AS pt ON sp.transaction_id = pt.transaction_id
+  WHERE pt.posted_date <= Date() GROUP BY sp.statement_id
 ) AS p ON q.statement_id = p.statement_id;
 
 CREATE VIEW rpt_statements AS SELECT

@@ -646,6 +646,7 @@ class Repository:
         acct = self._one("account", {"account_id": b["account_id"]})
         known_source_ids = {t["source_txn_id"] for t in self._rows("ledger_txn", {"account_id": b["account_id"]},
                                                                    columns=["source_txn_id"]) if t["source_txn_id"]}
+        batch_source_ids: Dict[str, int] = {}  # source_txn_id -> first approved row number in this batch
         errs: List[Error] = []
         txns = []
         for r in self._rows("staging_row", {"batch_id": b["batch_id"]}, order_by=["row_number"]):
@@ -659,10 +660,17 @@ class Repository:
             if r["duplicate_status"] not in APPROVABLE_DUP:
                 errs.append(("E_DUPLICATE_UNRESOLVED", path, "approved row has an unresolved duplicate"))
                 continue
-            if r["source_txn_id"] and r["source_txn_id"] in known_source_ids and r["duplicate_status"] != "confirmed_distinct":
-                errs.append(("E_DUPLICATE_UNRESOLVED", path, "source transaction id is already in the ledger for this "
-                             "account; resolve it as confirmed_distinct or reject the row"))
-                continue
+            if r["source_txn_id"] and r["duplicate_status"] != "confirmed_distinct":
+                # Same account (a batch has one account), same source id: an exact re-import, whether the earlier
+                # occurrence is already stored or an earlier approved row of this batch.
+                if r["source_txn_id"] in known_source_ids:
+                    errs.append(("E_DUPLICATE_UNRESOLVED", path, "source transaction id is already in the ledger for "
+                                 "this account; resolve it as confirmed_distinct or reject the row"))
+                    continue
+                if r["source_txn_id"] in batch_source_ids:
+                    errs.append(("E_DUPLICATE_UNRESOLVED", path, "source transaction id repeats row %d of this batch; "
+                                 "resolve it as confirmed_distinct or reject the row" % batch_source_ids[r["source_txn_id"]]))
+                    continue
             tid = derive_id(b["batch_id"], "r%d" % n, prefix="imp")
             if self._one("ledger_txn", {"transaction_id": tid}) is not None:
                 errs.append(("E_DUPLICATE_ID", path, "transaction %s already exists" % tid))
@@ -693,6 +701,8 @@ class Repository:
                          "currency": acct["currency"], "description": r["parsed_description"] or "",
                          "entry_method": "import", "row_version": 1, "splits": splits,
                          "source": _drop_none({"batch_id": b["batch_id"], "row_number": n, "source_txn_id": r["source_txn_id"]})})
+            if r["source_txn_id"]:
+                batch_source_ids.setdefault(r["source_txn_id"], n)
         if errs:
             raise Reject(errs)
         for t in txns:
