@@ -5,7 +5,7 @@ import re
 from collections import Counter, defaultdict
 from typing import Any, Dict, List
 
-from . import SUPPORTED_MAJOR, SUPPORTED_MINOR
+from . import CONTRACT_VERSION, SUPPORTED_MAJOR, SUPPORTED_MINOR
 from .schema_subset import Error, load_schema, validate
 
 DOC_SCHEMAS = {
@@ -320,6 +320,7 @@ def manifest_rules(d: Dict) -> List[Error]:
         e.append(("E_REQUIRED", "$.workbook_file", "excel modules ship their own workbook file"))
     lo = tuple(map(int, d["contract_versions"]["min"].split(".")))
     hi = tuple(map(int, d["contract_versions"]["max_exclusive"].split(".")))
-    if not lo <= (SUPPORTED_MAJOR, SUPPORTED_MINOR, 0) < hi:
+    current = tuple(map(int, CONTRACT_VERSION.split(".")))  # full version, patch included
+    if not lo <= current < hi:
         e.append(("E_VERSION_UNSUPPORTED", "$.contract_versions", "module does not support this contract version"))
     return e

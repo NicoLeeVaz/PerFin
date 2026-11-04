@@ -121,6 +121,16 @@ class Rules(unittest.TestCase):
             d = dict(LEDGER, contract_version=v)
             self.assertEqual(validate_document(d) == [], ok, v)
 
+    def test_manifest_range_uses_full_contract_version(self):
+        base = load(os.path.join(ROOT, "examples", "valid", "module_manifest_payoff.json"))
+        major, minor, patch = map(int, CONTRACT_VERSION.split("."))
+        cur = f"{major}.{minor}.{patch}"
+        nxt = f"{major}.{minor}.{patch + 1}"
+        for lo, hi, ok in ((cur, f"{major}.{minor + 1}.0", True), (f"{major}.0.0", f"{major + 1}.0.0", True),
+                           (f"{major}.0.0", cur, False), (nxt, f"{major + 1}.0.0", False)):
+            d = dict(base, contract_versions={"min": lo, "max_exclusive": hi})
+            self.assertEqual(validate_document(d) == [], ok, (lo, hi))
+
     def test_unknown_document_type(self):
         self.assertEqual(codes(dict(LEDGER, document_type="ledger_dump")), ["E_DOCUMENT_TYPE"])
 
