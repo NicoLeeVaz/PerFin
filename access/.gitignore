@@ -1,0 +1,11 @@
+# Real or test databases, lock files and backups never belong in this public repository.
+# access/ holds only the text sources that create an empty database.
+*.accdb
+*.accde
+*.mdb
+*.mde
+*.laccdb
+*.ldb
+*.bak
+*.csv
+manifest.json
