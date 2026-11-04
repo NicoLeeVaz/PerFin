@@ -1,0 +1,3 @@
+statement_id,account_id,period_start,period_end,due_date,opening_balance_minor,closing_balance_minor,minimum_due_minor
+st_alpha_2026_06,card:alpha,2026-06-01,2026-06-30,2026-07-25,-45000,-55000,2500
+st_beta_2026_06,card:beta,2026-06-01,2026-06-30,2026-07-25,0,-5500,3500

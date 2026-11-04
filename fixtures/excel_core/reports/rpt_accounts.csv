@@ -1,0 +1,7 @@
+account_id,display_name,kind,account_class,currency,ledger_balance_minor,display_balance_minor,balance_as_of,include_in_net_worth,liquidity,ownership_pct,legal_liability_pct,tax_status
+chk:main,Everyday checking,asset,checking,USD,320000,320000,2026-06-30,TRUE,liquid,,,
+sav:reserve,Reserve savings,asset,savings,USD,1050000,1050000,2026-06-30,TRUE,liquid,,,
+card:alpha,Card Alpha,liability,credit_card,USD,-55000,55000,2026-06-30,TRUE,,,,
+card:beta,Card Beta,liability,credit_card,USD,-5500,5500,2026-06-30,TRUE,,,,
+re:home,Home (valued separately),asset,real_estate,USD,0,0,2026-06-30,TRUE,illiquid,100,,
+mtg:home,Home mortgage,liability,mortgage,USD,-29940000,29940000,2026-06-30,TRUE,,,100,

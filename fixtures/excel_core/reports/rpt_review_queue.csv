@@ -1,0 +1,11 @@
+batch_id,row_number,review_state,duplicate_status,error_codes,posted_date,amount_minor,description
+b2026_07_alpha,1,approved,none,,2026-07-01,-1234,"SYNTHETIC CAFE, ""DOWNTOWN"""
+b2026_07_alpha,2,needs_review,none,E_PARSE_DATE,,,
+b2026_07_alpha,3,needs_review,possible,,2026-07-01,-1234,"SYNTHETIC CAFE, ""DOWNTOWN"""
+b2026_07_alpha,4,pending,none,,2026-07-03,10000,PAYMENT RECEIVED
+b2026_07_alpha,5,rejected,none,E_PARSE_AMOUNT,,,
+b2026_07_alpha,6,pending,none,,2026-07-05,-200,+SYNTHETIC PLUS PREFIX
+b2026_07_alpha,7,pending,none,,2026-07-05,-300,-SYNTHETIC MINUS PREFIX
+b2026_07_alpha,8,pending,none,,2026-07-05,-400,@SYNTHETIC AT PREFIX
+b2026_07_alpha,9,pending,none,,2026-07-05,-500,	SYNTHETIC TAB PREFIX
+b2026_07_alpha,10,pending,none,,2026-07-05,-600,"SYNTHETIC CR PREFIX, ""quoted"""

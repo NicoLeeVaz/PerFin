@@ -1,0 +1,13 @@
+transaction_id,account_id,posted_date,transaction_date,amount_minor,currency,description,entry_method,reconciled,row_version
+t001,chk:main,2026-06-01,,300000,USD,PAYROLL SYNTHETIC EMPLOYER,manual,FALSE,1
+t011,chk:main,2026-06-01,,-170000,USD,MORTGAGE PAYMENT,manual,FALSE,1
+t012,mtg:home,2026-06-01,,60000,USD,PRINCIPAL RECEIVED,manual,FALSE,1
+t002,card:alpha,2026-06-03,2026-06-02,-10000,USD,=SYNTHETIC GROCER #12 (leading '=' must stay text),import,TRUE,1
+t005,card:beta,2026-06-05,,-8000,USD,SYNTHETIC SUPERSTORE,manual,FALSE,1
+t003,chk:main,2026-06-10,,-10000,USD,ONLINE PAYMENT TO CARD ALPHA,manual,FALSE,1
+t004,card:alpha,2026-06-12,,10000,USD,PAYMENT RECEIVED - THANK YOU,manual,TRUE,1
+t006,card:beta,2026-06-15,,2500,USD,REFUND SYNTHETIC SUPERSTORE,manual,FALSE,1
+t009,chk:main,2026-06-20,,-50000,USD,TRANSFER TO RESERVE,manual,FALSE,1
+t010,sav:reserve,2026-06-20,,50000,USD,TRANSFER FROM CHECKING,manual,FALSE,1
+t007,card:alpha,2026-06-28,,-500,USD,INTEREST CHARGE ON PURCHASES,manual,TRUE,1
+t008,card:alpha,2026-06-28,,-9500,USD,ANNUAL FEE,manual,TRUE,1
