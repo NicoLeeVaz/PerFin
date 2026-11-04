@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/NicoLeeVaz/PerFin/config/privacy/nopii-export-envelope.schema.json",
+  "title": "PerFin NoPii export envelope",
+  "description": "Contract perfin-nopii-export/0.1.0. Interface PerFin needs from an optional local NoPii adapter. Describes no NoPii internals. See docs/privacy/nopii-export-contract.md.",
+  "oneOf": [
+    {"$ref": "#/$defs/request"},
+    {"$ref": "#/$defs/response"},
+    {"$ref": "#/$defs/description"}
+  ],
+  "$defs": {
+    "version": {"type": "string", "pattern": "^0\\.1\\.[0-9]+$"},
+    "isoDate": {"type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$"},
+    "exportId": {"type": "string", "pattern": "^exp-[A-Za-z0-9-]{1,64}$"},
+    "currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+    "adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "offline"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "offline": {"type": "boolean"}
+      }
+    },
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_id", "date", "amount_minor", "currency"],
+      "properties": {
+        "record_id": {"type": "string", "pattern": "^r[0-9]{1,9}$"},
+        "date": {"$ref": "#/$defs/isoDate"},
+        "amount_minor": {"type": "integer"},
+        "currency": {"$ref": "#/$defs/currency"},
+        "account_alias": {"type": "string"},
+        "category": {"type": "string"},
+        "description": {"type": "string"},
+        "memo": {"type": "string"}
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "contract_version", "export_id", "created", "purpose", "payload_kind", "preserve_fields", "scrub_fields"],
+      "properties": {
+        "kind": {"const": "perfin.nopii.export_request"},
+        "contract_version": {"$ref": "#/$defs/version"},
+        "export_id": {"$ref": "#/$defs/exportId"},
+        "created": {"$ref": "#/$defs/isoDate"},
+        "purpose": {"const": "external_ai"},
+        "payload_kind": {"enum": ["ledger_rows", "text"]},
+        "preserve_fields": {"type": "array", "items": {"type": "string"}, "allOf": [{"contains": {"const": "date"}}, {"contains": {"const": "amount_minor"}}, {"contains": {"const": "currency"}}]},
+        "scrub_fields": {"type": "array", "items": {"enum": ["description", "memo", "category", "text"]}},
+        "sensitive_values": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "records": {"type": "array", "items": {"$ref": "#/$defs/record"}},
+        "text": {"type": "string"}
+      }
+    },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "contract_version", "export_id", "status", "adapter"],
+      "properties": {
+        "kind": {"const": "perfin.nopii.export_response"},
+        "contract_version": {"$ref": "#/$defs/version"},
+        "export_id": {"$ref": "#/$defs/exportId"},
+        "status": {"enum": ["ok", "refused", "unsupported", "error"]},
+        "adapter": {"$ref": "#/$defs/adapter"},
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["category", "count"],
+            "properties": {"category": {"type": "string"}, "count": {"type": "integer", "minimum": 0}}
+          }
+        },
+        "records": {"type": "array", "items": {"$ref": "#/$defs/record"}},
+        "text": {"type": "string"},
+        "message": {"type": "string"}
+      }
+    },
+    "description": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "contract_version", "adapter", "payload_kinds"],
+      "properties": {
+        "kind": {"const": "perfin.nopii.adapter_description"},
+        "contract_version": {"$ref": "#/$defs/version"},
+        "adapter": {"$ref": "#/$defs/adapter"},
+        "payload_kinds": {"type": "array", "items": {"enum": ["ledger_rows", "text"]}}
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "kind": "perfin.nopii.export_response",
+  "contract_version": "0.1.0",
+  "export_id": "exp-2026-11-04-0001",
+  "status": "ok",
+  "adapter": {"name": "synthetic-mock-adapter", "version": "0.0.0-test", "offline": true},
+  "findings": [{"category": "PERSON", "count": 1}, {"category": "CARD_NUMBER", "count": 1}, {"category": "LOCATION", "count": 1}],
+  "records": [
+    {"record_id": "r1", "date": "2026-10-03", "amount_minor": -10000, "currency": "USD", "account_alias": "Card A", "category": "Groceries", "description": "SYNTHETIC GROCER [STORE_ID] [LOCATION_1]", "memo": "[PERSON_1] weekly shop"},
+    {"record_id": "r2", "date": "2026-10-15", "amount_minor": 10000, "currency": "USD", "account_alias": "Card A", "category": "Transfer", "description": "PAYMENT THANK YOU CARD [CARD_NUMBER_1]", "memo": ""},
+    {"record_id": "r3", "date": "2026-02-28", "amount_minor": -500, "currency": "USD", "account_alias": "Card B", "category": "Interest", "description": "=HYPERLINK(\"http://example.invalid\",\"x\") INTEREST CHARGE", "memo": "synthetic formula-injection fixture"}
+  ]
+}

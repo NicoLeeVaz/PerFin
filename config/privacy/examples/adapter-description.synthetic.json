@@ -1,0 +1,6 @@
+{
+  "kind": "perfin.nopii.adapter_description",
+  "contract_version": "0.1.0",
+  "adapter": {"name": "synthetic-mock-adapter", "version": "0.0.0-test", "offline": true},
+  "payload_kinds": ["ledger_rows"]
+}
