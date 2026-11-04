@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "perfin/1.0/command_result.schema.json",
+  "title": "Repository response to a command. Rejected commands change nothing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "document_type",
+    "command_id",
+    "result_status",
+    "errors",
+    "affected",
+    "audit_ids"
+  ],
+  "properties": {
+    "contract": {
+      "$ref": "common.schema.json#/$defs/contract"
+    },
+    "contract_version": {
+      "$ref": "common.schema.json#/$defs/semver"
+    },
+    "document_type": {
+      "const": "command_result"
+    },
+    "command_id": {
+      "$ref": "common.schema.json#/$defs/uuid"
+    },
+    "result_status": {
+      "enum": [
+        "accepted",
+        "rejected",
+        "replayed"
+      ]
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/error"
+      }
+    },
+    "affected": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "entity",
+          "entity_id",
+          "row_version"
+        ],
+        "properties": {
+          "entity": {
+            "$ref": "common.schema.json#/$defs/short_text"
+          },
+          "entity_id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "row_version": {
+            "$ref": "common.schema.json#/$defs/row_version"
+          }
+        }
+      }
+    },
+    "audit_ids": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/id"
+      }
+    }
+  }
+}

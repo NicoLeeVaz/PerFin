@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "perfin/1.0/staging_batch.schema.json",
+  "title": "Staged import batch: parsed preview rows. Nothing here is a ledger record until commit_batch succeeds.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "document_type",
+    "batch",
+    "rows"
+  ],
+  "properties": {
+    "contract": {
+      "$ref": "common.schema.json#/$defs/contract"
+    },
+    "contract_version": {
+      "$ref": "common.schema.json#/$defs/semver"
+    },
+    "document_type": {
+      "const": "staging_batch"
+    },
+    "batch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "batch_id",
+        "profile_id",
+        "profile_version",
+        "account_id",
+        "source_file_sha256",
+        "source_file_name",
+        "staged_at",
+        "importer_version",
+        "batch_status"
+      ],
+      "properties": {
+        "batch_id": {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        "profile_id": {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        "profile_version": {
+          "$ref": "common.schema.json#/$defs/semver"
+        },
+        "account_id": {
+          "$ref": "common.schema.json#/$defs/account_id"
+        },
+        "source_file_sha256": {
+          "$ref": "common.schema.json#/$defs/sha256"
+        },
+        "source_file_name": {
+          "type": "string",
+          "pattern": "^[^/\\\\:]{1,200}$",
+          "description": "Base name only; never a full local path."
+        },
+        "staged_at": {
+          "$ref": "common.schema.json#/$defs/timestamp"
+        },
+        "importer_version": {
+          "$ref": "common.schema.json#/$defs/semver"
+        },
+        "batch_status": {
+          "enum": [
+            "staged",
+            "approved",
+            "committed",
+            "rejected",
+            "rolled_back"
+          ]
+        },
+        "committed_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time-utc"
+        }
+      }
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "row_number",
+          "raw_fields",
+          "fingerprint",
+          "errors",
+          "duplicate",
+          "review_state"
+        ],
+        "properties": {
+          "row_number": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "raw_fields": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 4000
+            },
+            "description": "Exact field strings after CSV parsing; never coerced."
+          },
+          "parsed": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": false,
+            "required": [
+              "posted_date",
+              "amount_minor",
+              "description"
+            ],
+            "properties": {
+              "posted_date": {
+                "$ref": "common.schema.json#/$defs/date"
+              },
+              "transaction_date": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date"
+              },
+              "amount_minor": {
+                "$ref": "common.schema.json#/$defs/money_minor"
+              },
+              "description": {
+                "$ref": "common.schema.json#/$defs/text"
+              },
+              "source_txn_id": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 128
+              },
+              "running_balance_minor": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": -922337203685477,
+                "maximum": 922337203685477
+              }
+            }
+          },
+          "fingerprint": {
+            "$ref": "common.schema.json#/$defs/sha256"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "common.schema.json#/$defs/error"
+            }
+          },
+          "duplicate": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "status"
+            ],
+            "properties": {
+              "status": {
+                "enum": [
+                  "none",
+                  "exact_reimport",
+                  "possible",
+                  "confirmed_duplicate",
+                  "confirmed_distinct"
+                ]
+              },
+              "matched_transaction_id": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$"
+              },
+              "matched_row_number": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1
+              },
+              "evidence": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 1000
+              }
+            }
+          },
+          "review_state": {
+            "$ref": "common.schema.json#/$defs/review_state"
+          },
+          "proposed_splits": {
+            "type": "array",
+            "items": {
+              "$ref": "ledger_bundle.schema.json#/$defs/split"
+            }
+          },
+          "transfer_candidate_transaction_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$"
+          }
+        }
+      }
+    }
+  }
+}

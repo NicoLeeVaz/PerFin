@@ -1,0 +1,53 @@
+{
+ "contract": "perfin",
+ "contract_version": "1.0.0",
+ "document_type": "net_worth_report",
+ "as_of": "2026-06-30",
+ "period_start": "2026-06-01",
+ "base_currency": "USD",
+ "liability_view": "legal",
+ "lines": [
+  {
+   "account_id": "chk:main",
+   "kind": "asset",
+   "ledger_balance_minor": 320000,
+   "included_minor": 320000,
+   "valuation_as_of": null,
+   "stale": false,
+   "excluded_reason": null
+  },
+  {
+   "account_id": "re:home",
+   "kind": "asset",
+   "ledger_balance_minor": 0,
+   "included_minor": 45000000,
+   "valuation_as_of": "2026-06-30",
+   "stale": false,
+   "excluded_reason": null
+  },
+  {
+   "account_id": "mtg:home",
+   "kind": "liability",
+   "ledger_balance_minor": -29940000,
+   "included_minor": -29940000,
+   "valuation_as_of": null,
+   "stale": false,
+   "excluded_reason": null
+  }
+ ],
+ "totals": {
+  "net_worth_minor": 15380000,
+  "liquid_net_worth_minor": 320000
+ },
+ "bridge": {
+  "opening_net_worth_minor": 0,
+  "income_minor": 0,
+  "expenses_minor": 0,
+  "valuation_change_minor": 0,
+  "other_change_minor": 15380000,
+  "closing_net_worth_minor": 15380000
+ },
+ "warnings": [
+  "synthetic illustration: bridge 'other_change' is the opening setup of this tiny example"
+ ]
+}
