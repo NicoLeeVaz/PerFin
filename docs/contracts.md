@@ -44,7 +44,7 @@ python3 -m unittest discover -s contracts/tests -v
 
 | Topic | Rule |
 | --- | --- |
-| Money | JSON integers in minor units (USD cents), bounded to ±(2⁵³−1) so Excel/VBA doubles hold them exactly. **Floats, numeric strings and booleans are rejected** (`E_AMOUNT_NOT_INTEGER` / `E_TYPE`). Rates are decimal strings (`"0.2499"` = 24.99%). Percentage-point bands are strings (`"0.5"`). |
+| Money | JSON integers in minor units (USD cents), bounded to ±922337203685477 so integer minor units fit Access Currency and remain exact in Excel/VBA doubles. **Floats, numeric strings and booleans are rejected** (`E_AMOUNT_NOT_INTEGER` / `E_TYPE`). Rates are decimal strings (`"0.2499"` = 24.99%). Percentage-point bands are strings (`"0.5"`). |
 | Sign | `amount_minor` is from the account's point of view. **`+` = money into the account or less owed; `−` = money out of the account or more owed.** Asset balances are positive. Liability balances are negative when money is owed. Excel displays liabilities as positive owed amounts (`display_balance_minor = −ledger_balance` for liabilities). Payoff documents use non-negative *owed* amounts (`owed = −ledger balance`). |
 | Dates | ISO `YYYY-MM-DD` calendar dates, validated as real dates (leap years included). No time zone. Timestamps are UTC `YYYY-MM-DDTHH:MM:SSZ`. |
 | Currency | ISO 4217 code per account. In 1.0 **every account must use the bundle's `base_currency`** (`E_CURRENCY_MISMATCH`). Transactions, valuations and transfer legs must match their account's currency. Multi-currency accounts, cross-currency transfers and FX are **unsupported in 1.0**. `net_worth_report`'s `missing_fx_rate` exclusion reason is reserved for a later minor version. |
@@ -131,7 +131,7 @@ These are proven by the tests in `Semantics`:
 
 None of these were run here; this task was executed on Linux only.
 
-- Access stores `*_minor` columns as **Currency holding the integer count of minor units**. Currency is exact fixed-point, so integer cents in it are exact, with far more range than the ±$21.47M a 32-bit Long allows. Repository code must reject non-integers, and the reference DDL's `CHECK (x = Int(x))` needs ANSI-92/ADO mode.
+- Access stores `*_minor` columns as **Currency holding the integer count of minor units**. The symmetric integer limit is 922337203685477 minor units, derived from the [Microsoft Currency range](https://learn.microsoft.com/en-us/office/vba/language/reference/user-interface-help/currency-data-type); the larger Excel-only 2⁵³−1 limit would overflow this storage representation. Validate persisted values and calculated report totals against the contract bound before writing; reject overflow rather than truncate. Currency is exact fixed-point, so integer cents in it are exact, with far more range than the ±$21.47M a 32-bit Long allows. Repository code must reject non-integers, and the reference DDL's `CHECK (x = Int(x))` needs ANSI-92/ADO mode.
 - `ledger_txn` is used because `transaction` is reserved.
 - Dates are `DATETIME` with no time part.
 - Rates are text.
@@ -144,6 +144,6 @@ None of these were run here; this task was executed on Linux only.
 ## 8. Known limits and items for the Wave 1 gate
 
 - Out of 1.0 scope (unsupported, must be refused): multi-currency/FX, investment holdings and lots, pending-authorization ledger records (staging only), split-level tax tags, budgets, daily-accrual payoff models.
-- **Reconcile with 1c:** sync-folder and data-directory rules, `number_hint`, `source_file_name`, audit-log redaction of `before_json`/`after_json`, and the NoPii export envelope (not defined here).
-- **Reconcile with 1b:** if an Access seed is adopted, its table names map onto these entities. They do not replace them.
+- **1c alignment:** real ledger/staging data follows the local data-root rules in `docs/privacy/privacy-boundary.md`. `number_hint` is local-only and never logged/exported; `source_file_name` is a local base name and remains sensitive; `evidence_ref` is an opaque local reference, never an outbound path. `before_json`/`after_json` stay intact inside the protected Access audit trail, while diagnostic logs use the privacy allow-list and redaction. NoPii uses export-only `exp-*` and `r*` IDs, not ledger IDs, and maps `posted_date` to `date`; amounts/currency pass through unchanged within the shared money bound. Batch IDs and file hashes are local provenance/diagnostic identifiers only. NoPii owner confirmation and integration remain future work with export disabled.
+- **1b alignment:** PR #17 selected a fresh Access backend. Archived-template patterns are reference only and do not replace these entities.
 - The validator implements a declared JSON Schema subset and rejects unknown keywords. Other languages may use any draft 2020-12 validator for the structural part, but the cross-record rules live in `semantic.py` and must be ported or called.

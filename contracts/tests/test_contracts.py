@@ -60,6 +60,20 @@ class Schemas(unittest.TestCase):
         self.assertEqual(used - declared, set())
 
 
+class MoneyStorageRange(unittest.TestCase):
+    def test_currency_integer_boundaries(self):
+        # Access Currency stores cents as whole Currency values; Excel's larger
+        # exact-integer range cannot all fit the chosen database representation.
+        for amount in (-922337203685477, 922337203685477):
+            b = copy.deepcopy(LEDGER)
+            b["accounts"][0]["opening_balance_minor"] = amount
+            self.assertEqual(validate_document(b), [])
+        for amount in (-922337203685478, 922337203685478, 9007199254740991):
+            b = copy.deepcopy(LEDGER)
+            b["accounts"][0]["opening_balance_minor"] = amount
+            self.assertIn("E_RANGE", codes(b))
+
+
 class Examples(unittest.TestCase):
     def test_valid_examples_pass(self):
         self.assertGreaterEqual(len(VALID), 10)

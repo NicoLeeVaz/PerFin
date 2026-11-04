@@ -274,7 +274,7 @@
                 "null"
               ],
               "minimum": 0,
-              "maximum": 9007199254740991
+              "maximum": 922337203685477
             },
             "max_payoff_delay_months": {
               "type": [

@@ -112,9 +112,9 @@
         "due_date": {"type": ["string", "null"], "format": "date"},
         "opening_balance_minor": {"$ref": "common.schema.json#/$defs/money_minor"},
         "closing_balance_minor": {"$ref": "common.schema.json#/$defs/money_minor"},
-        "minimum_due_minor": {"type": ["integer", "null"], "minimum": 0, "maximum": 9007199254740991},
-        "interest_charged_minor": {"type": ["integer", "null"], "minimum": 0, "maximum": 9007199254740991},
-        "fees_charged_minor": {"type": ["integer", "null"], "minimum": 0, "maximum": 9007199254740991},
+        "minimum_due_minor": {"type": ["integer", "null"], "minimum": 0, "maximum": 922337203685477},
+        "interest_charged_minor": {"type": ["integer", "null"], "minimum": 0, "maximum": 922337203685477},
+        "fees_charged_minor": {"type": ["integer", "null"], "minimum": 0, "maximum": 922337203685477},
         "bucket_balances": {
           "type": "array",
           "items": {"type": "object", "additionalProperties": false, "required": ["bucket_id", "balance_minor"],
@@ -130,7 +130,7 @@
         "allocation_id": {"$ref": "common.schema.json#/$defs/id"},
         "statement_id": {"$ref": "common.schema.json#/$defs/id"},
         "transaction_id": {"$ref": "common.schema.json#/$defs/id"},
-        "amount_minor": {"type": "integer", "minimum": 1, "maximum": 9007199254740991}
+        "amount_minor": {"type": "integer", "minimum": 1, "maximum": 922337203685477}
       }
     },
     "reconciliation": {
@@ -153,7 +153,7 @@
         "effective_from": {"$ref": "common.schema.json#/$defs/date"},
         "effective_to": {"type": ["string", "null"], "format": "date"},
         "terms_source": {"enum": ["agreement", "statement", "user_estimate"]},
-        "credit_limit_minor": {"type": ["integer", "null"], "minimum": 0, "maximum": 9007199254740991, "description": "null = unknown; utilization is then 'unknown', never computed."},
+        "credit_limit_minor": {"type": ["integer", "null"], "minimum": 0, "maximum": 922337203685477, "description": "null = unknown; utilization is then 'unknown', never computed."},
         "min_payment_rule": {
           "type": "object", "additionalProperties": false, "required": ["rule_type"],
           "properties": {
@@ -187,7 +187,7 @@
         "currency": {"$ref": "common.schema.json#/$defs/currency"},
         "valuation_source": {"$ref": "common.schema.json#/$defs/short_text"},
         "valuation_method": {"enum": ["statement", "market_close", "appraisal", "automated_estimate", "owner_estimate"]},
-        "cost_basis_minor": {"type": ["integer", "null"], "minimum": 0, "maximum": 9007199254740991}
+        "cost_basis_minor": {"type": ["integer", "null"], "minimum": 0, "maximum": 922337203685477}
       }
     }
   }

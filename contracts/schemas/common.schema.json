@@ -25,14 +25,14 @@
     },
     "money_minor": {
       "type": "integer",
-      "minimum": -9007199254740991,
-      "maximum": 9007199254740991,
-      "description": "Signed integer minor units (USD cents). Bounded to +/-(2^53-1) so Excel/VBA doubles hold it exactly."
+      "minimum": -922337203685477,
+      "maximum": 922337203685477,
+      "description": "Signed integer minor units (USD cents). Bounded to +/-922337203685477: the integer range of Access Currency when storing minor units, also exact in Excel/VBA doubles."
     },
     "money_minor_nonneg": {
       "type": "integer",
       "minimum": 0,
-      "maximum": 9007199254740991
+      "maximum": 922337203685477
     },
     "currency": {
       "type": "string",

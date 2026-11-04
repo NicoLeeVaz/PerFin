@@ -3,6 +3,7 @@
 -- execute and verify it (ANSI-92 mode / ADO is needed for CHECK constraints; DAO ANSI-89 DDL
 -- cannot create them). Statements are separated by ';' and use only CREATE TABLE.
 -- Money: *_minor columns are CURRENCY holding the INTEGER count of minor units (cents),
+-- Contract range: +/-922337203685477 minor units (integer Currency range), checked before writes.
 -- never major units. Repository code rejects fractional values; CHECK shown where supported.
 -- Rates: TEXT decimal strings, as in the JSON contract. Dates: DATETIME with no time part.
 -- "transaction" is reserved in Access SQL, so the table is ledger_txn.

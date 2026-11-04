@@ -145,8 +145,8 @@
               "integer",
               "null"
             ],
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
+            "minimum": -922337203685477,
+            "maximum": 922337203685477
           },
           "delta_months_vs_avalanche": {
             "type": [

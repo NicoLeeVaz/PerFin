@@ -74,8 +74,8 @@
               "integer",
               "null"
             ],
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
+            "minimum": -922337203685477,
+            "maximum": 922337203685477
           },
           "valuation_as_of": {
             "type": [
