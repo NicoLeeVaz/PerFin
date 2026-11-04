@@ -256,6 +256,26 @@ class ExportGateTests(unittest.TestCase):
         resp["records"][0]["memo"] = "I paid $100.00 for groceries, $1,250 rent"
         self.assertNotIn("r1: money in memo changed", pc.check_fidelity(req, resp))
 
+    def test_card_number_next_to_other_digits_detected(self):
+        pan = make_luhn("4", 16)
+        grouped = " ".join(pan[i:i + 4] for i in range(0, 16, 4))
+        req = copy.deepcopy(self.req)
+        resp = copy.deepcopy(self.resp)
+        req["records"][0]["memo"] = resp["records"][0]["memo"] = "ref " + grouped + " 1"
+        allowed, reasons = self.gate(request=req, response=resp)
+        self.assertFalse(allowed)
+        self.assertIn("residual card number", reasons)
+        self.assertIn(pan, pc.find_card_numbers("x " + grouped + " 7 y"))
+        self.assertEqual(pc.find_card_numbers("id " + pc.load_defaults()["repo_guard"]["allowed_test_pans"][0]),
+                         {pc.load_defaults()["repo_guard"]["allowed_test_pans"][0]})
+
+    def test_response_reporting_online_adapter_cancels(self):
+        resp = copy.deepcopy(self.resp)
+        resp["adapter"]["offline"] = False
+        allowed, reasons = self.gate(response=resp)
+        self.assertFalse(allowed)
+        self.assertIn("not offline", reasons[0])
+
     def test_record_count_change_rejected(self):
         resp = copy.deepcopy(self.resp)
         resp["records"].pop()
@@ -306,6 +326,18 @@ class RepoGuardTests(unittest.TestCase):
         self.assertIn("~$book.xlsx", joined)
         self.assertIn("notes.txt", joined)
         self.assertNotIn("ok.csv", joined)
+
+    def test_forbidden_names_case_insensitive_and_embedded_pan(self):
+        pan = make_luhn("5", 16)
+        with tempfile.TemporaryDirectory() as tmp:
+            for name in ("RUN.LOG", "backup.BAK"):
+                Path(tmp, name).write_text("synthetic", encoding="utf-8")
+            Path(tmp, "notes.txt").write_text(" ".join(pan[i:i + 4] for i in range(0, 16, 4)) + " 9",
+                                              encoding="utf-8")
+            findings = pc.scan_repo_for_forbidden(tmp)
+        self.assertTrue(any(f.startswith("RUN.LOG") for f in findings), findings)
+        self.assertTrue(any(f.startswith("backup.BAK") for f in findings), findings)
+        self.assertTrue(any(f.startswith("notes.txt") for f in findings), findings)
 
     def test_this_repository_is_clean(self):
         self.assertEqual(pc.scan_repo_for_forbidden(REPO_ROOT), [])

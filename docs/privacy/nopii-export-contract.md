@@ -54,6 +54,7 @@ Assumptions, to be confirmed by the NoPii owner before integration:
 | No adapter configured, path missing, process fails to start | Export disabled; message "NoPii adapter not available — export disabled." |
 | `describe` fails, times out (default 10 s) or returns invalid JSON | Export disabled. |
 | Contract major version differs, payload kind unsupported, `offline` not `true` | Export disabled. |
+| The export response's own `adapter.offline` is not `true` (even if `describe` said it was) | This export is cancelled; nothing is written. |
 | Response `status` is `refused`, `unsupported` or `error`, or the envelope is invalid | This export is cancelled; nothing is written. |
 | Any fidelity or residual check fails | This export is cancelled; nothing is written. |
 | Feature flag off | Export menu item hidden or disabled. |

@@ -185,7 +185,37 @@ _USER_PATH = re.compile(r"(?i)(?:[A-Z]:\\Users\\[^\\/\s]+|/home/[^/\s]+|/Users/[
 _EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 _IBAN = re.compile(r"\b[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}\b")
 _SSN = re.compile(r"(?<!\d)\d{3}-\d{2}-\d{4}(?!\d)")
-_GROUPED = re.compile(r"(?<!\d)\d(?:[ -]?\d){12,18}(?!\d)")
+# Any span of 13+ digits, optionally separated by single spaces or hyphens.
+_GROUPED = re.compile(r"(?<!\d)\d(?:[ -]?\d){12,}(?!\d)")
+
+
+def card_number_candidates(span):
+    """Digit strings of 13-19 digits inside a span that could be a card number.
+
+    A greedy span can join a PAN to a neighbouring number ("4242 4242 4242 4242 1"),
+    so candidates are runs of consecutive separator-delimited groups totalling 13-19
+    digits. Arbitrary windows inside an unbroken digit run are not tried: they would flag
+    substrings of harmless long numbers, and the export gate already rejects any run of
+    6+ digits.
+    """
+    groups = re.split(r"[ -]", span)
+    out = set()
+    for i in range(len(groups)):
+        for j in range(i + 1, len(groups) + 1):
+            digits = "".join(groups[i:j])
+            if 13 <= len(digits) <= 19:
+                out.add(digits)
+            if len(digits) > 19:
+                break
+    return out
+
+
+def find_card_numbers(text):
+    """Luhn-valid candidate card numbers found anywhere in `text`."""
+    found = set()
+    for match in _GROUPED.finditer(text):
+        found |= {c for c in card_number_candidates(match.group(0)) if luhn_valid(c)}
+    return found
 _DIGITS = re.compile(r"\d{6,}")
 
 
@@ -197,8 +227,8 @@ def redact_log_text(text):
     text = _SSN.sub("[REDACTED-SSN]", text)
 
     def grouped(match):
-        digits = re.sub(r"[ -]", "", match.group(0))
-        return "[REDACTED-PAN]" if luhn_valid(digits) else "[REDACTED-DIGITS]"
+        cands = card_number_candidates(match.group(0))
+        return "[REDACTED-PAN]" if any(luhn_valid(c) for c in cands) else "[REDACTED-DIGITS]"
 
     text = _GROUPED.sub(grouped, text)
     return _DIGITS.sub("[REDACTED-DIGITS]", text)
@@ -358,9 +388,8 @@ def residual_findings(request, response):
     for text in _strings(payload):
         if _EMAIL.search(text):
             found.append("residual email")
-        for match in _GROUPED.finditer(text):
-            if luhn_valid(re.sub(r"[ -]", "", match.group(0))):
-                found.append("residual card number")
+        if find_card_numbers(text):
+            found.append("residual card number")
         if _DIGITS.search(text):
             found.append("residual digit run")
         folded, digits = text.casefold(), re.sub(r"\D", "", text)
@@ -395,6 +424,8 @@ def decide_export(defaults, feature_flag, description, request, response, user_c
         return False, ["invalid request"]
     if response is None or validate_envelope(response) or response.get("kind") != "perfin.nopii.export_response":
         return False, ["invalid or missing adapter response - export cancelled"]
+    if response.get("adapter", {}).get("offline") is not True:
+        return False, ["adapter reported not offline for this export - export cancelled"]
     if response["status"] != "ok":
         return False, ["adapter status %s - export cancelled" % response["status"]]
     errors = check_fidelity(request, response)
@@ -457,7 +488,8 @@ def scan_repo_for_forbidden(root, defaults=None):
     findings = []
     for rel in sorted(set(_repo_files(root))):
         name = rel.rsplit("/", 1)[-1]
-        if any(fnmatch.fnmatch(name, g) for g in guard["always_forbidden_globs"]):
+        # case-insensitive on every host: RUN.LOG and backup.BAK must not bypass the guard
+        if any(fnmatch.fnmatchcase(name.casefold(), g.casefold()) for g in guard["always_forbidden_globs"]):
             findings.append("%s: forbidden file type" % rel)
             continue
         ext = os.path.splitext(name)[1].lower()
@@ -471,11 +503,8 @@ def scan_repo_for_forbidden(root, defaults=None):
             text = path.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             continue
-        for match in _GROUPED.finditer(text):
-            digits = re.sub(r"[ -]", "", match.group(0))
-            if luhn_valid(digits) and digits not in allowed_pans:
-                findings.append("%s: Luhn-valid number not in test allow-list" % rel)
-                break
+        if find_card_numbers(text) - allowed_pans:
+            findings.append("%s: Luhn-valid number not in test allow-list" % rel)
     return findings
 
 
