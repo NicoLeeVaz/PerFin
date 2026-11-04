@@ -187,7 +187,7 @@ Diagnostic log rules (machine-readable in `defaults.json` → `log_redaction`):
 1. Structured events with allow-listed fields only: timestamp, level, event code, import batch id, row number, field name, counts, durations, file SHA-256, contract/profile versions and error codes.
 2. Never log: descriptions/payees/memos, amounts, balances, full or partial account or card numbers, names, addresses, email addresses, phone numbers, raw CSV lines, PDF text, exception messages that embed values, or the user's profile path.
 3. Paths are logged relative to the data root (`<data>\staging\...`); the user-profile part is replaced with `%USERPROFILE%`.
-4. A regex backstop runs on every message before it is written: Luhn-valid 13 to 19 digit sequences → `[REDACTED-PAN]`; other runs of 6 or more digits → `[REDACTED-DIGITS]`; email → `[REDACTED-EMAIL]`; US SSN pattern → `[REDACTED-SSN]`; IBAN-like strings → `[REDACTED-IBAN]`; user profile paths → `%USERPROFILE%`. The backstop is a safety net, not the main control.
+4. A regex backstop runs on every message before it is written: Luhn-valid 13 to 19 digit sequences → `[REDACTED-PAN]`; other runs of 6 or more digits → `[REDACTED-DIGITS]`; email → `[REDACTED-EMAIL]`; US SSN pattern → `[REDACTED-SSN]`; IBAN-like strings → `[REDACTED-IBAN]`; user profile paths → `%USERPROFILE%`, including profile folder names with spaces (if no path separator follows, the rest of the line is redacted). The backstop is a safety net, not the main control.
 5. Debug logging that includes values is not provided.
 
 Reference implementation: `redact_log_text()`.

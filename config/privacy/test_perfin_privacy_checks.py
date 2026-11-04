@@ -156,6 +156,12 @@ class RedactionTests(unittest.TestCase):
             self.assertIn(tag, out)
         self.assertIn("row 12", out)
 
+    def test_profile_names_with_spaces_fully_redacted(self):
+        out = pc.redact_log_text(r"C:\Users\Alex Example\AppData\Local\PerFin\staging\b.csv")
+        self.assertEqual(out, r"%USERPROFILE%\AppData\Local\PerFin\staging\b.csv")
+        self.assertEqual(pc.redact_log_text("/Users/Alex Example/Library/x.log"), "%USERPROFILE%/Library/x.log")
+        self.assertNotIn("Example", pc.redact_log_text(r'open "C:\Users\Alex Example" failed'))
+
     def test_posix_home_and_dates_kept(self):
         out = pc.redact_log_text("batch 2026-10-03 at /home/alex/.local/share/perfin")
         self.assertEqual(out, "batch 2026-10-03 at %USERPROFILE%/.local/share/perfin")

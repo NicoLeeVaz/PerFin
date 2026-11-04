@@ -181,7 +181,10 @@ def luhn_valid(digits):
     return total % 10 == 0
 
 
-_USER_PATH = re.compile(r"(?i)(?:[A-Z]:\\Users\\[^\\/\s]+|/home/[^/\s]+|/Users/[^/\s]+)")
+# The profile-directory component may contain spaces ("Alex Example"); it ends at the next
+# path separator, line break or quote. Without a following separator the rest of the line is
+# redacted, which deliberately over-redacts rather than leaking part of a name.
+_USER_PATH = re.compile(r"(?i)(?:[A-Z]:\\Users\\[^\\/\r\n\"'<>|]+|/home/[^/\r\n\"'<>|]+|/Users/[^/\r\n\"'<>|]+)")
 _EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 _IBAN = re.compile(r"\b[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}\b")
 _SSN = re.compile(r"(?<!\d)\d{3}-\d{2}-\d{4}(?!\d)")
