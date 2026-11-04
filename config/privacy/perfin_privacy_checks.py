@@ -120,11 +120,17 @@ def detect_sync_folder(path, env=None, defaults=None):
 
 
 def find_git_checkout(path):
-    """Return the nearest ancestor (or self) containing `.git`, else None."""
-    current = Path(path).expanduser().absolute()
-    for candidate in [current, *current.parents]:
-        if (candidate / ".git").exists():
-            return candidate
+    """Return the nearest ancestor (or self) containing `.git`, else None.
+
+    Checks both the literal path and its symlink-resolved form (resolve() with
+    strict=False also resolves an existing prefix when the leaf does not exist yet),
+    so an alias into a checkout cannot bypass the guard.
+    """
+    literal = Path(path).expanduser().absolute()
+    for start in (literal, literal.resolve(strict=False)):
+        for candidate in [start, *start.parents]:
+            if (candidate / ".git").exists():
+                return candidate
     return None
 
 
@@ -285,6 +291,9 @@ def check_fidelity(request, response):
     errors = []
     if response.get("export_id") != request.get("export_id"):
         errors.append("export_id mismatch")
+    other = "text" if request["payload_kind"] == "ledger_rows" else "records"
+    if response.get(other) is not None:
+        errors.append("unexpected %s payload in response" % other)
     if request["payload_kind"] == "ledger_rows":
         req, resp = request.get("records", []), response.get("records")
         if not isinstance(resp, list) or len(resp) != len(req):
@@ -320,7 +329,8 @@ def check_fidelity(request, response):
 def residual_findings(request, response):
     """Identifiers that survived scrubbing. Values are never echoed."""
     found = []
-    payload = response.get("records") if request["payload_kind"] == "ledger_rows" else response.get("text")
+    # Scan every payload field the response carries, not only the requested one.
+    payload = [response.get("records"), response.get("text")]
     sensitive = [s.casefold() for s in request.get("sensitive_values", [])]
     sensitive_digits = [re.sub(r"\D", "", s) for s in request.get("sensitive_values", [])]
     for text in _strings(payload):

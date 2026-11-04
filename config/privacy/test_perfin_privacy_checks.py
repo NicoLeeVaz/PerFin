@@ -123,6 +123,17 @@ class DataDirTests(unittest.TestCase):
             result = pc.evaluate_data_dir(data, env={})
             self.assertEqual(result["decision"], "refuse")
 
+    def test_symlink_alias_into_checkout_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            os.makedirs(os.path.join(tmp, "repo", ".git"))
+            os.makedirs(os.path.join(tmp, "repo", "sub"))
+            outside = os.path.join(tmp, "outside")
+            os.mkdir(outside)
+            alias = os.path.join(outside, "alias")
+            os.symlink(os.path.join(tmp, "repo", "sub"), alias)
+            result = pc.evaluate_data_dir(os.path.join(alias, "data"), env={})
+            self.assertEqual(result["decision"], "refuse")
+
     def test_this_checkout_refused(self):
         self.assertEqual(pc.evaluate_data_dir(REPO_ROOT / "data", env={})["decision"], "refuse")
 
@@ -247,6 +258,16 @@ class ExportGateTests(unittest.TestCase):
         self.assertEqual(self.gate(description=desc, request=req, response=resp), (True, []))
         resp["text"] = "Alex Example paid 250.00 on 2026-10-15"
         self.assertFalse(self.gate(description=desc, request=req, response=resp)[0])
+
+
+    def test_non_selected_payload_rejected_and_scanned(self):
+        resp = copy.deepcopy(self.resp)
+        resp["text"] = "Alex Example " + make_luhn("4", 16) + " alex@example.invalid"
+        allowed, reasons = self.gate(response=resp)
+        self.assertFalse(allowed)
+        self.assertIn("unexpected text payload in response", reasons)
+        self.assertIn("residual card number", reasons)
+        self.assertIn("residual email", reasons)
 
 
 class RepoGuardTests(unittest.TestCase):

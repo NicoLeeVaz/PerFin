@@ -28,7 +28,7 @@ Related: [NoPii export contract](nopii-export-contract.md) · [test checklist](t
 | Windows (production) | `%LOCALAPPDATA%\PerFin` | `%LOCALAPPDATA%` is per-user and not part of roaming profiles. OneDrive Known Folder Move redirects Desktop, Documents and Pictures (and optionally other user folders), not `AppData\Local` [Unverified]. Do not use `%APPDATA%` (Roaming), which can roam with a domain profile [Unverified]. |
 | Linux/macOS (development only) | `$XDG_DATA_HOME/perfin`, else `~/.local/share/perfin` | Synthetic data only. A Linux run is never evidence for Windows behaviour. |
 
-An override is accepted from `PERFIN_DATA_DIR` or the user settings file `<data root>\config\settings.json`. Overrides get the same checks as the default. The settings file lives in the data root, never in the checkout.
+An override is accepted from `PERFIN_DATA_DIR` or the user settings file `<data root>\config\settings.json`. Overrides get the same checks as the default. The checkout check walks both the literal path and its symlink-resolved path, so an alias into a checkout is refused. The settings file lives in the data root, never in the checkout.
 
 ### Layout
 

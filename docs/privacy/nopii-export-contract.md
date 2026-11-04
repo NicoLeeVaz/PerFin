@@ -39,7 +39,8 @@ Assumptions, to be confirmed by the NoPii owner before integration:
    - record count and record ids unchanged;
    - **monetary fidelity:** every `amount_minor` and `currency` identical to the request; for text payloads, the multiset of monetary amounts found in the text is unchanged;
    - **date fidelity:** every `date` identical and valid `YYYY-MM-DD`; for text payloads, the multiset of ISO dates is unchanged;
-   - residual scan: no Luhn-valid card number, no run of 6 or more digits, no email address and no field from the request's `sensitive_values` list (strings PerFin knows, such as the user's name and account numbers from settings) appears in the output;
+   - payload shape: the response carries only the payload field the request selected (`records` for `ledger_rows`, `text` for text); any other payload field cancels the export;
+   - residual scan, over every payload field present in the response: no Luhn-valid card number, no run of 6 or more digits, no email address and no field from the request's `sensitive_values` list (strings PerFin knows, such as the user's name and account numbers from settings) appears in the output;
    - spreadsheet formula escaping applied to every text field of the outbox file.
 6. **Preview.** The user sees the scrubbed output, the record count, replacement counts by category, the fidelity results and a warning that scrubbed text can still be sensitive. Any failed check blocks the export and the preview says which check failed.
 7. **Confirm.** Only after confirmation does PerFin write the file to `<data root>\exports\outbox\` (JSON or CSV), together with an audit entry without content (export id, time, record count, adapter name/version, SHA-256 of the file).
