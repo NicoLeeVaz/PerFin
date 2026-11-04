@@ -66,7 +66,7 @@ The detector is a heuristic. It cannot see virtual drive letters (for example a 
 | Marker | `perfin-data-dir.json` kind `synthetic` for generated directories; fixture files state "synthetic" in a header row, comment or adjacent README | kind `real` |
 | Card/account numbers | Public test numbers only (for example `4111 1111 1111 1111`) or obviously fake identifiers | Never stored in full by PerFin (alias plus at most last four digits) |
 
-The repository scan `scan_repo_for_forbidden()` flags real-data file types outside allowed paths, matching file names case-insensitively on every host (`RUN.LOG`, `backup.BAK`). It also flags Luhn-valid card numbers that are not known public test numbers, including a grouped card number that runs into a neighbouring number or uses up to three spaces, tabs, no-break spaces or hyphens between groups. The export gate and log redaction use the same card-number detection. Wiring it into a hook or release check belongs to tasks 3a/5a.
+The repository scan `scan_repo_for_forbidden()` flags real-data file types outside allowed paths, matching file names case-insensitively on every host (`RUN.LOG`, `backup.BAK`). It also flags Luhn-valid card numbers that are not known public test numbers, including a grouped card number that runs into a neighbouring number or uses repeated whitespace (including newlines and no-break spaces) or hyphens between groups. The export gate and log redaction use the same card-number detection. Wiring it into a hook or release check belongs to tasks 3a/5a.
 
 ## Offline operation
 

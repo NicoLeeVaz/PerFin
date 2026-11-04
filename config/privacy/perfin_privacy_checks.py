@@ -197,10 +197,9 @@ _USER_PATH = re.compile(r"(?i)(?:[A-Z]:[\\/]Users[\\/][^\\/\r\n\t\"<>|]+|/(?:hom
 _EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 _IBAN = re.compile(r"\b[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}\b")
 _SSN = re.compile(r"(?<!\d)\d{3}-\d{2}-\d{4}(?!\d)")
-# Any span of 13+ digits whose groups are separated by up to three spaces, tabs,
-# no-break spaces or hyphens ("4242  4242  4242  4242" included).
-_SEP = r"[ \t\u00a0-]"
-_GROUPED = re.compile(r"(?<!\d)\d(?:%s{0,3}\d){12,}(?!\d)" % _SEP)
+# Any span of 13+ digits, with repeated whitespace or hyphens between groups.
+_SEP = r"[\s-]"
+_GROUPED = re.compile(r"(?<!\d)\d(?:%s*\d){12,}(?!\d)" % _SEP)
 
 
 def card_number_candidates(span):

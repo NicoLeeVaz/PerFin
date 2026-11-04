@@ -150,6 +150,16 @@ class DataDirTests(unittest.TestCase):
             if pc.find_git_checkout(tmp) is None:
                 self.assertEqual(pc.evaluate_data_dir(tmp, env={})["decision"], "ok")
 
+    def test_symlink_to_sync_folder_requires_acknowledgement(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp, "Dropbox")
+            target.mkdir()
+            alias = Path(tmp, "alias")
+            alias.symlink_to(target, target_is_directory=True)
+            result = pc.evaluate_data_dir(alias / "not-created-yet", env={})
+            self.assertEqual(result["decision"], "warn")
+            self.assertTrue(any("sync marker" in r for r in result["reasons"]))
+
 
 class RedactionTests(unittest.TestCase):
     def test_backstop_rules(self):
@@ -173,6 +183,11 @@ class RedactionTests(unittest.TestCase):
     def test_profile_apostrophes_and_forward_slashes(self):
         self.assertEqual(pc.redact_log_text("C:/Users/Alex O'Brien/AppData/x"), "%USERPROFILE%/AppData/x")
         self.assertEqual(pc.redact_log_text("/home/Alex O'Brien/file"), "%USERPROFILE%/file")
+
+    def test_repeated_whitespace_pan_redacted(self):
+        for separator in ("  ", "\t", "\n", "\u00a0", " - "):
+            pan = separator.join(["4242"] * 4)
+            self.assertIn("[REDACTED-PAN]", pc.redact_log_text("card " + pan))
 
     def test_posix_home_and_dates_kept(self):
         out = pc.redact_log_text("batch 2026-10-03 at /home/alex/.local/share/perfin")
@@ -217,6 +232,15 @@ class ExportGateTests(unittest.TestCase):
 
     def test_malformed_request_fails_closed(self):
         self.assertEqual(self.gate(request={}), (False, ["invalid request"]))
+
+    def test_repeated_whitespace_pan_export_blocked(self):
+        for separator in ("  ", "\t", "\n", "\u00a0", " - "):
+            pan = separator.join(["4242"] * 4)
+            self.req["records"][0]["memo"] = "card " + pan
+            self.resp["records"][0]["memo"] = "card " + pan
+            allowed, reasons = self.gate()
+            self.assertFalse(allowed)
+            self.assertIn("residual card number", reasons)
 
     def test_happy_path_requires_confirmation(self):
         self.assertEqual(self.gate(), (True, []))
@@ -388,6 +412,13 @@ class RepoGuardTests(unittest.TestCase):
 
     def test_this_repository_is_clean(self):
         self.assertEqual(pc.scan_repo_for_forbidden(REPO_ROOT), [])
+
+    def test_repeated_whitespace_pan_repo_blocked(self):
+        pan = make_luhn("5", 16)
+        for separator in ("  ", "\t", "\n", "\u00a0", " - "):
+            with tempfile.TemporaryDirectory() as tmp:
+                Path(tmp, "notes.txt").write_text(separator.join(pan[i:i+4] for i in range(0,16,4)))
+                self.assertTrue(any("notes.txt" in f for f in pc.scan_repo_for_forbidden(tmp)))
 
 
 if __name__ == "__main__":
