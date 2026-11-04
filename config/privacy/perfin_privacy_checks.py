@@ -148,21 +148,29 @@ def evaluate_data_dir(path, env=None, defaults=None, check_filesystem=True):
         repo = find_git_checkout(path)
         if repo is not None:
             return {"decision": "refuse", "reasons": ["inside git checkout: %s" % repo]}
-    sync = detect_sync_folder(path, env, defaults)
-    if sync:
-        decision = "warn"
-        reasons.extend(sync)
-    text = str(path)
-    if text.startswith("\\\\") or text.startswith("//"):
-        decision = "warn"
-        reasons.append("network (UNC) path")
+    # Check the literal path and, when the filesystem is consulted, its symlink-resolved
+    # form too, so an alias into a sync or network folder is not treated as local.
+    candidates = [path]
+    if check_filesystem:
+        resolved = Path(path).expanduser().absolute().resolve(strict=False)
+        if str(resolved) != str(Path(path).expanduser().absolute()):
+            candidates.append(resolved)
     redirected = {f.casefold() for f in cfg["possibly_redirected_user_folders"]}
-    for part in _pure_path(path).parts:
-        if part.casefold() in redirected:
+    for candidate in candidates:
+        sync = detect_sync_folder(candidate, env, defaults)
+        if sync:
             decision = "warn"
-            reasons.append("possibly redirected user folder: %s" % part)
-            break
-    return {"decision": decision, "reasons": reasons}
+            reasons.extend(sync)
+        text = str(candidate)
+        if text.startswith("\\\\") or text.startswith("//"):
+            decision = "warn"
+            reasons.append("network (UNC) path")
+        for part in _pure_path(candidate).parts:
+            if part.casefold() in redirected:
+                decision = "warn"
+                reasons.append("possibly redirected user folder: %s" % part)
+                break
+    return {"decision": decision, "reasons": list(dict.fromkeys(reasons))}
 
 
 # ------------------------------------------------------------- redaction
@@ -188,8 +196,10 @@ _USER_PATH = re.compile(r"(?i)(?:[A-Z]:\\Users\\[^\\/\r\n\"'<>|]+|/home/[^/\r\n\
 _EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 _IBAN = re.compile(r"\b[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}\b")
 _SSN = re.compile(r"(?<!\d)\d{3}-\d{2}-\d{4}(?!\d)")
-# Any span of 13+ digits, optionally separated by single spaces or hyphens.
-_GROUPED = re.compile(r"(?<!\d)\d(?:[ -]?\d){12,}(?!\d)")
+# Any span of 13+ digits whose groups are separated by up to three spaces, tabs,
+# no-break spaces or hyphens ("4242  4242  4242  4242" included).
+_SEP = r"[ \t\u00a0-]"
+_GROUPED = re.compile(r"(?<!\d)\d(?:%s{0,3}\d){12,}(?!\d)" % _SEP)
 
 
 def card_number_candidates(span):
@@ -201,7 +211,7 @@ def card_number_candidates(span):
     substrings of harmless long numbers, and the export gate already rejects any run of
     6+ digits.
     """
-    groups = re.split(r"[ -]", span)
+    groups = [g for g in re.split(_SEP + "+", span) if g]
     out = set()
     for i in range(len(groups)):
         for j in range(i + 1, len(groups) + 1):

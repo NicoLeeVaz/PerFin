@@ -28,7 +28,7 @@ Related: [NoPii export contract](nopii-export-contract.md) · [test checklist](t
 | Windows (production) | `%LOCALAPPDATA%\PerFin` | `%LOCALAPPDATA%` is per-user and not part of roaming profiles. OneDrive Known Folder Move redirects Desktop, Documents and Pictures (and optionally other user folders), not `AppData\Local` [Unverified]. Do not use `%APPDATA%` (Roaming), which can roam with a domain profile [Unverified]. |
 | Linux/macOS (development only) | `$XDG_DATA_HOME/perfin`, else `~/.local/share/perfin` | Synthetic data only. A Linux run is never evidence for Windows behaviour. |
 
-An override is accepted from `PERFIN_DATA_DIR` or the user settings file `<data root>\config\settings.json`. Overrides get the same checks as the default. The checkout check walks both the literal path and its symlink-resolved path, so an alias into a checkout is refused. The settings file lives in the data root, never in the checkout.
+An override is accepted from `PERFIN_DATA_DIR` or the user settings file `<data root>\config\settings.json`. Overrides get the same checks as the default. The checkout, sync-folder, network-path and redirected-folder checks run on both the literal path and its symlink-resolved path. An alias into a checkout is refused, and an alias into a sync folder still warns. The settings file lives in the data root, never in the checkout.
 
 ### Layout
 
@@ -66,7 +66,7 @@ The detector is a heuristic. It cannot see virtual drive letters (for example a 
 | Marker | `perfin-data-dir.json` kind `synthetic` for generated directories; fixture files state "synthetic" in a header row, comment or adjacent README | kind `real` |
 | Card/account numbers | Public test numbers only (for example `4111 1111 1111 1111`) or obviously fake identifiers | Never stored in full by PerFin (alias plus at most last four digits) |
 
-The repository scan `scan_repo_for_forbidden()` flags real-data file types outside allowed paths, matching file names case-insensitively on every host (`RUN.LOG`, `backup.BAK`). It also flags Luhn-valid card numbers that are not known public test numbers, including a grouped card number that runs into a neighbouring number. Wiring it into a hook or release check belongs to tasks 3a/5a.
+The repository scan `scan_repo_for_forbidden()` flags real-data file types outside allowed paths, matching file names case-insensitively on every host (`RUN.LOG`, `backup.BAK`). It also flags Luhn-valid card numbers that are not known public test numbers, including a grouped card number that runs into a neighbouring number or uses up to three spaces, tabs, no-break spaces or hyphens between groups. The export gate and log redaction use the same card-number detection. Wiring it into a hook or release check belongs to tasks 3a/5a.
 
 ## Offline operation
 

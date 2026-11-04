@@ -134,6 +134,14 @@ class DataDirTests(unittest.TestCase):
             result = pc.evaluate_data_dir(os.path.join(alias, "data"), env={})
             self.assertEqual(result["decision"], "refuse")
 
+    def test_symlink_alias_into_sync_folder_warns(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            os.mkdir(os.path.join(tmp, "Dropbox"))
+            alias = os.path.join(tmp, "alias")
+            os.symlink(os.path.join(tmp, "Dropbox"), alias)
+            if pc.find_git_checkout(tmp) is None:
+                self.assertEqual(pc.evaluate_data_dir(os.path.join(alias, "data"), env={})["decision"], "warn")
+
     def test_this_checkout_refused(self):
         self.assertEqual(pc.evaluate_data_dir(REPO_ROOT / "data", env={})["decision"], "refuse")
 
@@ -274,6 +282,17 @@ class ExportGateTests(unittest.TestCase):
         self.assertIn(pan, pc.find_card_numbers("x " + grouped + " 7 y"))
         self.assertEqual(pc.find_card_numbers("id " + pc.load_defaults()["repo_guard"]["allowed_test_pans"][0]),
                          {pc.load_defaults()["repo_guard"]["allowed_test_pans"][0]})
+
+    def test_card_number_with_repeated_whitespace_detected(self):
+        pan = make_luhn("4", 16)
+        for sep in ("  ", "\t", "\u00a0", " - "):
+            text = "card " + sep.join(pan[i:i + 4] for i in range(0, 16, 4))
+            self.assertIn(pan, pc.find_card_numbers(text), repr(sep))
+            self.assertNotIn(pan[-4:], pc.redact_log_text(text), repr(sep))
+        req = copy.deepcopy(self.req)
+        resp = copy.deepcopy(self.resp)
+        req["records"][0]["memo"] = resp["records"][0]["memo"] = "card " + "  ".join(pan[i:i + 4] for i in range(0, 16, 4))
+        self.assertIn("residual card number", self.gate(request=req, response=resp)[1])
 
     def test_response_reporting_online_adapter_cancels(self):
         resp = copy.deepcopy(self.resp)
