@@ -1,0 +1,3 @@
+reconciliation_id,statement_id,included_count,difference_minor,recon_status
+r001,st_alpha_2026_06,4,0,balanced
+r002,st_beta_2026_06,1,2500,in_progress

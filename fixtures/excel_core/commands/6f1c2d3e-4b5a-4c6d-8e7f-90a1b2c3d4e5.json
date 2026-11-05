@@ -1,0 +1,1 @@
+{"contract": "perfin", "contract_version": "1.0.0", "document_type": "command", "command_id": "6f1c2d3e-4b5a-4c6d-8e7f-90a1b2c3d4e5", "command_type": "reject_rows", "issued_at": "2026-07-02T15:20:00Z", "issued_by": "excel_core:review_sheet", "payload": {"batch_id": "b2026_07_alpha", "row_numbers": [6, 7], "reason": "\u00e9 synthetic \"quoted\" reason"}, "expected_versions": []}

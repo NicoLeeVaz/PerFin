@@ -1,0 +1,27 @@
+{
+ "contract": "perfin",
+ "contract_version": "1.0.0",
+ "document_type": "module_manifest",
+ "module_id": "excel_statements",
+ "module_version": "0.1.0",
+ "module_kind": "excel_workbook",
+ "contract_versions": {
+  "min": "1.0.0",
+  "max_exclusive": "2.0.0"
+ },
+ "entry": null,
+ "workbook_file": "PerFin-Statements.xlsm",
+ "reads": [
+  "rpt_accounts",
+  "rpt_valuations",
+  "rpt_net_worth_lines",
+  "rpt_net_worth_bridge"
+ ],
+ "emits": [
+  "command"
+ ],
+ "commands": [
+  "record_valuation"
+ ],
+ "writes_ledger": false
+}
