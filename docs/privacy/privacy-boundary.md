@@ -14,7 +14,7 @@ Related: [NoPii export contract](nopii-export-contract.md) · [test checklist](t
 
 1. **Local by default.** Ordinary use (import, review, commit to Access, reconcile, refresh Excel, back up, restore) works with no network connection and makes no outbound calls.
 2. **No PerFin network code in the default workflow.** PerFin ships no telemetry, update check, cloud parser, bank connection, payment execution or AI client. Python and VBA code must not open sockets or HTTP connections (see the static checks in the [checklist](test-checklist.md)).
-3. **One authoritative store.** Access is the ledger. Excel is a refreshed view. Exports are copies, never a second ledger.
+3. **One authoritative store.** The selected SQLite (default) or explicit Access database is the ledger. Excel is a refreshed view. Exports are copies, never a second ledger.
 4. **Real data never enters the public repository.** Only code, empty templates and synthetic fixtures are committed.
 5. **Every outbound path is disabled by default** and is listed in the [data-flow table](#data-flow-and-outbound-paths). A path not in the table is a defect.
 6. **Fail closed.** If a safeguard (sync-folder check, NoPii adapter, fidelity check, redaction) is missing or fails, the dependent action is disabled. PerFin never falls back to the raw data.
@@ -35,7 +35,7 @@ An override is accepted from `PERFIN_DATA_DIR` or the user settings file `<data 
 | Subfolder | Contents | Sensitivity |
 | --- | --- | --- |
 | `statements\originals\` | Original CSV/OFX/PDF statements, kept unchanged, named by SHA-256 plus a user alias (no account numbers in file names) | High; original PDFs are never sanitized |
-| `db\` | Access back end (`.accdb`) and its lock file | High; authoritative ledger |
+| `db\` | SQLite database and sidecars, or explicit Access back end and lock file | High; authoritative ledger |
 | `workbooks\` | The user's populated Excel front end(s) | High |
 | `staging\` | Parsed preview rows awaiting review | High; deleted after commit or expiry |
 | `exports\outbox\` | Scrubbed exports the user explicitly created | Still sensitive (see the [NoPii contract](nopii-export-contract.md)) |
@@ -179,7 +179,7 @@ Deletion is ordinary file deletion. Secure erase is not promised on SSDs; device
 
 Two different records:
 
-- **Ledger audit trail** (inside Access, 2b): the authoritative edit history. It contains values because it is part of the ledger. It has the same protection as the database and is never written to log files or exports.
+- **Ledger audit trail** (inside the selected database): the authoritative edit history. It contains values because it is part of the ledger. It has the same protection as the database and is never written to log files or exports.
 - **Diagnostic logs** (`<data root>\logs`): for troubleshooting. They must not contain financial content.
 
 Diagnostic log rules (machine-readable in `defaults.json` → `log_redaction`):

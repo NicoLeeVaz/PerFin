@@ -95,7 +95,7 @@ class FinanceApp:
         batch_id = result.document['batch']['batch_id']
         if saved['result_status'] == 'replayed':
             batch_id = self.repo._one('import_batch', {'account_id': account_id, 'source_file_sha256': result.document['batch']['source_file_sha256']})['batch_id']
-        # The stage payload remains audited in Access; this local sidecar is extraction evidence.
+        # The stage payload remains audited in the ledger; this local sidecar is extraction evidence.
         p = self.path('staging/' + batch_id + '.pdf-provenance.json')
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(json.dumps(result.provenance, indent=2), encoding='utf-8')

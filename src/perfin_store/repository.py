@@ -23,7 +23,9 @@ import json
 import re
 import uuid
 from collections import defaultdict
+from contextlib import nullcontext
 from datetime import datetime, timezone
+from functools import wraps
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 from . import _paths, codec, migrations, sqlbuild
@@ -111,19 +113,34 @@ class _Ctx:
         self.affected[(entity, entity_id)] = version
 
 
+def _read_context(adapter):
+    """Adapters with explicit snapshot support protect multi-query reads."""
+    snapshot = getattr(adapter, "read_snapshot", None)
+    return snapshot() if snapshot is not None else nullcontext()
+
+
+def _consistent_read(method):
+    @wraps(method)
+    def read(self, *args, **kwargs):
+        with _read_context(self.adapter):
+            return method(self, *args, **kwargs)
+    return read
+
+
 class Repository:
     def __init__(self, adapter, *, clock: Callable[[], str] = utc_now, check_schema: bool = True):
         self.adapter = adapter
         self.clock = clock
         (self._validate, self.contract_schema_dir, self.contract_version,
          self.contract_major, self.contract_minor) = _paths.contracts()
-        if check_schema:
-            self.meta = migrations.ensure_compatible(adapter, contract_major=self.contract_major)
-        else:
-            self.meta = migrations.read_meta(adapter)
-        self.base_currency = self.meta.get("base_currency")
-        errs = self._validate(self.export_bundle())
-        self.blocked_errors: List[Error] = list(errs)  # stored ledger invalid -> fail closed for writes
+        with _read_context(adapter):
+            if check_schema:
+                self.meta = migrations.ensure_compatible(adapter, contract_major=self.contract_major)
+            else:
+                self.meta = migrations.read_meta(adapter)
+            self.base_currency = self.meta.get("base_currency")
+            errs = self._validate(self.export_bundle())
+            self.blocked_errors: List[Error] = list(errs)  # stored ledger invalid -> fail closed for writes
 
     # ------------------------------------------------------------------ low-level access
     def _rows(self, table: str, where: Optional[Dict[str, Any]] = None,
@@ -153,6 +170,7 @@ class Repository:
             self._insert("contract_meta", {"meta_key": key, "meta_value": value})
 
     # ------------------------------------------------------------------ contract shapes
+    @_consistent_read
     def snapshot(self, tables: Iterable[str] = LEDGER_TABLES) -> Dict[str, List[Dict[str, Any]]]:
         return {t: self._rows(t) for t in tables}
 
@@ -196,6 +214,7 @@ class Repository:
         }
         return doc
 
+    @_consistent_read
     def transaction(self, transaction_id: str) -> Optional[Dict[str, Any]]:
         row = self._one("ledger_txn", {"transaction_id": transaction_id})
         if row is None:
@@ -203,6 +222,7 @@ class Repository:
         return _txn_out(row, [_split_out(s) for s in self._rows("split", {"transaction_id": transaction_id},
                                                                order_by=["split_id"])])
 
+    @_consistent_read
     def export_staging_batch(self, batch_id: str) -> Optional[Dict[str, Any]]:
         b = self._one("import_batch", {"batch_id": batch_id})
         if b is None:
@@ -242,6 +262,7 @@ class Repository:
         return {"contract": "perfin", "contract_version": self.contract_version, "document_type": "staging_batch",
                 "batch": batch, "rows": rows}
 
+    @_consistent_read
     def summary(self) -> Dict[str, Any]:
         """Facts a restore must reproduce: versions, balances, import history and statements."""
         s = self.snapshot(LEDGER_TABLES + ("import_batch",))
@@ -356,6 +377,7 @@ class Repository:
     def _scenario_key(scenario_id):
         return "scenario:" + hashlib.sha256(scenario_id.encode("utf-8")).hexdigest()[:48]
 
+    @_consistent_read
     def payoff_scenario(self, scenario_id):
         pointer = self._one("contract_meta", {"meta_key": self._scenario_key(scenario_id)})
         if pointer is None:
@@ -367,6 +389,7 @@ class Repository:
         return {"contract": "perfin", "contract_version": self.contract_version,
                 "document_type": "payoff_scenario", "scenario": command["payload"]}
 
+    @_consistent_read
     def payoff_scenarios(self):
         result = []
         for row in self._rows("contract_meta"):

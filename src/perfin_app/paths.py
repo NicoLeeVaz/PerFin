@@ -45,7 +45,9 @@ def initialize_layout(root, acknowledge=False, synthetic=False):
     dirs += ['reports', 'commands/drafts', 'commands/outbox', 'commands/processed', 'commands/rejected']
     # Validate the entire layout before creating anything.
     paths = [child(root, d, acknowledge) for d in dirs]
-    root.mkdir(parents=True, exist_ok=True)
+    # Private exports and staging inherit the protection of a newly created
+    # dedicated root. Never change permissions on a user-selected existing folder.
+    root.mkdir(mode=0o700, parents=True, exist_ok=True)
     for p in paths:
         p.mkdir(parents=True, exist_ok=True)
     if not marker.exists():

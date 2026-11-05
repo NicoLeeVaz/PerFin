@@ -3,11 +3,11 @@ import subprocess
 import sys
 
 
-def launch(data_root, acknowledge=False):
+def launch(data_root, acknowledge=False, backend='sqlite'):
     import tkinter as tk
     from tkinter import ttk, filedialog, messagebox
     root=tk.Tk();root.title('PerFin — Local Finance');root.geometry('1000x760')
-    ttk.Label(root,text='Data stays in '+str(data_root)).pack(anchor='w',padx=12,pady=8)
+    ttk.Label(root,text='Data stays in '+str(data_root)+' ('+backend+')').pack(anchor='w',padx=12,pady=8)
     form=ttk.Frame(root);form.pack(fill='x',padx=12)
     fields={}
     defaults={'Account':'chk:main','Profile':'synthetic_checking_signed','CSV file':'','Batch':'','Approve rows':'','Reject rows':'','Reason':'',
@@ -19,8 +19,8 @@ def launch(data_root, acknowledge=False):
     ttk.Button(form,text='Browse CSV',command=browse).grid(row=2,column=2)
     output=tk.Text(root,wrap='none',height=23);output.pack(fill='both',expand=True,padx=12,pady=10)
     def run(args,confirm=False):
-        if confirm and not messagebox.askyesno('Confirm local change','Apply this explicit action to the local Access database?'):return
-        command=[sys.executable,'-m','perfin_app','--data-root',str(data_root)]
+        if confirm and not messagebox.askyesno('Confirm local change','Apply this explicit action to the local '+backend+' database?'):return
+        command=[sys.executable,'-m','perfin_app','--data-root',str(data_root),'--backend',backend]
         if acknowledge:command+=['--acknowledge-location']
         root.config(cursor='watch');root.update_idletasks()
         try:

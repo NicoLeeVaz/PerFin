@@ -2,8 +2,8 @@
 
     path/to/venv/python -I path/to/source/scripts/release/installed_smoke.py
 
-No database, network or Office dependency is substituted. This verifies packaged
-Python modules/resources and generated OOXML only; actual Windows checks remain.
+No network or Office dependency is substituted. This verifies packaged modules,
+real SQLite persistence/backup/restore and generated OOXML; native checks remain.
 """
 from __future__ import annotations
 
@@ -37,6 +37,10 @@ def main():
     from perfin_statements import build_statements
     from perfin_excel_statements import build as statements_build
     from perfin_app.__main__ import demo_bundle
+    from perfin_app.paths import initialize_layout
+    from perfin_app.service import FinanceApp, accepted
+    from perfin_store.sqlite_backend import create_database, open_database
+    from perfin_store import sqlite_backup
     if SOURCE in root().resolve().parents or root().resolve() == SOURCE:
         raise RuntimeError('schemas resolved through source checkout')
     profiles = builtin_profiles()
@@ -65,6 +69,34 @@ def main():
         if read_scenario(data / 'payoff.xlsx')['scenario']['cards'] != scenario['scenario']['cards']:
             raise RuntimeError('installed payoff workbook roundtrip failed')
         statements_build(details, data / 'statements.xlsx', data_root=data)
+        root_dir = initialize_layout(data / 'finance', synthetic=True)
+        database = root_dir / 'db/perfin.sqlite'
+        create_database(database)
+        repo = open_database(database)
+        try:
+            accepted(repo.import_bundle(bundle))
+            accepted(repo.set_default_categories('expenses', 'income'))
+            app = FinanceApp(repo, root_dir)
+            profile = profiles[('synthetic_checking_signed', '1.0.0')]
+            staged = app.import_csv(b'Date,Description,Amount,Balance,Transaction ID\n02/01/2026,SYNTHETIC SHOP,-25.00,,smoke-1\n',
+                                    'synthetic.csv', profile, 'chk:main')
+            batch_id = staged['document']['batch']['batch_id']
+            app.review(batch_id, approve=[1])
+            app.commit(batch_id)
+            if repo.summary()['account_balances_minor']['chk:main'] != 247500:
+                raise RuntimeError('installed SQLite command path returned wrong balance')
+            expected = repo.summary()
+        finally:
+            repo.adapter.close()
+        saved = sqlite_backup.create_backup(database, root_dir / 'backups', summary=expected)
+        restored = root_dir / 'db/restored.sqlite'
+        sqlite_backup.restore_backup(saved, restored)
+        repo = open_database(restored)
+        try:
+            if repo.summary() != expected:
+                raise RuntimeError('installed SQLite restore lost balances/history')
+        finally:
+            repo.adapter.close()
         for name in ('perfin_app', 'perfin_payoff', 'perfin_excel_payoff', 'perfin_excel_statements', 'perfin_pdf'):
             subprocess.run([sys.executable, '-I', '-B', '-m', name, '--help'], cwd=data, check=True,
                            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
@@ -73,7 +105,7 @@ def main():
         manifest = Path(package.__file__).parent / 'module_manifest.json'
         if not manifest.is_file() or validate_document(json.loads(manifest.read_text())):
             raise RuntimeError('installed module manifest missing/invalid: ' + name)
-    print('PASS installed wheel imports, resources, profiles, schemas, engines, workbook generation and CLI help')
+    print('PASS installed wheel resources, real SQLite reviewed import/backup/restore, engines, workbooks and CLI help')
     print('PENDING Windows/ACE, desktop Excel, Power Query and VBA runtime acceptance')
     return 0
 

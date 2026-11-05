@@ -1,23 +1,30 @@
 # Getting started
 
-PerFin uses Access as the authoritative local store and Excel as the interactive frontend. Python performs deterministic imports, calculations and controlled writes. Keep the checkout and private data folder separate.
+PerFin uses SQLite as the default portable local store and generates Excel files. Access is an explicit optional native backend. Python performs deterministic imports, calculations and controlled writes. Keep the checkout and private data folder separate.
 
-**Windows/Office runtime verification is still pending.** The steps below are the intended local installation/workflow, supported by automated source tests where available, not a claim that a fresh Windows machine has passed acceptance.
+**SQLite works without Windows or Office.** Native Access/ACE and desktop Excel acceptance are separate release requirements; their pending status does not block portable development. Generated files and inspected formulas are not native Excel recalculation evidence.
 
-## 1. Prepare Windows
+## 1. Install the portable app
 
-Use desktop Excel and the Access Database Engine/Access Runtime. Full Access is needed for design work, not necessarily ordinary use. Python, ACE and Office must have compatible bitness. Run the [environment check](access/README.md) before creating a database. Python dependencies and build requirements are declared in `pyproject.toml` and the project requirements files; workbook generation uses pinned openpyxl.
+Use Python 3.10+ with SQLite 3.37+ (check `perfin envcheck` after installation).
 
-From a clean checkout:
-
-```bat
-py -m venv .venv
-.venv\Scripts\activate
-python -m pip install ".[windows,pdf]"
+```sh
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# Linux/macOS: source .venv/bin/activate
+python -m pip install .
 perfin envcheck
 ```
 
-The Windows and PDF extras install the declared optional adapters. Installation may download code/dependencies; normal finance operations do not need network access. For a disconnected machine, prepare a reviewed local wheelhouse first and install with `--no-index --find-links`.
+SQLite uses Python's standard-library sqlite3. Workbook generation uses the
+project's declared local Python dependencies; desktop Excel is not required to
+generate XLSX files. Install `.[pdf]` for the optional local PDF parser, or
+`.[test]` for the full synthetic development suite. A reviewed local wheelhouse
+with `--no-index --find-links` supports offline installation.
+
+For the optional Access backend, install `.[windows]` on compatible Windows with
+matching Python/ACE/Office bitness, then use `perfin --backend access envcheck`.
+Full Access is needed for design inspection. Native evidence remains pending.
 
 Choose `%LOCALAPPDATA%\PerFin` or another local, nonsynced folder. Actual CSV/PDF statements, `.accdb` databases, generated workbooks, reports, commands, backups and logs must not be placed in this public checkout. Synced/network paths require explicit acknowledgment; checkout paths are refused.
 
@@ -31,7 +38,7 @@ perfin --data-root "%PERFIN_DATA%" init --demo
 perfin --data-root "%PERFIN_DATA%" gui
 ```
 
-`--demo` creates synthetic checking/two-card accounts and categories. It does not connect to a bank or invent an import history. The GUI is a convenience over the same local services; CLI commands are available for automation. Use a separate data root when starting with real data.
+`--demo` creates synthetic checking/two-card accounts and categories. It does not connect to a bank or invent an import history. SQLite is selected for new roots and saved in perfin-data-dir.json. Existing Access roots are preserved; backend conflicts are refused. The GUI requires a local display; headless/cloud users use the CLI. Use a separate data root when starting with real data.
 
 To onboard your own accounts, prepare a validated local `ledger_bundle` JSON with account IDs, opening dates/balances, currency and categories. The [contract examples](../contracts/examples/valid/ledger_household.json) show the document format; do not treat the synthetic numbers as your own. Then:
 
@@ -63,7 +70,7 @@ A card payment is a transfer between checking and the card; it must not be count
 
 `refresh` writes local reports and the core workbook. Rebuild/refresh explicitly after changes; Excel views are not a second editable ledger. For interactive Power Query/VBA refresh, install the exported components as described in the [Excel guide](excel/README.md), then complete the [Windows checklist](excel/windows-checklist.md).
 
-Build the statements module directly from the current local Access ledger:
+Build the statements module directly from the selected local ledger:
 
 ```bat
 perfin --data-root "%PERFIN_DATA%" statements --as-of 2026-07-31 --period-start 2026-07-01
@@ -95,14 +102,14 @@ The payoff and statements workbooks are separate modules. Their runbooks give co
 
 ## 5. Backup, restore and update
 
-Close Access/Excel connections before backup. Use a new restore target so an existing database is never silently overwritten:
+SQLite backup uses the online snapshot API so committed WAL data is included. Close Access/Excel connections when backing up the optional Access backend. Use a new restore target so an existing database is never silently overwritten:
 
 ```bat
 perfin --data-root "%PERFIN_DATA%" backup
-perfin --data-root "%PERFIN_DATA%" restore BACKUP_SET --target db/perfin-restored.accdb
+perfin --data-root "%PERFIN_DATA%" restore BACKUP_SET --target db/perfin-restored.sqlite
 ```
 
-A backup set includes hashes and metadata. Restore validates integrity and checks balances/history/schema through the backend. Keep a backup before a code upgrade. Newer/incompatible database schemas are refused; do not bypass schema checks or edit the database directly. Restore the prior backup/code pair if an upgrade cannot be completed.
+Restore creates a new file and does not silently switch the active database. Access restore targets use `.accdb`; SQLite targets use `.sqlite`, `.sqlite3` or `.db`. A backup set includes hashes and metadata. Restore validates integrity and checks balances/history/schema through the backend. Keep a backup before a code upgrade. Newer/incompatible database schemas are refused; do not bypass schema checks or edit the database directly. Restore the prior backup/code pair if an upgrade cannot be completed.
 
 ## Troubleshooting
 
@@ -117,4 +124,4 @@ A backup set includes hashes and metadata. Restore validates integrity and check
 | Payoff unsupported/infeasible | Correct card terms or budget; a truncated schedule is not debt-free. |
 | Net-worth totals incomplete | Supply missing valuations and resolve overlapping assets rather than adding totals twice. Foreign currencies are refused until the ledger contract supports them; FX inputs do not bypass this restriction. |
 
-For developers, run `python scripts/release/check_all.py --offline`. For an actual Windows release, follow [release verification](../release/README.md). No paid hosted CI is required.
+For a complete synthetic demo on Linux/cloud, run `python scripts/core/portable_demo.py --out /tmp/perfin-demo-new`; see [demo instructions](runbooks/portable-demo.md). For the full schema, use the [relationship explorer](database/model.html). For audit-preserving archives, see [portability](database/portability.md); `snapshot` is only a ledger exchange, not a full-history backup. For developers, run `python scripts/release/check_all.py --offline`. For an actual Windows release, follow [release verification](../release/README.md). No paid hosted CI is required.

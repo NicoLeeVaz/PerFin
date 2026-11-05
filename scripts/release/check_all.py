@@ -20,7 +20,7 @@ SUITES = (
     "contracts/tests", "config/privacy", "research/reuse/harness", "tests/import",
     "tests/store", "tests/excel_core", "tests/integration_core", "tests/payoff",
     "tests/statements", "tests/excel_payoff", "tests/excel_statements", "tests/pdf",
-    "tests/acceptance",
+    "tests/acceptance", "tests/database", "tests/sqlite", "tests/portability", "tests/portable_demo", "tests/extras",
 )
 # sitecustomize is loaded in each subprocess. Audit hooks reject socket access,
 # including a socket created before a test replaces socket.socket. This is a
@@ -57,7 +57,7 @@ def main(argv=None):
     except ValueError as exc:
         print("BLOCKED:", exc)
         return 2
-    evidence = {"scope": "local Python synthetic checks; Windows/Office unverified", "offline_guard": args.offline,
+    evidence = {"scope": "Python, real SQLite and synthetic workbook checks; native Access/Excel unverified", "offline_guard": args.offline,
                 "python": sys.version.split()[0], "platform": sys.platform, "checks": []}
     with tempfile.TemporaryDirectory(prefix="perfin-network-guard-") as guard:
         env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")

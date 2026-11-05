@@ -1,18 +1,26 @@
 # PerFin
 
-Private local personal finance: **Excel frontend, Microsoft Access database, local Python automation.**
+**Private local personal finance with SQLite, Python workflows and Excel files.**
 
-PerFin imports statements into a review queue, records approved transactions through an audited write path, exports Excel views and compares credit-card payoff plans. Optional modules provide personal statements/net worth and reviewed text-PDF extraction. Financial data stays in a local data folder outside this public source repository; external AI export is disabled by default.
+Import statements into an explicit review queue, commit approved transactions to one local database, reconcile statements, generate reports/workbooks, compare payoff plans and view dated net worth. Access remains an explicit optional backend for a later native deployment; a Windows dependency no longer blocks development.
 
-**Status:** source implementation is available, with automated local checks and reproducible packaging tools. Windows/ACE and desktop Excel acceptance remain **pending**, so a production-ready Windows release is not yet certified. See the [tracker](https://github.com/NicoLeeVaz/PerFin/issues/1) for exact merged revisions and test evidence.
+## Start here
 
+- [Complete 18-table model](docs/database/model.md) and [offline clickable relationship explorer](docs/database/model.html)
 - [Install and run](docs/GETTING-STARTED.md)
-- [Core import/review workflow](docs/runbooks/core/)
-- [Payoff engine](docs/payoff/) and [Excel planner](docs/runbooks/payoff/)
-- [Statements/net worth](docs/statements/) and [Excel statements](docs/runbooks/statements/)
-- [Local PDF extraction](docs/runbooks/pdf/)
-- [Release checks and packaging](release/README.md)
-- [Contracts](docs/contracts.md), [privacy](docs/privacy/privacy-boundary.md), [research](research/README.md)
-- [Agent execution plan](docs/EXECUTION-PLAN.md)
+- [Run the synthetic portable demo](docs/runbooks/portable-demo.md): real SQLite, two statement cycles, three Excel workbooks and evidence
+- [SQLite backup and full-history portability](docs/database/portability.md)
+- [Core workflow](docs/runbooks/core/), [payoff](docs/payoff/), [statements](docs/statements/), [local PDF](docs/runbooks/pdf/)
+- [Three new development waves](docs/EXECUTION-PLAN.md), [live tracker](https://github.com/NicoLeeVaz/PerFin/issues/1), [release verification](release/README.md)
 
-The production database is Access; Linux tests use a test-only fake adapter and do not certify ACE behavior. Payoff results clearly identify their supported calculation assumptions. Initial CSV/PDF profiles are synthetic, not verified against every bank. There are no payment execution or bank-connection features.
+```sh
+python -m pip install .
+perfin --data-root /outside/checkout/perfin-synthetic init --demo
+perfin --data-root /outside/checkout/perfin-synthetic status
+```
+
+SQLite is the default only for new roots. Existing Access roots retain their backend; conflicting roots are refused. Use `--backend access` with a separate data root for the native path. Tables, exact integer cents, review, audit and exchange contracts are shared; engine-specific types, queries, locking and backup are explicitly mapped.
+
+**Evidence is separate by platform:** real SQLite tests and generated XLSX checks support portable use. Native Access/ACE, desktop Excel recalculation, Power Query and VBA remain release requirements for those features. Cloud demonstrations use synthetic data only. Actual financial data stays local outside this public checkout and sync folders by default.
+
+Initial CSV/PDF profiles are synthetic; real exports require validation. Optional AI export stays disabled. No bank connections, payment execution or telemetry.

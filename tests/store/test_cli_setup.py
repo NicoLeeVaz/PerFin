@@ -153,8 +153,9 @@ class StaticSafety(unittest.TestCase):
             elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
                 yield node.module.split(".")[0]
 
-    def test_no_network_or_alternate_database_modules(self):
-        banned = {"socket", "http", "urllib", "requests", "ftplib", "smtplib", "sqlite3", "dbm", "shelve"}
+    def test_no_network_or_undeclared_database_modules(self):
+        # SQLite is explicitly authorized as the portable backend (2026-11-05).
+        banned = {"socket", "http", "urllib", "requests", "ftplib", "smtplib", "dbm", "shelve"}
         for name, tree in self.modules().items():
             self.assertFalse(banned & set(self.imports(tree)), name)
 
@@ -179,7 +180,7 @@ class StaticSafety(unittest.TestCase):
                     self.fail("float() call in %s" % name)
 
     def test_no_committed_databases_or_csv(self):
-        for pattern in ("*.accdb", "*.mdb", "*.laccdb", "*.csv", "*.bak"):
+        for pattern in ("*.accdb", "*.mdb", "*.laccdb", "*.csv", "*.bak", "*.sqlite", "*.sqlite3", "*.db", "*-wal", "*-shm", "*-journal"):
             for base in (ROOT / "access", ROOT / "tests" / "store", ROOT / "src" / "perfin_store", ROOT / "docs" / "access"):
                 self.assertEqual(list(base.rglob(pattern)), [], (base, pattern))
 

@@ -16,7 +16,7 @@ import sys
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
-FORBIDDEN_SUFFIXES = {".accdb", ".mdb", ".laccdb", ".ldb", ".xlsx", ".xlsm", ".pdf", ".zip", ".log", ".pem", ".key"}
+FORBIDDEN_SUFFIXES = {".accdb", ".mdb", ".laccdb", ".ldb", ".sqlite", ".sqlite3", ".db", ".xlsx", ".xlsm", ".pdf", ".zip", ".log", ".pem", ".key"}
 FORBIDDEN_PARTS = {".git", ".venv", "__pycache__", "node_modules", "backups", "outbox", "logs"}
 
 
@@ -24,7 +24,8 @@ def check_source_path(path):
     p = Path(path)
     if p.is_absolute() or ".." in p.parts or set(p.parts) & FORBIDDEN_PARTS:
         raise ValueError("unsafe source path: " + str(path))
-    if p.suffix.lower() in FORBIDDEN_SUFFIXES or p.name.startswith(".env"):
+    if (p.suffix.lower() in FORBIDDEN_SUFFIXES or p.name.startswith(".env")
+            or p.name.lower().endswith(("-wal", "-shm", "-journal"))):
         raise ValueError("runtime/private artifact cannot ship: " + str(path))
 
 
@@ -77,7 +78,9 @@ def main(argv=None):
     (out / "SHA256SUMS").write_text("".join(v["sha256"] + "  " + k + "\n" for k, v in artifacts.items()), encoding="ascii")
     (out / "release-manifest.json").write_text(json.dumps({"revision": revision, "artifacts": artifacts,
         "python": sys.version.split()[0], "build_tools": {name: version(name) for name in ("setuptools", "wheel")},
-        "source_timestamp": "1980-01-01T00:00:00", "runtime_acceptance": "PENDING; attach separate Windows evidence"}, indent=2), encoding="utf-8")
+        "source_timestamp": "1980-01-01T00:00:00",
+        "portable_acceptance": "Attach real SQLite and installed-wheel evidence for this revision",
+        "native_access_excel_acceptance": "PENDING; release-only for native features, not a development blocker"}, indent=2), encoding="utf-8")
     print(out)
     return 0
 
