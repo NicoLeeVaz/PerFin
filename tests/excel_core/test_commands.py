@@ -43,6 +43,50 @@ class Build(unittest.TestCase):
 
 
 class Outbox(unittest.TestCase):
+    def symlink(self, link, target, *, directory=True):
+        try:
+            link.symlink_to(target, target_is_directory=directory)
+        except (OSError, NotImplementedError):
+            self.skipTest("symlink creation is unavailable on this host")
+
+    def test_outbox_symlink_cannot_escape_approved_root(self):
+        with _support.temp_dir() as root, _support.temp_dir() as external:
+            (external / ".git").mkdir()
+            (root / "commands").mkdir()
+            self.symlink(root / "commands" / "outbox", external)
+            doc = commands.build_review_command("approve_rows", "synthetic", [1])
+            with self.assertRaises(commands.CommandError):
+                commands.write_to_outbox(doc, root, acknowledged=True)
+            self.assertFalse((external / (doc["command_id"] + ".json")).exists())
+
+    def test_promote_rejects_escaping_draft_file(self):
+        with _support.temp_dir() as root, _support.temp_dir() as external:
+            drafts = root / "commands" / "drafts"
+            drafts.mkdir(parents=True)
+            doc = commands.build_review_command("approve_rows", "synthetic", [1])
+            name = doc["command_id"] + ".json"
+            source = external / name
+            source.write_text(json.dumps(doc), encoding="utf-8")
+            self.symlink(drafts / name, source, directory=False)
+            with self.assertRaises(commands.CommandError):
+                commands.promote_drafts(root)
+            self.assertTrue(source.exists())
+            self.assertFalse((root / "commands" / "outbox").exists())
+
+    def test_promote_cannot_write_into_escaping_folder(self):
+        for folder, valid in (("outbox", True), ("rejected", False)):
+            with self.subTest(folder=folder), _support.temp_dir() as root, _support.temp_dir() as external:
+                drafts = root / "commands" / "drafts"
+                drafts.mkdir(parents=True)
+                doc = commands.build_review_command("approve_rows", "synthetic", [1])
+                name = doc["command_id"] + ".json"
+                (drafts / name).write_text(json.dumps(doc) if valid else "null", encoding="utf-8")
+                self.symlink(root / "commands" / folder, external)
+                with self.assertRaises(commands.CommandError):
+                    commands.promote_drafts(root)
+                self.assertTrue((drafts / name).exists())
+                self.assertFalse((external / name).exists())
+
     def test_write_never_overwrites(self):
         with _support.temp_dir() as root:
             doc = commands.build_review_command("approve_rows", "b2026_07_alpha", [1, 4])

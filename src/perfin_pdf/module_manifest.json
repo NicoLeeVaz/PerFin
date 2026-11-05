@@ -1,0 +1,7 @@
+{
+  "contract": "perfin", "contract_version": "1.0.1", "document_type": "module_manifest",
+  "module_id": "pdf.synthetic.statement.v1", "module_version": "0.1.0", "module_kind": "import_profile",
+  "contract_versions": {"min": "1.0.0", "max_exclusive": "1.1.0"},
+  "entry": "perfin_pdf:stage_pdf", "reads": ["rpt_accounts", "rpt_transactions"],
+  "emits": ["staging_batch"], "commands": [], "writes_ledger": false
+}

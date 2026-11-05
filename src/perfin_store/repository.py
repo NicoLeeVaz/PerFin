@@ -207,6 +207,13 @@ class Repository:
         b = self._one("import_batch", {"batch_id": batch_id})
         if b is None:
             return None
+        # The immutable stage command already stores every contract field. Use it
+        # for provenance not represented by the normalized 1.0 columns; reviewed
+        # state and financial values below still come from authoritative rows.
+        stage_id = str(uuid.uuid5(ADMIN_NAMESPACE, "stage:%s:%s" % (batch_id, b["source_file_sha256"])))
+        log = self._one("command_log", {"command_id": stage_id})
+        original = json.loads(log["payload_json"]) if log else {}
+        original_rows = {r["row_number"]: r for r in original.get("rows", [])}
         rows = []
         for r in self._rows("staging_row", {"batch_id": batch_id}, order_by=["row_number"]):
             parsed = None
@@ -218,6 +225,15 @@ class Repository:
                    "fingerprint": r["fingerprint"], "errors": json.loads(r["errors_json"]),
                    "duplicate": _drop_none({"status": r["duplicate_status"], "matched_transaction_id": r["matched_transaction_id"]}),
                    "review_state": r["review_state"]}
+            saved = original_rows.get(r["row_number"], {})
+            for key in ("transfer_candidate_transaction_id",):
+                if key in saved:
+                    row[key] = saved[key]
+            for key in ("matched_row_number", "evidence"):
+                if key in saved.get("duplicate", {}):
+                    row["duplicate"][key] = saved["duplicate"][key]
+            if parsed is not None and "running_balance_minor" in (saved.get("parsed") or {}):
+                parsed["running_balance_minor"] = saved["parsed"]["running_balance_minor"]
             if r["proposed_splits_json"]:
                 row["proposed_splits"] = json.loads(r["proposed_splits_json"])
             rows.append(row)
@@ -335,6 +351,34 @@ class Repository:
         ctx = _Ctx(cid, ctype, command["issued_at"], command["issued_by"], command, self.clock())
         payload = command["payload"]
         return self._run(ctx, lambda c: handler(c, payload))
+
+    @staticmethod
+    def _scenario_key(scenario_id):
+        return "scenario:" + hashlib.sha256(scenario_id.encode("utf-8")).hexdigest()[:48]
+
+    def payoff_scenario(self, scenario_id):
+        pointer = self._one("contract_meta", {"meta_key": self._scenario_key(scenario_id)})
+        if pointer is None:
+            return None
+        saved = self._one("command_log", {"command_id": pointer["meta_value"]})
+        if saved is None:
+            raise StorageError("saved scenario pointer has no audited command")
+        command = json.loads(saved["payload_json"])
+        return {"contract": "perfin", "contract_version": self.contract_version,
+                "document_type": "payoff_scenario", "scenario": command["payload"]}
+
+    def payoff_scenarios(self):
+        result = []
+        for row in self._rows("contract_meta"):
+            if row["meta_key"].startswith("scenario:"):
+                saved = self._one("command_log", {"command_id": row["meta_value"]})
+                result.append(json.loads(saved["payload_json"])["payload"])
+        return sorted(result, key=lambda x: x["scenario_id"])
+
+    def _cmd_save_payoff_scenario(self, ctx, payload):
+        before = self.payoff_scenario(payload["scenario_id"])
+        self._meta_set(self._scenario_key(payload["scenario_id"]), ctx.command_id)
+        ctx.log("payoff_scenario", payload["scenario_id"], "save", before, payload)
 
     def stage_batch(self, doc: Any, *, issued_by: str = "importer:stage") -> Dict[str, Any]:
         """Store a staging_batch document (import_batch + staging_row). Never touches the ledger."""

@@ -312,10 +312,17 @@ class ConcurrencyAndValidation(Base):
         r = self.repo.execute("not a document")
         self.assertEqual(r["command_id"], NIL_UUID)
 
-    def test_payoff_scenarios_are_not_stored_here(self):
+    def test_payoff_scenarios_are_audited_and_current(self):
         cmd = json.loads((ROOT / "contracts" / "examples" / "valid" / "payoff_scenario.json").read_text(encoding="utf-8"))
         r = self.repo.execute(S.command("save_payoff_scenario", cmd["scenario"]))
-        self.rejected(r, "E_COMMAND_PAYLOAD")
+        self.ok(r)
+        sid = cmd["scenario"]["scenario_id"]
+        self.assertEqual(self.repo.payoff_scenario(sid)["scenario"], cmd["scenario"])
+        cmd["scenario"]["cash_plan"]["monthly_minor"] += 100
+        self.ok(self.repo.execute(S.command("save_payoff_scenario", cmd["scenario"])))
+        self.assertEqual(self.repo.payoff_scenario(sid)["scenario"], cmd["scenario"])
+        self.assertEqual(len(self.repo.payoff_scenarios()), 1)
+        self.assertEqual(len([r for r in self.ad.db.rows["audit_log"] if r["entity"] == "payoff_scenario"]), 2)
 
     def test_all_dml_is_parameterized(self):
         self.stage_and_review()

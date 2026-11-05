@@ -1,6 +1,6 @@
 # PerFin Access backend (task 2b)
 
-Issue [#6](https://github.com/NicoLeeVaz/PerFin/issues/6), part of tracker [#1](https://github.com/NicoLeeVaz/PerFin/issues/1). Built against contract **1.0.0** (frozen, `contracts/VERSION`); no contract file is changed.
+Issue [#6](https://github.com/NicoLeeVaz/PerFin/issues/6), part of tracker [#1](https://github.com/NicoLeeVaz/PerFin/issues/1). The schema remains **1.0.0**; exchange documents use the current compatible contract **1.0.1** (`contracts/VERSION`).
 
 **Status:** the code and its Linux unit tests are complete. **Every Windows/Access check is pending.** Nothing here has run against Microsoft Access or the ACE driver. Statements about Microsoft behaviour that this session could not check against Microsoft documentation are marked **[Unverified]**. The Windows acceptance script ([below](#windows-acceptance-pending)) is the evidence the wave gate needs.
 
@@ -23,7 +23,7 @@ Command semantics, ids and the rules the repository adds are in [commands.md](co
 
 1. **Windows 10/11** with Microsoft 365 / Office desktop, *or* the free **Access Runtime** / **Microsoft Access Database Engine (ACE)**. The ACE ODBC driver must be registered as `Microsoft Access Driver (*.mdb, *.accdb)` [Unverified name on the user's version].
 2. **Bitness must match.** ACE has the same bitness as Office (32- or 64-bit). Python and pyodbc must have that bitness too: 64-bit Office needs 64-bit Python. Mixing them is the most common failure; `envcheck` reports it [Unverified].
-3. **Python 3.9+** of that bitness, plus **pyodbc 5.3.0** (MIT). Install it with hashes, as the 1b catalog recommends: `py -3 -m pip install --require-hashes -r <reviewed requirements file>`. 3a owns the shared requirements file; until then `py -3 -m pip install pyodbc==5.3.0`. Installing it is the only step that uses the network, and it involves no financial data.
+3. **Python 3.10+** of that bitness. Install the project with its `windows` extra using the [current installation instructions](../GETTING-STARTED.md); `pyproject.toml` is authoritative for the pinned pyodbc dependency. A prepared local wheelhouse supports offline installation. Ordinary operation makes no network calls.
 4. **Full Access (not the Runtime)** is needed only for *design work*: opening the database to inspect tables, relationships or queries, importing `PerfinSetup.bas`, or editing forms and VBA. The Runtime cannot open design view [Unverified]. Day-to-day use (setup, commands, reports, backup) needs only ACE + Python.
 5. **Data location.** The database lives in the data root, `%LOCALAPPDATA%\PerFin\db\` by default (see [privacy boundary](../privacy/privacy-boundary.md)). It is never inside this repository or a sync folder. Setup, report export, backup and restore all call `evaluate_data_dir()` from `config/privacy/perfin_privacy_checks.py`, which is imported, not copied:
    - inside a git checkout: refused, with no override;
@@ -36,7 +36,7 @@ py -3 -m perfin_store envcheck
 powershell -NoProfile -ExecutionPolicy Bypass -File access\setup\Get-PerfinEnvironment.ps1
 ```
 
-Run these from the repository root with `set PYTHONPATH=src` until 3a packages PerFin.
+After installing the project, Python module commands work outside the checkout. The PowerShell source helper remains under `access/setup` in the source package. For source-only development, run from the repository root with `set PYTHONPATH=src`.
 
 `envcheck` reports:
 
@@ -117,7 +117,7 @@ Results are `command_result` documents. They are validated before they are retur
 
 The audit trail holds values. It is part of the protected ledger, never a diagnostic log (privacy boundary, "Logs and audit-log redaction"). PerFin writes no diagnostic log in 2b.
 
-Minimal review CLI for 3a (prints the queue; each action is a contract command with `issued_by: cli:review`):
+The low-level review CLI prints the queue; each action is a contract command with `issued_by: cli:review`. The integrated `perfin` CLI and local GUI provide the normal workflow ([runbook](../runbooks/core/README.md)).
 
 ```bat
 py -3 -m perfin_store review --db DB --batch b2026_07_alpha
@@ -154,7 +154,7 @@ Text columns get the privacy boundary's formula prefix (`'`). The tables exporte
 
 The `rpt_payoff_*` and `rpt_net_worth_*` tables are produced by 3b/3c, not by the store.
 
-The output directory gets the data-root location checks. Two differences between the views and the CSV:
+The output directory and each resolved report-file destination receive location checks; child paths escaping the export directory are refused before writing. Two differences between the views and the CSV:
 
 - The views compute "as of" from `Date()`; the CSV export takes `--as-of`.
 - `rpt_review_queue.error_codes` holds the raw `errors_json` in the view, because Access SQL cannot parse JSON. The CSV holds codes joined with `;`.
@@ -177,7 +177,7 @@ The output directory gets the data-root location checks. Two differences between
 4. The copy is opened through the repository, which repeats the version checks and the ledger validation.
 5. The restored summary must equal the manifest's: balances, import history, statements, reconciliations, row counts and schema version. On any mismatch the restored copy is deleted.
 
-Statement PDFs are never stored in Access: `statement.evidence_ref` is an opaque reference, and paths are refused. Originals stay in `statements\originals\`. 3a can pass them to `create_backup(extra_files=..., data_root=...)` so they are copied and hashed with the set.
+Statement PDFs are never stored in Access: `statement.evidence_ref` is an opaque reference, and paths are refused. Originals stay in `statements\originals\`. The backup API accepts `create_backup(extra_files=..., data_root=...)` to copy and hash selected originals with a set. The current application backup command backs up the database; include original statement files separately when planning recovery.
 
 ## Windows acceptance (pending)
 

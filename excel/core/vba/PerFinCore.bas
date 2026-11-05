@@ -8,7 +8,7 @@ Option Explicit
 
 Public Const PERFIN_REFRESH_ORDER As String = _
     "rpt_accounts,rpt_transactions,rpt_card_status,rpt_review_queue," & _
-    "perfin_statement_recon,perfin_unreconciled_items,perfin_modules,perfin_refresh_status"
+    "perfin_batch_versions,perfin_statement_recon,perfin_unreconciled_items,perfin_modules,perfin_refresh_status"
 
 Private Type SYSTEMTIME
     wYear As Integer

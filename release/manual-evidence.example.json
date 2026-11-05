@@ -1,0 +1,18 @@
+{
+  "revision": "REPLACE_WITH_EXACT_TESTED_GIT_SHA",
+  "operator": "",
+  "windows_version": "",
+  "office_bitness": "",
+  "excel_build": "",
+  "checks": {
+    "core_vba_compile": "PENDING",
+    "core_powerquery_refresh": "PENDING",
+    "core_privacy_guards": "PENDING",
+    "core_offline_refresh": "PENDING",
+    "payoff_edit_recompute": "PENDING",
+    "statements_valuation_refresh": "PENDING",
+    "pdf_review_rejection": "PENDING",
+    "fresh_install_restore": "PENDING"
+  },
+  "notes": "Copy outside the repository; record actual results, environment and supporting evidence. Do not change PENDING to PASS without running the check."
+}

@@ -1,0 +1,21 @@
+{
+  "contract": "perfin", "contract_version": "1.0.1", "document_type": "payoff_scenario",
+  "scenario": {
+    "scenario_id": "synthetic_household", "as_of": "2026-11-01", "horizon_months": 120,
+    "accrual_model": "m1_monthly_apr_div_12",
+    "cash_plan": {"monthly_minor": 60000, "overrides": [], "lump_sums": [{"month": 3, "amount_minor": 100000}]},
+    "cards": [
+      {"account_id": "card:alpha", "source_statement_id": null,
+       "buckets": [{"bucket_id": "purchase", "balance_minor": 500000, "apr": "0.24", "deferred_interest": false}],
+       "min_payment_rule": {"rule_type": "pct_plus_interest", "pct": "0.01", "floor_minor": 2500}},
+      {"account_id": "card:beta", "source_statement_id": null,
+       "buckets": [{"bucket_id": "purchase", "balance_minor": 200000, "apr": "0.245", "deferred_interest": false}],
+       "min_payment_rule": {"rule_type": "pct_plus_interest", "pct": "0.01", "floor_minor": 2500}},
+      {"account_id": "card:gamma", "source_statement_id": null,
+       "buckets": [{"bucket_id": "purchase", "balance_minor": 100000, "apr": "0.29", "deferred_interest": false}],
+       "min_payment_rule": {"rule_type": "fixed", "amount_minor": 2500}}
+    ],
+    "strategies": [{"kind": "near_apr_hybrid", "gap_pp": "0.5", "prefer": "largest"}, {"kind": "largest_balance"}, {"kind": "snowball"}, {"kind": "avalanche"}],
+    "tolerance": {"max_extra_cost_minor": null, "max_payoff_delay_months": null}
+  }
+}

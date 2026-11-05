@@ -14,6 +14,7 @@ Money stays integer minor units in every table cell. Only display formulas divid
 formula also gets Excel's quote prefix (the 1c rule), so it is never evaluated.
 """
 import datetime as dt
+from pathlib import Path
 
 from openpyxl import Workbook
 from openpyxl.formatting.rule import FormulaRule
@@ -44,6 +45,7 @@ SHEETS = ["Home", "Status", "Accounts", "Cards", "Transactions", "Review", "Reco
 # Where each table sits: sheet, header row, first column. rpt_statements and
 # rpt_reconciliation are connection-only queries feeding perfin_statement_recon.
 TABLE_PLACES = {
+    spec.BATCH_VERSIONS_TABLE: ("Settings", 14, 4),
     spec.STATUS_TABLE: ("Status", 14, 1),
     "rpt_accounts": ("Accounts", 14, 1),
     "rpt_card_status": ("Cards", 15, 1),
@@ -273,6 +275,13 @@ def build(out_path, report_dir=None, modules_dir=None, checked_at=None, stale_da
         if checked_at is None:
             raise ValueError("a snapshot build needs checked_at (the simulated refresh time)")
         tables, status = reports.load_reports(report_dir, checked_at, stale_days)
+    tables[spec.BATCH_VERSIONS_TABLE] = []
+    if report_dir is not None:
+        try:
+            tables[spec.BATCH_VERSIONS_TABLE] = reports.read_report_csv(
+                Path(report_dir) / (spec.BATCH_VERSIONS_TABLE + ".csv"), spec.BATCH_VERSIONS_TABLE)
+        except reports.ReportError:
+            pass  # No token means the VBA review action refuses; never invent a version.
     tables[spec.STATUS_TABLE] = status
     tables[spec.MODULES_TABLE] = registry.scan(modules_dir) if modules_dir else []
 
@@ -333,6 +342,7 @@ def build(out_path, report_dir=None, modules_dir=None, checked_at=None, stale_da
     tx.column_dimensions["D"].hidden = True
 
     se = sheets["Settings"]
+    se.column_dimensions["D"].hidden = se.column_dimensions["E"].hidden = True
     for row, label, value in [(4, "Data root (blank = %LOCALAPPDATA%\\PerFin)", None),
                               (5, "Stale after (days)", stale_days),
                               (6, "Modules folder (blank = <data root>\\workbooks)", None),
