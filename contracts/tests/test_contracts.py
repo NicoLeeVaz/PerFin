@@ -121,6 +121,16 @@ class Rules(unittest.TestCase):
             d = dict(LEDGER, contract_version=v)
             self.assertEqual(validate_document(d) == [], ok, v)
 
+    def test_manifest_range_uses_full_contract_version(self):
+        base = load(os.path.join(ROOT, "examples", "valid", "module_manifest_payoff.json"))
+        major, minor, patch = map(int, CONTRACT_VERSION.split("."))
+        cur = f"{major}.{minor}.{patch}"
+        nxt = f"{major}.{minor}.{patch + 1}"
+        for lo, hi, ok in ((cur, f"{major}.{minor + 1}.0", True), (f"{major}.0.0", f"{major + 1}.0.0", True),
+                           (f"{major}.0.0", cur, False), (nxt, f"{major + 1}.0.0", False)):
+            d = dict(base, contract_versions={"min": lo, "max_exclusive": hi})
+            self.assertEqual(validate_document(d) == [], ok, (lo, hi))
+
     def test_unknown_document_type(self):
         self.assertEqual(codes(dict(LEDGER, document_type="ledger_dump")), ["E_DOCUMENT_TYPE"])
 
@@ -212,6 +222,13 @@ class Rules(unittest.TestCase):
     def test_all_entity_ids_unique(self):
         for coll in ("statement_payments", "reconciliations", "card_terms", "asset_valuations"):
             self.assertIn("E_DUPLICATE_ID", self.mutate(lambda d: d[coll].append(copy.deepcopy(d[coll][0]))), coll)
+
+    def test_statement_bucket_ids_unique(self):
+        # contract 1.0.1: Access primary key statement_bucket_balance(statement_id, bucket_id)
+        def f(d):
+            d["statements"][0]["bucket_balances"] = [{"bucket_id": "purchase", "balance_minor": -27500},
+                                                     {"bucket_id": "purchase", "balance_minor": -27500}]
+        self.assertEqual(self.mutate(f), ["E_DUPLICATE_ID"])
 
     def test_deferred_promo_needs_deadline(self):
         self.assertIn("E_REQUIRED", self.mutate(lambda d: d["card_terms"][1]["apr_buckets"][1].pop("promo_end_date")))

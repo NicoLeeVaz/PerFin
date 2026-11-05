@@ -5,7 +5,7 @@ import re
 from collections import Counter, defaultdict
 from typing import Any, Dict, List
 
-from . import SUPPORTED_MAJOR, SUPPORTED_MINOR
+from . import CONTRACT_VERSION, SUPPORTED_MAJOR, SUPPORTED_MINOR
 from .schema_subset import Error, load_schema, validate
 
 DOC_SCHEMAS = {
@@ -172,6 +172,8 @@ def ledger_rules(b: Dict) -> List[Error]:
             e.append(("E_DATE_ORDER", p, "need period_start <= period_end <= due_date"))
         if s.get("bucket_balances") and sum(x["balance_minor"] for x in s["bucket_balances"]) != s["closing_balance_minor"]:
             e.append(("E_BUCKET_SUM", p, "bucket balances must sum to closing_balance_minor"))
+        # Access primary key statement_bucket_balance(statement_id, bucket_id): one row per bucket
+        e += _dupes(s.get("bucket_balances", []), "bucket_id", f"{p}.bucket_balances")
 
     alloc = Counter()
     for i, sp in enumerate(b.get("statement_payments", [])):
@@ -318,6 +320,7 @@ def manifest_rules(d: Dict) -> List[Error]:
         e.append(("E_REQUIRED", "$.workbook_file", "excel modules ship their own workbook file"))
     lo = tuple(map(int, d["contract_versions"]["min"].split(".")))
     hi = tuple(map(int, d["contract_versions"]["max_exclusive"].split(".")))
-    if not lo <= (SUPPORTED_MAJOR, SUPPORTED_MINOR, 0) < hi:
+    current = tuple(map(int, CONTRACT_VERSION.split(".")))  # full version, patch included
+    if not lo <= current < hi:
         e.append(("E_VERSION_UNSUPPORTED", "$.contract_versions", "module does not support this contract version"))
     return e
