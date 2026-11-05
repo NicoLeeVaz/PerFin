@@ -1,0 +1,11 @@
+{
+  "sha256": "REPLACE_WITH_INSPECT_OUTPUT",
+  "source_url": "https://publisher.example/template",
+  "license": "Record exact license and permitted personal or commercial use; retain attribution in workbook",
+  "license_reviewed": false,
+  "synthetic_math_checked": false,
+  "desktop_offline_checked": false,
+  "tested_environment": "Excel version, OS and calculation settings",
+  "reviewed_by": "Local operator",
+  "notes": "Record cases, expected/actual results, input cells and limitations. Keep private; do not commit populated evidence."
+}
