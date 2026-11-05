@@ -13,6 +13,7 @@
 -- statement and card terms are those in effect on it. Listing views (transactions, splits, statements,
 -- reconciliation, review queue, card terms, valuations, buckets) have no as-of column and list every row.
 -- Rounding: utilization uses Access Round() (half-to-even); the Python export matches it.
+-- IIf evaluates both branches: guard the denominator itself against zero.
 -- Table names are bracketed in case a name is reserved in Access SQL [Unverified].
 -- Nothing here writes: refresh is read-only.
 
@@ -68,8 +69,8 @@ CREATE VIEW rpt_card_status AS SELECT
   -s.closing_balance_minor AS [statement_closing_owed_minor],
   -q.ledger_balance_minor AS [current_owed_minor],
   q.credit_limit_minor AS [credit_limit_minor],
-  IIf(IsNull(q.credit_limit_minor) OR q.credit_limit_minor = 0, Null,
-      Round(-q.ledger_balance_minor * 10000 / q.credit_limit_minor, 0)) AS [utilization_basis_points],
+  Round(-q.ledger_balance_minor * 10000 /
+      IIf(q.credit_limit_minor = 0, Null, q.credit_limit_minor), 0) AS [utilization_basis_points],
   s.due_date AS [due_date],
   s.minimum_due_minor AS [minimum_due_minor],
   IIf(IsNull(p.paid_minor), 0, p.paid_minor) AS [confirmed_payments_minor],

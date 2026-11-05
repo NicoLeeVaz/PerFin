@@ -128,6 +128,28 @@ class ReportTables(unittest.TestCase):
         self.assertFalse((ROOT / "tmp-reports").exists())
 
 
+class UtilizationLimits(unittest.TestCase):
+    def test_missing_zero_and_positive_limits_in_export(self):
+        repo, adapter, _ = new_fake_store()
+        self.addCleanup(adapter.close)
+        result = repo.import_bundle(S.utilization_bundle())
+        self.assertEqual(result["result_status"], "accepted", result["errors"])
+        rows = reports.build_tables(repo, "2026-07-01")["rpt_card_status"]
+        self.assertEqual({r["account_id"]: r["utilization_basis_points"] for r in rows},
+                         {"card:util.missing": None, "card:util.zero": None, "card:util.positive": 2500})
+        csv_rows = list(csv.DictReader(io.StringIO(reports.to_csv("rpt_card_status", rows))))
+        self.assertEqual({r["account_id"]: r["utilization_basis_points"] for r in csv_rows},
+                         {"card:util.missing": "", "card:util.zero": "", "card:util.positive": "2500"})
+
+    def test_view_guards_the_divisor_not_only_the_result(self):
+        # Source-level regression only: the fake cannot execute Access report queries.
+        # Real zero/null/positive-limit checks live in windows_acceptance.py.
+        from perfin_store import ddl
+        sql = " ".join(dict(ddl.views())["rpt_card_status"].split())
+        self.assertIn("/ IIf(q.credit_limit_minor = 0, Null, q.credit_limit_minor)", sql)
+        self.assertNotIn("/ q.credit_limit_minor", sql)
+
+
 class AsOfPayments(unittest.TestCase):
     """Codex P2: a historical report must not count an allocated payment that posts after as_of."""
 
