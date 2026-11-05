@@ -257,6 +257,29 @@ class SourceIdsWithinBatch(Base):
         self.assertEqual(self.repo.summary()["account_balances_minor"]["chk:main"], 239300)  # 250000 opening, two 50.00 rows, one 7.00
         self.assertEqual(validate_document(self.repo.export_bundle()), [])
 
+    def test_commit_collision_can_be_resolved_and_retried(self):
+        self.rejected(self.stage(), "E_DUPLICATE_UNRESOLVED")
+        self.ok(self.run_cmd("resolve_duplicate", {"batch_id": "b.dup", "row_number": 2,
+                             "resolution": "confirmed_distinct"}, [self.ev("batch", "b.dup")]))
+        batch = self.repo._one("import_batch", {"batch_id": "b.dup"})
+        self.ok(self.run_cmd("commit_batch", {"batch_id": "b.dup", "source_file_sha256": batch["source_file_sha256"]},
+                             [self.ev("batch", "b.dup")]))
+        self.assertEqual(self.repo.summary()["account_balances_minor"]["chk:main"], 239300)
+        log = [r for r in self.ad.db.rows["audit_log"] if r["action"] == "resolve"][-1]
+        self.assertEqual(json.loads(log["before_json"])["duplicate_status"], "none")
+
+    def test_ledger_collision_can_be_resolved_and_retried(self):
+        self.ok(self.stage(dup2="confirmed_distinct"))
+        b = S.batch("b.later", "chk:main", [S.row(1, "2026-07-03", -900, "distinct purchase",
+                    state="approved", source_txn_id="bank-1")])
+        self.ok(self.repo.stage_batch(b))
+        payload = {"batch_id": "b.later", "source_file_sha256": b["batch"]["source_file_sha256"]}
+        self.rejected(self.run_cmd("commit_batch", payload, [self.ev("batch", "b.later")]), "E_DUPLICATE_UNRESOLVED")
+        self.ok(self.run_cmd("resolve_duplicate", {"batch_id": "b.later", "row_number": 1,
+                    "resolution": "confirmed_distinct"}, [self.ev("batch", "b.later")]))
+        self.ok(self.run_cmd("commit_batch", payload, [self.ev("batch", "b.later")]))
+        self.assertEqual(self.repo.summary()["account_balances_minor"]["chk:main"], 238400)
+
     def test_rejected_first_occurrence_does_not_block(self):
         self.ok(self.stage(state1="rejected"))
         self.assertEqual(self.repo.summary()["account_balances_minor"]["chk:main"], 250000 - 5000 - 700)
@@ -447,6 +470,31 @@ class Transfers(Base):
         self.assertEqual(self.repo.transaction("m2")["splits"], [S.cat("m2.s1", 10000, "inc.uncategorized")])
         self.assertEqual(self.ad.db.rows["transfer_link"], [])
         self.assertIn({"entity": "transfer_link", "entity_id": "L1", "row_version": 1}, r["affected"])
+
+    def test_reused_link_id_restores_latest_splits_at_same_timestamp(self):
+        def link(command_id):
+            command = S.command("link_transfer", {"transfer_link_id": "L1", "from_transaction_id": "m1",
+                                "to_transaction_id": "m2", "link_status": "confirmed"},
+                                [self.ev("transaction", "m1"), self.ev("transaction", "m2")])
+            command["command_id"] = command_id
+            self.ok(self.repo.execute(command))
+
+        def unlink():
+            self.ok(self.run_cmd("unlink_transfer", {"transfer_link_id": "L1", "reason": "correction"},
+                                 [self.ev("transfer_link", "L1")]))
+
+        link("ffffffff-ffff-4fff-8fff-ffffffffffff")
+        unlink()
+        latest = [S.cat("m1.s1", -10000, "exp.groceries")]
+        self.ok(self.run_cmd("set_splits", {"transaction_id": "m1", "splits": latest},
+                             [self.ev("transaction", "m1")]))
+        link("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+        # Even another edit while linked must not change which pre-link snapshot wins.
+        self.ok(self.run_cmd("edit_transaction", {"transaction_id": "m1", "reason": "label",
+                             "changes": {"description": "corrected label"}}, [self.ev("transaction", "m1")]))
+        unlink()
+        self.assertEqual(self.repo.transaction("m1")["splits"], latest)
+        self.assertEqual(self.repo.transaction("m2")["splits"], [S.cat("m2.s1", 10000, "inc.uncategorized")])
 
     def test_statement_payment_allocation(self):
         self.ok(self.link())

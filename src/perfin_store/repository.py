@@ -620,13 +620,22 @@ class Repository:
         r = rows.get(p["row_number"])
         if r is None:
             reject("E_REF_UNKNOWN", "$.payload.row_number", "batch has no row %d" % p["row_number"])
-        if r["duplicate_status"] != "possible":
+        # A concurrent import or the in-batch guard can discover a source-ID
+        # collision after staging. Permit explicit human resolution of that
+        # collision, without allowing arbitrary clean rows to bypass review.
+        source_id = r["source_txn_id"]
+        detected = r["duplicate_status"] == "none" and source_id and (
+            bool(self._rows("ledger_txn", {"account_id": b["account_id"], "source_txn_id": source_id},
+                            columns=["transaction_id"]))
+            or any(other["row_number"] < r["row_number"] and other["review_state"] == "approved"
+                   and other["source_txn_id"] == source_id for other in rows.values()))
+        if r["duplicate_status"] != "possible" and not detected:
             reject("E_BATCH_STATE", "$.payload.row_number", "row %d has duplicate status %s; only 'possible' "
-                   "duplicates are resolved" % (p["row_number"], r["duplicate_status"]))
+                   "or source-ID collisions are resolved" % (p["row_number"], r["duplicate_status"]))
         self._update("staging_row", {"duplicate_status": p["resolution"]},
                      {"batch_id": b["batch_id"], "row_number": p["row_number"]})
         ctx.log("staging_row", derive_id(b["batch_id"], "r%d" % p["row_number"], prefix="row"), "resolve",
-                {"duplicate_status": "possible"}, {"duplicate_status": p["resolution"]})
+                {"duplicate_status": r["duplicate_status"]}, {"duplicate_status": p["resolution"]})
         self._bump_batch(ctx, b, {}, "review")
 
     # ------------------------------------------------------------------ commit / rollback
@@ -827,12 +836,17 @@ class Repository:
     def _pre_link_splits(self, tid: str, lid: str) -> Optional[List[Dict[str, Any]]]:
         """The splits a leg had before link_transfer replaced them (from the audit trail)."""
         best = None
+        best_version = -1
         for row in self._rows("audit_log", {"entity": "transaction", "entity_id": tid, "action": "link"},
                               columns=["audit_id", "recorded_at", "before_json", "after_json"]):
             after = json.loads(row["after_json"] or "null") or {}
             if any(s.get("transfer_link_id") == lid for s in after.get("splits", [])):
-                if best is None or (row["recorded_at"], row["audit_id"]) > (best["recorded_at"], best["audit_id"]):
+                # Transaction versions increase on every edit, including unlink
+                # and relink. Clock seconds and random command UUIDs do not.
+                version = after.get("row_version", 0)
+                if version > best_version:
                     best = row
+                    best_version = version
         if best is None:
             return None
         splits = (json.loads(best["before_json"] or "null") or {}).get("splits") or []

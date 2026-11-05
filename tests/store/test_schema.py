@@ -102,7 +102,7 @@ class SetupOnFake(unittest.TestCase):
         self.assertFalse(report["views_failed"])
         meta = migrations.read_meta(ad)
         self.assertEqual(meta["schema_version"], SCHEMA_VERSION)
-        self.assertEqual(meta["contract_version"], "1.0.0")
+        self.assertEqual(meta["contract_version"], (ROOT / "contracts" / "VERSION").read_text().strip())
         self.assertEqual(meta["check_constraints"], "present")
         self.assertEqual(repo.blocked_errors, [])
 
