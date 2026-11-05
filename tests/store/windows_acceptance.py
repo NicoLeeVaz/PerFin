@@ -204,6 +204,17 @@ def main(argv=None) -> int:
         card_now = reports.build_tables(repo, today)["rpt_card_status"][0]
         run.record("as-of: a payment posted after the report date is not counted", fut["result_status"] == "accepted"
                    and card_now["confirmed_payments_minor"] == 0, fut["errors"] or None)
+        utilization = repo.import_bundle(S.utilization_bundle())
+        run.record("utilization: synthetic zero/null/positive limit cards imported",
+                   utilization["result_status"] == "accepted", utilization["errors"] or None)
+        for label, expected in (("missing", None), ("zero", None), ("positive", 2500)):
+            # This query executes on real ACE. IIf must not expose a zero divisor,
+            # and a missing/zero limit must be Null rather than zero utilization.
+            values = ad.query("SELECT [utilization_basis_points] FROM [rpt_card_status] WHERE [account_id] = ?",
+                              ("card:util." + label,))
+            actual = norm(values[0][0]) if len(values) == 1 else "missing or duplicate card"
+            run.record("utilization: %s limit" % label, actual == expected,
+                       {"expected": expected, "actual": actual})
         py = reports.build_tables(repo, today)
         spec = reports.report_spec()
         view_problems = {}

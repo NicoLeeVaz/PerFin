@@ -47,6 +47,26 @@ def reference_bundle() -> Dict[str, Any]:
     }
 
 
+def utilization_bundle() -> Dict[str, Any]:
+    """Isolated cards with missing, zero and positive limits, each owing 125.00."""
+    bundle = {"contract": "perfin", "contract_version": CV, "document_type": "ledger_bundle",
+              "base_currency": "USD", "accounts": [], "categories": [], "transactions": [], "card_terms": []}
+    for label, limit in (("missing", None), ("zero", 0), ("positive", 50000)):
+        aid = "card:util." + label
+        bundle["accounts"].append({"account_id": aid, "kind": "liability", "account_class": "credit_card",
+                                  "display_name": "SYNTHETIC utilization " + label, "currency": "USD",
+                                  "opening_balance_minor": -12500, "opening_balance_date": "2026-01-01",
+                                  "row_version": 1})
+        terms = {"terms_id": "terms.util." + label, "account_id": aid, "effective_from": "2026-01-01",
+                 "terms_source": "user_estimate", "min_payment_rule": {"rule_type": "fixed", "amount_minor": 100},
+                 "apr_buckets": [{"bucket_id": "purchase", "bucket_kind": "purchase", "apr": "0.20",
+                                  "deferred_interest": False}]}
+        if limit is not None:
+            terms["credit_limit_minor"] = limit
+        bundle["card_terms"].append(terms)
+    return bundle
+
+
 def row(n: int, posted: str, amount: Optional[int], desc: str, *, splits: Optional[List[Dict[str, Any]]] = None,
         errors: Optional[List[Dict[str, Any]]] = None, dup: str = "none", state: str = "pending",
         source_txn_id: Optional[str] = None) -> Dict[str, Any]:
