@@ -16,6 +16,9 @@ class Build(unittest.TestCase):
         example = _support.load_json(_support.REPO / "contracts" / "examples" / "valid" / "command_approve_rows.json")
         doc = commands.build_review_command("approve_rows", "b2026_07_alpha", [1], batch_row_version=1,
                                             issued_at=FIXED, command_id=example["command_id"])
+        self.assertEqual(validate_document(example), [])  # Historical compatible fixture.
+        example["contract_version"] = (_support.REPO / "contracts" / "VERSION").read_text().strip()
+        self.assertEqual(validate_document(doc), [])
         self.assertEqual(doc, example)
 
     def test_reject_and_validation(self):

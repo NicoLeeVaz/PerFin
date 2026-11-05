@@ -81,7 +81,7 @@ MODULES_TABLE = "perfin_modules"
 MODULES_CSV = "perfin_modules.csv"
 MODULES_COLUMNS = [
     ("module_id", "id", 0),
-    ("module_version", "text", 0),
+    ("module_version", "text", 1),
     ("module_kind", "enum", 0),
     ("module_dir", "text", 0),
     ("workbook_file", "text", 1),

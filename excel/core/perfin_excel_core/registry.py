@@ -53,7 +53,7 @@ def scan(modules_dir):
 
 
 def _entry(sub, mf):
-    e = {"module_id": sub.name, "module_version": "", "module_kind": "unknown", "module_dir": sub.name,
+    e = {"module_id": sub.name, "module_version": None, "module_kind": "unknown", "module_dir": sub.name,
          "workbook_file": None, "launchable": False, "status": "INVALID", "message": None,
          "reads": None, "commands": None}
     if not _DIR.match(sub.name):
@@ -64,6 +64,9 @@ def _entry(sub, mf):
             doc = json.load(f)
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         e["message"] = "manifest is not readable JSON (%s)" % type(exc).__name__
+        return e
+    if not isinstance(doc, dict) or doc.get("document_type") != "module_manifest":
+        e["message"] = "E_DOCUMENT_TYPE: expected module_manifest"
         return e
     errs = validate_document(doc)
     if isinstance(doc, dict):

@@ -5,7 +5,7 @@
 let
     Source = fnPerFinReadCsv("perfin_modules.csv", {
         {"module_id", "id", false},
-        {"module_version", "text", false},
+        {"module_version", "text", true},
         {"module_kind", "enum", false},
         {"module_dir", "text", false},
         {"workbook_file", "text", true},

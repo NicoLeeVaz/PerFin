@@ -80,6 +80,35 @@ class Registry(unittest.TestCase):
             registry.launch(self.root, "nofile", opener=opened.append)
         self.assertEqual(len(opened), 1)
 
+    def test_invalid_metadata_does_not_hide_valid_modules(self):
+        broken = self.root / "broken"
+        broken.mkdir()
+        (broken / "module_manifest.json").write_text("{not json", encoding="utf-8")
+        missing_version = dict(self.base, module_id="missing_version")
+        del missing_version["module_version"]
+        add(self.root, "missing_version", missing_version)
+        out = self.d / spec.MODULES_CSV
+        registry.export_csv(self.root, out)
+        rows = reports.read_report_csv(out, spec.MODULES_TABLE)
+        by = {r["module_id"]: r for r in rows}
+        for name in ("broken", "missing_version"):
+            self.assertEqual(by[name]["status"], "INVALID")
+            self.assertIsNone(by[name]["module_version"])
+            self.assertFalse(by[name]["launchable"])
+        self.assertTrue(by["excel_payoff"]["launchable"])
+        self.assertTrue(by["excel_statements"]["launchable"])
+
+    def test_other_document_type_is_an_invalid_entry(self):
+        doc = _support.load_json(_support.REPO / "contracts/examples/valid/command_approve_rows.json")
+        add(self.root, "wrong_type", doc)
+        out = self.d / spec.MODULES_CSV
+        registry.export_csv(self.root, out)
+        rows = reports.read_report_csv(out, spec.MODULES_TABLE)
+        wrong = next(r for r in rows if r["module_id"] == "wrong_type")
+        self.assertEqual(wrong["status"], "INVALID")
+        self.assertIn("E_DOCUMENT_TYPE", wrong["message"])
+        self.assertEqual(sum(r["launchable"] for r in rows), 2)
+
     def test_registry_csv_feeds_the_core_workbook(self):
         out = self.d / "reports" / spec.MODULES_CSV
         out.parent.mkdir()
