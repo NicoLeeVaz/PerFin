@@ -1,0 +1,39 @@
+{
+  "contract": "perfin",
+  "contract_version": "1.0.0",
+  "document_type": "import_profile",
+  "profile_id": "synthetic_checking_signed",
+  "profile_version": "1.0.0",
+  "description": "Checking export with one signed Amount column (negative = money out) and an issuer transaction id. SYNTHETIC profile for tests and examples; not verified against any real institution's export.",
+  "account_class": "checking",
+  "file": {
+    "encoding": "utf-8",
+    "delimiter": ",",
+    "quote_char": "\"",
+    "header_rows": 1,
+    "skip_footer_rows": 0,
+    "expected_field_count": 5
+  },
+  "columns": {
+    "posted_date": "Date",
+    "description": "Description",
+    "amount": "Amount",
+    "running_balance": "Balance",
+    "source_txn_id": "Transaction ID"
+  },
+  "date_format": "MM/DD/YYYY",
+  "amount": {
+    "sign_rule": "as_is",
+    "decimal_separator": ".",
+    "thousands_separator": ",",
+    "currency": "USD",
+    "parentheses_negative": true
+  },
+  "dedupe_key": [
+    "source_txn_id",
+    "posted_date",
+    "amount_minor",
+    "description",
+    "row_occurrence"
+  ]
+}
