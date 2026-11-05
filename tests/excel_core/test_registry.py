@@ -109,6 +109,19 @@ class Registry(unittest.TestCase):
         self.assertIn("E_DOCUMENT_TYPE", wrong["message"])
         self.assertEqual(sum(r["launchable"] for r in rows), 2)
 
+    def test_invalid_identity_metadata_remains_readable(self):
+        for name, changes in (("empty_id", {"module_id": ""}),
+                              ("bad_id", {"module_id": "bad id"}),
+                              ("empty_kind", {"module_id": "empty_kind", "module_kind": ""}),
+                              ("bad folder", {}),
+                              ("x" * 80, {"module_id": ""})):
+            add(self.root, name, dict(self.base, **changes))
+        out = self.d / spec.MODULES_CSV
+        registry.export_csv(self.root, out)
+        rows = reports.read_report_csv(out, spec.MODULES_TABLE)
+        self.assertEqual(sum(r["status"] == "INVALID" for r in rows), 5)
+        self.assertEqual(sum(r["launchable"] for r in rows), 2)
+
     def test_registry_csv_feeds_the_core_workbook(self):
         out = self.d / "reports" / spec.MODULES_CSV
         out.parent.mkdir()

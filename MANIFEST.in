@@ -1,0 +1,5 @@
+recursive-include contracts *.json VERSION
+recursive-include config/privacy *.json *.py
+recursive-include access *.sql *.bas *.ps1
+recursive-include excel *.py *.pq *.bas *.txt *.json
+recursive-include src *.py *.json

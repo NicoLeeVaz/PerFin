@@ -200,6 +200,16 @@ def export_csv(repo, out_dir, as_of: Optional[str] = None, tables=STORE_TABLES,
     """Write <out_dir>/<table>.csv for each table. Report CSVs hold financial data: the target
     gets the same location checks as the data root (never inside a checkout)."""
     check_export_dir(out_dir, acknowledge_location)
+    root = Path(out_dir).resolve()
+    destinations = []
+    for t in tables:
+        p = Path(out_dir) / ("%s.csv" % t)
+        try:
+            p.resolve().relative_to(root)
+        except ValueError:
+            raise ExportLocationError("report destination escapes the export directory") from None
+        check_export_dir(p, acknowledge_location)
+        destinations.append(p)
     os.makedirs(out_dir, exist_ok=True)
     spec = report_spec()
     data = build_tables(repo, as_of)

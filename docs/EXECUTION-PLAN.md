@@ -8,13 +8,13 @@ Updated 2026-11-04. [Live tracker](https://github.com/NicoLeeVaz/PerFin/issues/1
 
 Privacy, extensibility and reuse are requirements. Ordinary use must work locally without AI, external bank connections or payment execution. Public source contains only code, empty templates and synthetic examples. Actual financial data, populated workbooks/databases, statement PDFs, logs and backups live outside this public repository and outside sync folders by default.
 
-Current status: research plus an actionable backlog. No production importer, Access database or Excel app has yet been built or runtime-verified in this repository.
+Current status: CSV staging, Access repository and Excel core source are merged. Remaining integration and modules are being completed under the user's explicit 2026-11-05 instruction to continue with subagents. The tracker records actual merged revisions and local test evidence. Windows/ACE/desktop Excel runtime acceptance remains pending; source completion is not a verified Windows release.
 
 ## How the numbering works
 
 The number is the wave; the letter is an independent task. **1a, 1b and 1c may run concurrently. Every Wave 1 task must be merged and verified before any Wave 2 task begins.** This rule applies to all lower-numbered waves, not just a task's most obvious dependency. GitHub's issue number (for example #2) is separate from the scheduling code (1a).
 
-The table's initial states are a creation snapshot. The tracker gate evidence and linked PRs are authoritative thereafter. A closed issue or merged PR alone is insufficient. An issue closed as duplicate/not planned does not satisfy its gate unless the tracker records the approved replacement/scope decision and evidence.
+The user's 2026-11-05 continuation instruction permits source implementation across the remaining waves while Windows runtime evidence is unavailable. Keep module dependencies and owned paths explicit, integrate tested producers before consumers, and never turn this source-progression authorization into a runtime PASS. The table's initial states are a creation snapshot. The tracker gate evidence and linked PRs are authoritative thereafter. A closed issue or merged PR alone is insufficient. An issue closed as duplicate/not planned does not satisfy its gate unless the tracker records the approved replacement/scope decision and evidence.
 
 | Task | Issue | Output | Initial state |
 | --- | --- | --- | --- |

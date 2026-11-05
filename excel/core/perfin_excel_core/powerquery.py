@@ -300,6 +300,10 @@ def queries():
             table, table, "1.0.0")
         out[table + ".pq"] = _source_query(table, table + ".csv", note)
         manifest.append((table, "table" if table in TABLE_PLACES else "connection"))
+    out["perfin_batch_versions.pq"] = _source_query(
+        spec.BATCH_VERSIONS_TABLE, "perfin_batch_versions.csv",
+        "// Application-owned optimistic review versions, exported with the local snapshot.\n")
+    manifest.append((spec.BATCH_VERSIONS_TABLE, "table"))
     out["perfin_statement_recon.pq"] = _recon_query()
     out["perfin_unreconciled_items.pq"] = _items_query()
     out["perfin_modules.pq"] = _source_query(

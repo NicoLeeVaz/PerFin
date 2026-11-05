@@ -12,6 +12,7 @@ perfin_modules.csv and opens a module's own file; it never edits module workbook
 and module agents never edit the core workbook.
 """
 import json
+import hashlib
 import os
 import re
 import sys
@@ -23,6 +24,7 @@ from .reports import write_report_csv
 
 MANIFEST_NAME = "module_manifest.json"
 _DIR = re.compile(r"^[A-Za-z0-9_.-]{1,80}$")
+_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}")
 CORE_NAMES = {CORE_WORKBOOK_TEMPLATE.casefold(), CORE_WORKBOOK_MACRO.casefold()}
 
 
@@ -53,10 +55,14 @@ def scan(modules_dir):
 
 
 def _entry(sub, mf):
-    e = {"module_id": sub.name, "module_version": None, "module_kind": "unknown", "module_dir": sub.name,
+    # Diagnostics must themselves conform to the registry CSV, even when the
+    # untrusted folder or manifest identity does not conform to its contract.
+    fallback_id = (sub.name if _ID.fullmatch(sub.name) else
+                   "invalid." + hashlib.sha256(sub.name.encode("utf-8")).hexdigest()[:32])
+    e = {"module_id": fallback_id, "module_version": None, "module_kind": "unknown", "module_dir": sub.name,
          "workbook_file": None, "launchable": False, "status": "INVALID", "message": None,
          "reads": None, "commands": None}
-    if not _DIR.match(sub.name):
+    if not _DIR.fullmatch(sub.name):
         e["message"] = "module folder name is not a plain name"
         return e
     try:
@@ -70,9 +76,13 @@ def _entry(sub, mf):
         return e
     errs = validate_document(doc)
     if isinstance(doc, dict):
-        for k in ("module_id", "module_version", "module_kind", "workbook_file"):
+        for k in ("module_version", "workbook_file"):
             if isinstance(doc.get(k), str):
                 e[k] = doc[k]
+        if isinstance(doc.get("module_id"), str) and _ID.fullmatch(doc["module_id"]):
+            e["module_id"] = doc["module_id"]
+        if doc.get("module_kind") in ("import_profile", "calculation_module", "excel_workbook"):
+            e["module_kind"] = doc["module_kind"]
         if isinstance(doc.get("reads"), list):
             e["reads"] = " ".join(str(x) for x in doc["reads"])
         if isinstance(doc.get("commands"), list):

@@ -41,7 +41,7 @@ The core workbook is a **read-only view** of the `rpt_*` report tables. Access (
 | `fixtures/excel_core/` | Synthetic report CSVs, contract documents, mock module manifests and a VBA-shaped command draft. See its README. |
 | `tests/excel_core/` | Linux tests, including a small formula evaluator for the subset of Excel formulas the workbook uses. |
 
-The contract validator (`contracts/python/perfin_contracts`) and the 1c helpers (`needs_formula_escape`, `evaluate_data_dir` from `config/privacy/perfin_privacy_checks.py`) are imported from the checkout, not copied. Packaging for a release belongs to 3a.
+The contract validator and privacy helpers are imported from their source packages. The installable wheel includes the same allow-listed schemas, privacy defaults and Excel assets under `perfin_resources`; a source-independent wheel smoke test checks them. See [getting started](../GETTING-STARTED.md) for installation.
 
 ## Build and check (Linux or Windows)
 
@@ -91,7 +91,7 @@ A manual fallback for step 3 is in the checklist: Data › Get Data › Blank Qu
 | Review | Queue counts (awaiting, approved, rejected, errors, possible duplicates), the drafts folder and the command entry point. Rows with errors or possible duplicates are highlighted. | `rpt_review_queue` |
 | Reconciliation | Statements, balanced vs open, non-zero differences, unreconciled items and their net amount, opening balances | `perfin_statement_recon`, `perfin_unreconciled_items` |
 | Modules | Registered, launchable and invalid module counts | `perfin_modules` |
-| Settings | Data root, stale-after days, modules folder (unlocked inputs), contract and shell versions | — |
+| Settings | Data root, stale-after days, modules folder (unlocked inputs), contract and shell versions; hidden protected review tokens | `perfin_batch_versions` |
 
 `rpt_statements` and `rpt_reconciliation` are connection-only queries that feed the two reconciliation tables. Summary cells have stable defined names (`PerFin_TotalAssets`, `PerFin_Status`, `PerFin_DataAsOf` and others), which the self-test macro and the tests use.
 
@@ -126,7 +126,7 @@ All sheets are protected and the workbook structure is locked, with **no passwor
 
 ## Writes only through validated commands
 
-The workbook never writes the ledger. The repository (2b/3a) is not implemented here.
+The workbook never writes the ledger. `perfin_store.Repository` applies validated commands to Access; `perfin process-outbox` promotes and processes workbook drafts through that repository.
 
 1. **VBA draft.** Select rows of `rpt_review_queue` and run `PerFin_ApproveSelectedRows` or `PerFin_RejectSelectedRows`. The macro:
    - **first runs the data-root location guard** (`PerFin_DataRootProblem` in `PerFinCore.bas`) and writes nothing if it fails. The guard refuses:
@@ -141,10 +141,11 @@ The workbook never writes the ledger. The repository (2b/3a) is not implemented 
      - `PerFin_EnsureFolder` and `PerFin_WriteNewAsciiFile` call the guard again before any `MkDir`/`Open`, and refuse paths outside the data root. The self-test log uses the same guard.
    - checks the batch id, the row numbers and that all rows come from one batch;
    - refuses to approve rows with errors or unresolved possible duplicates, matching the repository's `E_ROW_UNRESOLVED`/`E_DUPLICATE_UNRESOLVED`;
+   - reads the batch version from the local `perfin_batch_versions` table, emits it in `expected_versions`, and refuses a missing or invalid token;
    - asks for a 1–120 character reason when rejecting;
    - writes a one-line, ASCII-only JSON draft (`\u` escapes) to `<data root>\commands\drafts\<uuid>.json`. The UUID comes from `CoCreateGuid` and `issued_at` comes from `GetSystemTime` (UTC).
 2. **Validation.** `python -m perfin_excel_core command promote --data-root <root>` runs the 1c location check on the data root again (defence in depth), which refuses a Git checkout and blocks unacknowledged sync or network folders. It then validates each draft with `perfin_contracts.validate_document`; any draft that is not a JSON object (`null`, an array, a number, a string) is rejected with `E_TYPE`. Valid drafts move to `commands\outbox\`. Invalid ones move to `commands\rejected\` with an `.errors.json` file. Files are never overwritten.
-3. **Python path.** `python -m perfin_excel_core command approve|reject --data-root … --batch-id … --rows 1,4 [--reason …] [--batch-version N]` builds, validates and writes straight to the outbox. With `--batch-version 1`, the built document is identical to `contracts/examples/valid/command_approve_rows.json`.
+3. **Python path.** `python -m perfin_excel_core command approve|reject --data-root … --batch-id … --rows 1,4 [--reason …] [--batch-version N]` builds, validates and writes straight to the outbox. Provide the version from the reviewed snapshot; missing or stale versions are refused by Access. The builder uses the current contract version while compatible historical examples remain validated.
 
 The outbox and drafts are inside the user's data root and never in the repository; the tests check that a root inside the checkout is refused.
 
@@ -196,11 +197,11 @@ Run it on the generated template on Linux. On Windows, run it again on the saved
 
 See the PR description for the list raised to the tracker. In brief:
 
-1. `rpt_review_queue` has no batch `row_version`, so review commands carry empty `expected_versions`.
+1. The frozen `rpt_review_queue` still has no batch `row_version`. The application now exports the separate `perfin_batch_versions.csv`; the generated Power Query table refreshes it in macro workbooks. Review commands carry that snapshot token. After processing commands, regenerate application reports and run `PerFin_Refresh`; stale tokens remain rejected. Old macro workbooks need the updated template table, query and VBA installed once.
 2. There is no report-export metadata table (export time, ledger version). Data-as-of is derived from `balance_as_of`/`as_of`, and freshness from file times.
 3. Three report semantics are not defined by the contract:
    - `rpt_transactions.reconciled` (assumed: included in a *balanced* reconciliation);
    - the separator for `rpt_review_queue.error_codes` (assumed `;`);
    - how `rpt_card_status.confirmed_payments_minor`/`unpaid_statement_minor` are derived.
-4. The `<data root>\reports` and `<data root>\commands\{drafts,outbox,rejected}` folders are not in the 1c layout table.
+4. The application initializer extends the original privacy layout with `reports` and `commands/{drafts,outbox,processed,rejected}`. Every application destination and Python command child path receives location and containment checks; the original privacy defaults remain unchanged.
 5. Every Excel, Power Query and VBA runtime behaviour is pending the [Windows checklist](windows-checklist.md).

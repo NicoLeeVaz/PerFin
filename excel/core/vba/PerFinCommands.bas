@@ -4,8 +4,8 @@ Attribute VB_Name = "PerFinCommands"
 ' draft (approve_rows / reject_rows, contract 1.0.0) to <data root>\commands\drafts.
 ' The validator (python -m perfin_excel_core command promote) checks it with
 ' perfin_contracts and moves it to <data root>\commands\outbox; the PerFin repository
-' (tasks 2b/3a) re-validates and applies it. rpt_review_queue has no batch row_version,
-' so expected_versions is empty (tracked as a contract item).
+' re-validates and applies it. Application-owned perfin_batch_versions supplies
+' optimistic versions; absent tokens refuse drafts and stale tokens fail in Access.
 Option Explicit
 
 Private Const ISSUED_BY As String = "excel_core:review_sheet"
@@ -29,10 +29,28 @@ Private Function IsContractId(ByVal s As String) As Boolean
     IsContractId = True
 End Function
 
+Private Function BatchVersion(ByVal batch As String) As Long
+    Dim lo As ListObject, rw As Range, value As Variant
+    On Error GoTo Missing
+    Set lo = PerFin_FindTable("perfin_batch_versions")
+    If lo Is Nothing Then Exit Function
+    If lo.DataBodyRange Is Nothing Then Exit Function
+    For Each rw In lo.DataBodyRange.Rows
+        If CStr(rw.Cells(1, lo.ListColumns("batch_id").Index).Value) = batch Then
+            value = rw.Cells(1, lo.ListColumns("row_version").Index).Value
+            If Not IsNumeric(value) Then Exit Function
+            If value < 1 Or value <> Int(value) Or value > 2147483647 Then Exit Function
+            BatchVersion = CLng(value)
+            Exit Function
+        End If
+    Next rw
+Missing:
+End Function
+
 Private Sub BuildReviewDraft(ByVal commandType As String)
     Dim lo As ListObject, sel As Range, area As Range, rw As Range
     Dim cBatch As Long, cRow As Long, cErr As Long, cDup As Long, idx As Long
-    Dim batch As String, b As String, v As Variant, problems As String
+    Dim batch As String, b As String, v As Variant, problems As String, version As Long
     Dim nums() As Long, n As Long, i As Long, j As Long, t As Long, dup As Boolean
     Dim reason As String, id As String, json As String, list As String, folder As String, why As String
 
@@ -99,6 +117,12 @@ Private Sub BuildReviewDraft(ByVal commandType As String)
         Exit Sub
     End If
 
+    version = BatchVersion(batch)
+    If version < 1 Then
+        MsgBox "No command written: refresh the application reports and the perfin_batch_versions query first.", vbExclamation, "PerFin review"
+        Exit Sub
+    End If
+
     If commandType = "reject_rows" Then
         reason = Trim$(InputBox("Reason for rejecting " & n & " row(s) (1 to 120 characters):", "PerFin review"))
         If Len(reason) = 0 Or Len(reason) > 120 Then
@@ -128,7 +152,8 @@ Private Sub BuildReviewDraft(ByVal commandType As String)
         """issued_by"": """ & ISSUED_BY & """, ""payload"": {""batch_id"": " & PerFin_JsonString(batch) & _
         ", ""row_numbers"": [" & list & "]" & _
         IIf(commandType = "reject_rows", ", ""reason"": " & PerFin_JsonString(reason), "") & _
-        "}, ""expected_versions"": []}"
+        "}, ""expected_versions"": [{""entity"": ""batch"", ""entity_id"": " & _
+        PerFin_JsonString(batch) & ", ""row_version"": " & CStr(version) & "}]}"
 
     folder = PerFin_CheckedDataRoot() & "\commands\drafts"   ' guard re-checked just before writing
     PerFin_EnsureFolder folder

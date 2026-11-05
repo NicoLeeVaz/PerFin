@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools==84.2.1", "wheel==0.48.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "perfin-local"
+version = "0.2.0"
+description = "Local Excel and Access personal finance workflow"
+requires-python = ">=3.10"
+dependencies = ["openpyxl==3.1.5", "et-xmlfile==2.0.0"]
+
+[project.optional-dependencies]
+windows = ["pyodbc==5.2.0; sys_platform == 'win32'"]
+pdf = ["pypdf==6.10.0"]
+test = ["pypdf==6.10.0", "reportlab==4.4.9"]
+
+[project.scripts]
+perfin = "perfin_app.__main__:main"

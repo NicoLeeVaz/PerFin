@@ -99,8 +99,18 @@ def check_data_root(data_root, acknowledged=False):
     return result
 
 
-def _folder(data_root, name):
-    p = Path(data_root) / "commands" / name
+def _checked_path(path, data_root, acknowledged=False):
+    """Refuse child symlinks/junctions that escape the approved local root."""
+    root = Path(data_root).resolve()
+    resolved = Path(path).resolve()
+    if resolved != root and root not in resolved.parents:
+        raise CommandError("command path escapes the approved data root")
+    check_data_root(resolved, acknowledged)
+    return Path(path)
+
+
+def _folder(data_root, name, acknowledged=False):
+    p = _checked_path(Path(data_root) / "commands" / name, data_root, acknowledged)
     p.mkdir(parents=True, exist_ok=True)
     return p
 
@@ -120,7 +130,7 @@ def write_to_outbox(doc, data_root, acknowledged=False):
     """Validate `doc` and write it to <data root>/commands/outbox/<command_id>.json."""
     check_data_root(data_root, acknowledged)
     validate(doc)
-    path = _folder(data_root, "outbox") / ("%s.json" % doc["command_id"])
+    path = _folder(data_root, "outbox", acknowledged) / ("%s.json" % doc["command_id"])
     _write_new(path, json.dumps(doc, indent=1, sort_keys=True, ensure_ascii=True) + "\n")
     return path
 
@@ -151,14 +161,15 @@ def _draft_errors(path):
 def promote_drafts(data_root, acknowledged=False):
     """Validate VBA drafts; move valid ones to the outbox and invalid ones to rejected/."""
     check_data_root(data_root, acknowledged)
-    drafts = _folder(data_root, "drafts")
+    drafts = _folder(data_root, "drafts", acknowledged)
     report = {"promoted": [], "rejected": []}
     for path in sorted(drafts.iterdir()):
         if not path.is_file() or not path.name.endswith(".json"):
             continue
+        _checked_path(path, data_root, acknowledged)
         errors = _draft_errors(path)
         if errors:
-            dest = _folder(data_root, "rejected") / path.name
+            dest = _folder(data_root, "rejected", acknowledged) / path.name
             os.replace(path, dest)
             _write_new(dest.with_name(dest.name + ".errors.json"),
                        json.dumps([list(e) for e in errors], indent=1) + "\n")
@@ -166,7 +177,7 @@ def promote_drafts(data_root, acknowledged=False):
         else:
             doc = json.loads(path.read_text(encoding="utf-8-sig"))
             validate(doc)  # defence in depth: only a validated object reaches the outbox
-            dest = _folder(data_root, "outbox") / path.name
+            dest = _folder(data_root, "outbox", acknowledged) / path.name
             if dest.exists():
                 raise CommandError("outbox already holds %s" % path.name)
             _write_new(dest, json.dumps(doc, indent=1, sort_keys=True, ensure_ascii=True) + "\n")

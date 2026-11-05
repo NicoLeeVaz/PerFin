@@ -77,6 +77,9 @@ STATUS_COLUMNS = [
     ("message", "text", 1),
 ]
 
+BATCH_VERSIONS_TABLE = "perfin_batch_versions"
+BATCH_VERSIONS_COLUMNS = [("batch_id", "id", 0), ("row_version", "integer", 0)]
+
 MODULES_TABLE = "perfin_modules"
 MODULES_CSV = "perfin_modules.csv"
 MODULES_COLUMNS = [
@@ -114,6 +117,8 @@ def columns(table):
     """Column definitions for any table the core workbook shows."""
     if table in DERIVED_TABLES:
         return tuple((n, t, bool(nl)) for n, t, nl in DERIVED_TABLES[table])
+    if table == BATCH_VERSIONS_TABLE:
+        return tuple((n, t, bool(nl)) for n, t, nl in BATCH_VERSIONS_COLUMNS)
     if table == STATUS_TABLE:
         return tuple((n, t, bool(nl)) for n, t, nl in STATUS_COLUMNS)
     if table == MODULES_TABLE:

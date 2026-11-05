@@ -13,6 +13,9 @@ from datetime import date, datetime
 from typing import Any, Dict, List, Tuple
 
 SCHEMA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "schemas")
+if not os.path.isdir(SCHEMA_DIR):
+    from perfin_resources import root as resource_root
+    SCHEMA_DIR = str(resource_root() / "contracts" / "schemas")
 ANNOTATIONS = {"$schema", "$id", "title", "description", "$comment", "$defs"}
 SUPPORTED = ANNOTATIONS | {"$ref", "type", "properties", "required", "additionalProperties", "items", "enum", "const",
                            "pattern", "minLength", "maxLength", "minimum", "maximum", "minItems", "maxItems",

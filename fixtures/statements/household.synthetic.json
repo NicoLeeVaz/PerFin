@@ -1,0 +1,259 @@
+{
+  "contract": "perfin",
+  "contract_version": "1.0.1",
+  "document_type": "ledger_bundle",
+  "base_currency": "USD",
+  "accounts": [
+    {
+      "account_id": "test:cash",
+      "kind": "asset",
+      "account_class": "checking",
+      "display_name": "SYNTHETIC test:cash",
+      "currency": "USD",
+      "opening_balance_minor": 100000,
+      "opening_balance_date": "2026-01-01",
+      "row_version": 1,
+      "liquidity": "liquid"
+    },
+    {
+      "account_id": "test:loan",
+      "kind": "liability",
+      "account_class": "mortgage",
+      "display_name": "SYNTHETIC test:loan",
+      "currency": "USD",
+      "opening_balance_minor": -40000,
+      "opening_balance_date": "2026-01-01",
+      "row_version": 1,
+      "liquidity": "illiquid"
+    },
+    {
+      "account_id": "re:home",
+      "kind": "asset",
+      "account_class": "real_estate",
+      "display_name": "SYNTHETIC re:home",
+      "currency": "USD",
+      "opening_balance_minor": 0,
+      "opening_balance_date": "2026-01-01",
+      "row_version": 1,
+      "liquidity": "illiquid",
+      "ownership_pct": 50
+    },
+    {
+      "account_id": "ret:ira",
+      "kind": "asset",
+      "account_class": "retirement",
+      "display_name": "SYNTHETIC ret:ira",
+      "currency": "USD",
+      "opening_balance_minor": 0,
+      "opening_balance_date": "2026-01-01",
+      "row_version": 1,
+      "liquidity": "restricted"
+    }
+  ],
+  "categories": [
+    {
+      "category_id": "salary",
+      "name": "Salary",
+      "category_kind": "income"
+    },
+    {
+      "category_id": "interest",
+      "name": "Interest",
+      "category_kind": "interest"
+    },
+    {
+      "category_id": "shop",
+      "name": "Shopping",
+      "category_kind": "expense"
+    }
+  ],
+  "transactions": [
+    {
+      "transaction_id": "t1",
+      "account_id": "test:cash",
+      "posted_date": "2026-02-01",
+      "amount_minor": -10000,
+      "currency": "USD",
+      "description": "SYNTHETIC",
+      "entry_method": "manual",
+      "row_version": 1,
+      "splits": [
+        {
+          "split_id": "t1.s",
+          "split_kind": "transfer",
+          "transfer_link_id": "link1",
+          "amount_minor": -10000
+        }
+      ]
+    },
+    {
+      "transaction_id": "t2",
+      "account_id": "test:loan",
+      "posted_date": "2026-02-01",
+      "amount_minor": 10000,
+      "currency": "USD",
+      "description": "SYNTHETIC",
+      "entry_method": "manual",
+      "row_version": 1,
+      "splits": [
+        {
+          "split_id": "t2.s",
+          "split_kind": "transfer",
+          "transfer_link_id": "link1",
+          "amount_minor": 10000
+        }
+      ]
+    },
+    {
+      "transaction_id": "t3",
+      "account_id": "test:cash",
+      "posted_date": "2026-02-01",
+      "amount_minor": -500,
+      "currency": "USD",
+      "description": "SYNTHETIC",
+      "entry_method": "manual",
+      "row_version": 1,
+      "splits": [
+        {
+          "split_id": "t3.s",
+          "split_kind": "category",
+          "category_id": "interest",
+          "amount_minor": -500
+        }
+      ]
+    },
+    {
+      "transaction_id": "t4",
+      "account_id": "test:cash",
+      "posted_date": "2026-02-01",
+      "amount_minor": -5000,
+      "currency": "USD",
+      "description": "SYNTHETIC",
+      "entry_method": "manual",
+      "row_version": 1,
+      "splits": [
+        {
+          "split_id": "t4.s",
+          "split_kind": "transfer",
+          "transfer_link_id": "link2",
+          "amount_minor": -5000
+        }
+      ]
+    },
+    {
+      "transaction_id": "t5",
+      "account_id": "ret:ira",
+      "posted_date": "2026-02-01",
+      "amount_minor": 5000,
+      "currency": "USD",
+      "description": "SYNTHETIC",
+      "entry_method": "manual",
+      "row_version": 1,
+      "splits": [
+        {
+          "split_id": "t5.s",
+          "split_kind": "transfer",
+          "transfer_link_id": "link2",
+          "amount_minor": 5000
+        }
+      ]
+    },
+    {
+      "transaction_id": "t6",
+      "account_id": "test:cash",
+      "posted_date": "2026-02-01",
+      "amount_minor": 10000,
+      "currency": "USD",
+      "description": "SYNTHETIC",
+      "entry_method": "manual",
+      "row_version": 1,
+      "splits": [
+        {
+          "split_id": "t6.s",
+          "split_kind": "category",
+          "category_id": "salary",
+          "amount_minor": 10000
+        }
+      ]
+    },
+    {
+      "transaction_id": "t7",
+      "account_id": "test:cash",
+      "posted_date": "2026-02-01",
+      "amount_minor": -2000,
+      "currency": "USD",
+      "description": "SYNTHETIC",
+      "entry_method": "manual",
+      "row_version": 1,
+      "splits": [
+        {
+          "split_id": "t7.s",
+          "split_kind": "category",
+          "category_id": "shop",
+          "amount_minor": -2000
+        }
+      ]
+    },
+    {
+      "transaction_id": "t8",
+      "account_id": "test:cash",
+      "posted_date": "2026-02-01",
+      "amount_minor": 500,
+      "currency": "USD",
+      "description": "SYNTHETIC",
+      "entry_method": "manual",
+      "row_version": 1,
+      "splits": [
+        {
+          "split_id": "t8.s",
+          "split_kind": "category",
+          "category_id": "shop",
+          "amount_minor": 500
+        }
+      ]
+    }
+  ],
+  "transfer_links": [
+    {
+      "transfer_link_id": "link1",
+      "from_transaction_id": "t1",
+      "to_transaction_id": "t2",
+      "link_status": "confirmed"
+    },
+    {
+      "transfer_link_id": "link2",
+      "from_transaction_id": "t4",
+      "to_transaction_id": "t5",
+      "link_status": "confirmed"
+    }
+  ],
+  "asset_valuations": [
+    {
+      "valuation_id": "v1",
+      "account_id": "re:home",
+      "as_of": "2026-01-31",
+      "value_minor": 300000,
+      "currency": "USD",
+      "valuation_source": "SYNTHETIC statement",
+      "valuation_method": "statement"
+    },
+    {
+      "valuation_id": "v2",
+      "account_id": "ret:ira",
+      "as_of": "2026-01-31",
+      "value_minor": 200000,
+      "currency": "USD",
+      "valuation_source": "SYNTHETIC statement",
+      "valuation_method": "statement"
+    },
+    {
+      "valuation_id": "v3",
+      "account_id": "ret:ira",
+      "as_of": "2026-02-28",
+      "value_minor": 208000,
+      "currency": "USD",
+      "valuation_source": "SYNTHETIC statement",
+      "valuation_method": "statement"
+    }
+  ]
+}

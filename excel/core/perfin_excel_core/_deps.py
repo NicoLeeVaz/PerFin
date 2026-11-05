@@ -6,7 +6,11 @@ copied. Packaging for an installed release belongs to task 3a.
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+try:
+    from perfin_resources import root as resource_root
+    REPO_ROOT = resource_root()
+except ImportError:
+    REPO_ROOT = Path(__file__).resolve().parents[3]
 CORE_DIR = REPO_ROOT / "excel" / "core"
 CONTRACTS_DIR = REPO_ROOT / "contracts"
 REPORT_TABLES_JSON = CONTRACTS_DIR / "schemas" / "report_tables.json"

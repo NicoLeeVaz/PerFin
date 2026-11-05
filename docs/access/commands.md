@@ -1,6 +1,6 @@
 # Repository command semantics (task 2b)
 
-`perfin_store.repository.Repository` implements the contract 1.0.0 command flow ([docs/contracts.md §4](../contracts.md#4-import-review-and-commit-interfaces)). This page records the choices the contract leaves to the store, plus the gaps that need a tracker decision. Behaviour shown here is tested on Linux against the test-only fake; Access behaviour is pending ([README](README.md#windows-acceptance-pending)).
+`perfin_store.repository.Repository` implements the compatible contract 1.0.x command flow (currently 1.0.1) ([docs/contracts.md §4](../contracts.md#4-import-review-and-commit-interfaces)). This page records the choices the contract leaves to the store, plus the gaps that need a tracker decision. Behaviour shown here is tested on Linux against the test-only fake; Access behaviour is pending ([README](README.md#windows-acceptance-pending)).
 
 ## Common rules
 
@@ -37,7 +37,7 @@
 
 | Operation | Why | Behaviour |
 | --- | --- | --- |
-| `stage_batch(staging_batch)` | Staging is not a command in 1.0 | Writes `import_batch` and `staging_row`, never the ledger. Needs `batch_status: staged` and a known account. Re-staging the same file for the same account returns `replayed`. Fields that have no column are dropped (T2). |
+| `stage_batch(staging_batch)` | Staging is not a command in 1.0 | Writes `import_batch` and `staging_row`, never the ledger. Needs `batch_status: staged` and a known account. Re-staging the same file for the same account returns `replayed`. Fields without normalized columns remain in the immutable audited staging payload and are restored by `export_staging_batch` (T2). |
 | `import_bundle(ledger_bundle)` | No command creates accounts, categories or manual history (T1) | Insert-only and all-or-nothing. It validates the bundle *merged with* the stored ledger, refuses existing ids (`E_DUPLICATE_ID`) and needs a committed batch for imported transactions. Logged and audited. |
 | `set_default_categories(out, in)` | There is no command to categorize staging rows (T3) | Stored in `contract_meta`. An approved row with no `proposed_splits` gets one category split: outflow for negative amounts, inflow otherwise. With no default set, commit fails with `E_ROW_UNRESOLVED`. |
 
@@ -49,7 +49,7 @@ All three are logged in `command_log` with their own `command_type` (`stage_batc
 | --- | --- |
 | `approve_rows` | Needs a batch that is not committed or rolled back. Each row must exist (`E_REF_UNKNOWN`), have no errors (`E_ROW_UNRESOLVED`), and have duplicate status `none` or `confirmed_distinct` (`E_DUPLICATE_UNRESOLVED`). The batch becomes `approved` once every row is decided and at least one is approved. It becomes `rejected` if every row is rejected. |
 | `reject_rows` | The reason is kept in the audit `after_json`. |
-| `resolve_duplicate` | Only `possible` rows; otherwise `E_BATCH_STATE`. A `confirmed_duplicate` row must still be rejected explicitly. |
+| `resolve_duplicate` | Accepts `possible` rows, or `none` rows with a detected same-account ledger source-ID collision or an earlier approved same-batch source-ID collision. Other rows return `E_BATCH_STATE`. A `confirmed_duplicate` row must still be rejected explicitly. |
 | `commit_batch` | See the [commit_batch](#commit_batch) section below. |
 | `rollback_batch` | See the [rollback_batch](#rollback_batch) section below. |
 | `edit_transaction` | Changes the description and dates, and the amount when the transaction has **one** split (that split follows the amount). With several splits, collapse them with `set_splits` first (`E_SPLITS_UNBALANCED`). Reconciled and linked amounts are protected by the post-write check (`E_RECON_MISMATCH`, `E_TRANSFER_AMOUNT`). |
@@ -61,7 +61,7 @@ All three are logged in `command_log` with their own `command_type` (`stage_batc
 | `allocate_statement_payment` / `remove_statement_payment` | Allocation follows the contract's payment-portion rules (`E_ACCOUNT_KIND`, `E_ALLOCATION_EXCEEDS`). Removal deletes the row; the deleted row is kept in `before_json`. |
 | `reconcile_statement` | Inserts, or updates with the expected version. Included transactions must exist and may not belong to another reconciliation (`E_DUPLICATE_ID`). The contract recomputes `difference_minor`. |
 | `record_valuation`, `set_card_terms` | Upsert. Card APR buckets are replaced as a whole. The contract's local rules and its asset-only / credit-card-only rules apply. |
-| `save_payoff_scenario` | **Not stored**: there is no table in the reference DDL (T7). Returns `E_COMMAND_PAYLOAD`. |
+| `save_payoff_scenario` | Stores the validated scenario body in the audited command payload and updates a hashed scenario-id pointer in `contract_meta` in the same transaction. `payoff_scenario(id)` returns the current document; earlier versions remain in history. No ledger balance changes (T7). |
 
 ### commit_batch
 
@@ -97,22 +97,22 @@ Each leg's splits are replaced by one transfer split. The previous splits are ke
 
 ## Tracker items (contract gaps and ambiguities found by 2b)
 
-None of these changed the contract. Each needs a coordinator decision before 1.1:
+These items distinguish remaining contract limitations from gaps resolved during application integration. Resolutions below preserve the frozen exchange contract and Access schema; remaining design changes need a coordinator decision.
 
-| # | Finding | 2b behaviour now |
+| # | Finding | Current behaviour |
 | --- | --- | --- |
-| T1 | No command creates accounts, categories or manual transactions. | Logged admin `import_bundle`. |
-| T2 | The `staging_row` DDL has no column for `duplicate.matched_row_number`, `duplicate.evidence`, `transfer_candidate_transaction_id` or `parsed.running_balance_minor`. | Dropped at stage time; not returned by `export_staging_batch`. |
+| T1 | No dedicated contract command creates accounts, categories or manual transactions. | Logged admin `import_bundle`; application `init`, `account-add` and `onboard` provide the setup path. |
+| T2 | The `staging_row` DDL has no column for `duplicate.matched_row_number`, `duplicate.evidence`, `transfer_candidate_transaction_id` or `parsed.running_balance_minor`. | Resolved without new columns: preserved in the immutable stage-command payload and restored by `export_staging_batch`; reviewed state stays authoritative in normalized rows. |
 | T3 | No command sets or edits `proposed_splits` on a staged row. | Default categories in `contract_meta`; otherwise `E_ROW_UNRESOLVED`. |
 | T4 | The `link_transfer` payload cannot say which splits form the transfer. | Whole-transaction links only. |
 | T5 | `statement_payment` is an `expected_versions` entity but has no `row_version` column. | Its version is 1. |
 | T6 | `command_result` has no code for a storage or engine failure. | `StorageError` is raised after rollback. |
-| T7 | `save_payoff_scenario` has no Access table. | Rejected with `E_COMMAND_PAYLOAD`. |
+| T7 | `save_payoff_scenario` has no dedicated Access table. | Resolved using audited command payloads and an atomic metadata pointer to the latest accepted scenario command. |
 | T8 | `include_in_net_worth` is optional in JSON, but Access Yes/No cannot store Null [Unverified]. | An absent flag is stored as `TRUE`. |
 | T9 | Access compares text keys case-insensitively [Unverified], but contract ids are case-sensitive. | `T001` and `t001` collide (the fake models this). Suggest a contract rule that ids are unique case-insensitively. |
-| T10 | `uq_batch_file (account_id, source_file_sha256)` blocks re-staging a file after `rollback_batch`. | Re-importing a rolled-back file needs a contract decision. |
+| T10 | `uq_batch_file (account_id, source_file_sha256)` blocks re-staging a file after `rollback_batch`. | The application explicitly refuses same-file reimport after rollback and directs the user to correction entries. Supporting a new import generation still needs a schema/contract decision. |
 | T11 | The format of `rpt_review_queue.error_codes` is unspecified. | The CSV uses `;`-joined codes; the view returns raw JSON. |
-| T12 | `rpt_card_status` derivations are unspecified. | Latest statement with `period_end ≤ as_of`; terms effective on `as_of`; payments are allocations whose transaction posted on or before `as_of`; `unpaid = max(0, statement owed − those payments)`; utilization in basis points, rounded half-to-even; null when the limit is null or 0. To be confirmed with 2c/3b. |
-| T13 | `command_result` has no warnings field. | Dropped staging fields (T2) cannot be reported back. |
-| T14 | Contract 1.0.1 (PR #18) rejects duplicate bucket ids. | Already enforced. Compatible; no change is needed when it merges. |
+| T12 | `rpt_card_status` derivations are unspecified. | Latest statement with `period_end ≤ as_of`; terms effective on `as_of`; payments are allocations whose transaction posted on or before `as_of`; `unpaid = max(0, statement owed − those payments)`; utilization in basis points, rounded half-to-even; null when the limit is null or 0. These remain implementation conventions rather than additional frozen-contract fields. |
+| T13 | `command_result` has no warnings field. | Non-fatal warnings need separate application/report output. Staging-field loss in T2 is resolved and no longer needs a warning. |
+| T14 | Contract 1.0.1 (PR #18) rejects duplicate bucket ids. | Already merged and enforced by the current validator and store. |
 | T15 | `scan_repo_for_forbidden()` (1c) reports the nil UUID `00000000-…-000000000000` as a Luhn-valid card number. | 2b builds the nil UUID in code instead of writing it out. Suggest a 1c fix: exclude all-zero sequences. |

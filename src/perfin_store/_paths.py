@@ -10,7 +10,11 @@ import os
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+try:
+    from perfin_resources import root as resource_root
+    REPO_ROOT = resource_root()
+except ImportError:
+    REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _dir(env: str, default: Path) -> Path:

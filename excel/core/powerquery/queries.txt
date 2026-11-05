@@ -11,6 +11,7 @@ rpt_card_status|table
 rpt_statements|connection
 rpt_reconciliation|connection
 rpt_review_queue|table
+perfin_batch_versions|table
 perfin_statement_recon|table
 perfin_unreconciled_items|table
 perfin_modules|table
