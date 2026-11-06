@@ -3,6 +3,8 @@
 Revised 2026-11-05 under the user's explicit SQLite and parallel-agent instruction.
 [Live tracker #1](https://github.com/NicoLeeVaz/PerFin/issues/1) records completion evidence.
 
+**Current status:** portable waves 6, 7 and 8a are merged in PR #33 (`af6a794`). The next executable task is [#34: Windows SQLite and desktop Excel acceptance](https://github.com/NicoLeeVaz/PerFin/issues/34). Intended executor: local Codex on Windows; desktop operator: the user; results review: Spot/cloud coordinator. The Windows task is not yet claimed or running. Optional Access/ACE and remaining native release requirements stay open in #30. See [the agent log](AGENT-LOG.md) for actual activity, recorded ownership and later handoffs.
+
 ## Outcome and structure first
 
 Run private personal finance locally using a real SQLite database, existing deterministic Python workflows, and generated Excel files. Access remains an explicit optional backend/port target. Native Access and desktop Excel acceptance are release requirements for those features, not blockers for development.
@@ -21,21 +23,22 @@ The [complete data model](database/model.md), [offline relationship explorer](da
 
 Foreign keys and logical references differ; inspect both in the model. SQLite stores exact bounded integer cents, explicit ISO dates and booleans. SQLite/Access SQL and collations are not identical. Canonical Python reports feed CSV/XLSX; Access saved queries remain platform-specific. Full-history archives retain more than ledger_bundle.
 
-## Three new waves
+## Wave ownership and completion
 
 The five original waves have merged source; do not repeat them. Their native evidence gaps belong to **8b**, without blocking portable work.
 
-| Wave/task | Issue | Owner | Deliverable | Integration dependency |
+| Wave/task | Issue | Recorded owner | Deliverable | Current status |
 | --- | --- | --- | --- | --- |
-| 6a | [#24](https://github.com/NicoLeeVaz/PerFin/issues/24) | Schema agent | Structure, relationship explorer, inventory drift checks | Existing contract/schema |
-| 6b | [#25](https://github.com/NicoLeeVaz/PerFin/issues/25) | Storage agent | Real SQLite schema/adapter and repository regressions | Adapter contract and 6a model |
-| 6c | [#26](https://github.com/NicoLeeVaz/PerFin/issues/26) | Portability agent | Backup/verified restore and full-history archives | 6b adapter |
-| 7a | [#27](https://github.com/NicoLeeVaz/PerFin/issues/27) | App agent | SQLite default, explicit Access option, full CLI workflow | 6b/6c APIs |
-| 7b | [#28](https://github.com/NicoLeeVaz/PerFin/issues/28) | Demo agent | Synthetic database workflow and three Excel workbooks on Linux/cloud | 6b and app/workbook APIs |
-| 8a | [#29](https://github.com/NicoLeeVaz/PerFin/issues/29) | Coordinator | Offline suites, installed wheel, portable package/evidence | 6a–6c and 7a–7b |
-| 8b | [#30](https://github.com/NicoLeeVaz/PerFin/issues/30) | Windows operator | Native ACE/Excel/Power Query/VBA and future Access import validation | Compatible native environment; release-only |
+| 6a | [#24](https://github.com/NicoLeeVaz/PerFin/issues/24) | `schema_map` | Structure, relationship explorer, inventory drift checks | Merged #33; closed |
+| 6b | [#25](https://github.com/NicoLeeVaz/PerFin/issues/25) | `sqlite_backend` | Real SQLite schema/adapter and repository regressions | Merged #33; closed |
+| 6c | [#26](https://github.com/NicoLeeVaz/PerFin/issues/26) | `portability` | Backup/verified restore and full-history archives | Merged #33; closed |
+| 7a | [#27](https://github.com/NicoLeeVaz/PerFin/issues/27) | `app_backend` | SQLite default, explicit Access option, full CLI workflow | Merged #33; closed |
+| 7b | [#28](https://github.com/NicoLeeVaz/PerFin/issues/28) | `cloud_workbooks` | Synthetic database workflow and three Excel workbooks | Merged #33; closed |
+| 8a | [#29](https://github.com/NicoLeeVaz/PerFin/issues/29) | `root` coordinator | Offline suites, installed wheel, portable package/evidence | Merged #33; closed; 547 tests and installed smoke PASS |
+| 8b | [#30](https://github.com/NicoLeeVaz/PerFin/issues/30) | Compatible Windows operator needed | Native ACE/Excel/Power Query/VBA and future Access import validation | Open; native requirements UNRUN |
+| Next Windows slice | [#34](https://github.com/NicoLeeVaz/PerFin/issues/34) | Local Codex + user; Spot reviews results | Actual Windows SQLite and desktop Excel evidence | Open; intended executor not yet claimed |
 
-Five agents can begin immediately on agreed interfaces in separate worktrees. Dependent tests must use the integrated implementation before a task is verified. No unrelated native check blocks development.
+Implementation owners above come from the original wave issues; they are historical attribution, not newly launched agents. The next actor should claim #34 and update the agent log before starting. Follow actual code dependencies and record component results separately. Missing optional Access/ACE does not prevent independent SQLite/Excel checks or continued development.
 
 ## Previous task reconciliation
 
