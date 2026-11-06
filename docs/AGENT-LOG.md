@@ -88,3 +88,19 @@ Append an entry at task start and again before stopping or handing off:
 Keep prior entries and their qualifications. An instruction to run a check is
 not proof it ran. Development remains independent of unexecuted native release
 requirements in #30.
+
+
+## 2026-11-05 — Windows issue #34 preflight started
+
+| Field | Record |
+| --- | --- |
+| Actor/session | Local Codex native thread `01a1afaa-f8c9-7cd2-8235-297fd5c7bed4`; matching active-runtime `CODEX_THREAD_ID` and `CODEX_SESSION_ID` environment values are the provenance. Not a generated label or `/root`. |
+| Environment | Windows NT 10.0.19045; 64-bit OS; en-US. Edition, Python/SQLite/dependency versions, and Excel build/bitness/settings are not yet confirmed. |
+| Claim | [Issue #34 claim](https://github.com/NicoLeeVaz/PerFin/issues/34#issuecomment-6679453842); live comments and log checked before claiming, with no existing active claim. |
+| Branch / starting revision | `codex/issue-34-windows-01a1afaa`, created from remote main `7e80d78f4e226ca37c714138f17478dc87f49699`. This is a remote baseline, not a tested local revision. |
+| Owned paths | `docs/AGENT-LOG.md` only at preflight. Synthetic runtime data and detailed evidence are reserved for a fresh local nonsynced directory outside Git. |
+| Work actually started | Read #34/#1/#30, agent instructions/log, execution plan, getting-started/release docs, Windows checklist, core/payoff/statements/PDF runbooks, and the native Python/PowerShell runners. Inspected for a local checkout and attempted an isolated fresh clone; no existing work was reset, cleaned, stashed, or overwritten. |
+| Prerequisites | Local Git HTTPS could not connect to github.com:443, including a retry with expanded execution access. No clean local checkout exists. Required exact-path authorization for the LocalAppData run directory is pending. GitHub connector is available for sanitized coordination. |
+| Intended checks | Existing offline suites and privacy scan; portable demo; clean package/isolated installed-wheel smoke; real SQLite workflow/replay/backup/restore; native runner; actual operator observations W1-W19/W15b and module/GUI/PDF/offline checks. Optional ACE stays separate. |
+| Evidence state | No acceptance commands have executed; tested SHA/tree and clean-status evidence are unavailable. No native success or historical Linux test count is claimed. |
+| Next owner | Same Codex session resumes after local preparation blockers are resolved, with the user for desktop observations; Spot/cloud coordinator reviews the eventual handoff. |
