@@ -43,6 +43,14 @@ integrity and summary again. It never overwrites an existing file or associated
 SQLite sidecars. A failed restore removes only its newly created target. New
 files use owner-only modes where the operating system supports them.
 
+New database creation, backup restore and archive import all refuse an existing
+target or any `-wal`, `-shm` or `-journal` sidecar, including dangling symbolic
+links. This preserves recovery material when the main database file is missing;
+SQLite must not consume it while initializing a replacement. Choose a different
+path and recover the old files deliberately. Opening a repository also refuses
+newer contract minor versions, consistently with archive import. Same-minor
+patch versions remain readable under the existing contract policy.
+
 Python API:
 
 ```python
