@@ -1,99 +1,84 @@
 # PerFin execution plan
 
-Updated 2026-11-04. [Live tracker](https://github.com/NicoLeeVaz/PerFin/issues/1).
+Revised 2026-11-05 under the user's explicit SQLite and parallel-agent instruction.
+[Live tracker #1](https://github.com/NicoLeeVaz/PerFin/issues/1) records completion evidence.
 
-## Selected direction
+## Outcome and structure first
 
-**Excel is the user interface; Microsoft Access is the authoritative local data layer.** Installed Python handles parsing and deterministic calculations; thin VBA/Power Query/DAO/ODBC integration is selected based on the existing Office setup. SQLite and complete alternative apps remain historical research, not parallel implementation targets.
+Run private personal finance locally using a real SQLite database, existing deterministic Python workflows, and generated Excel files. Access remains an explicit optional backend/port target. Native Access and desktop Excel acceptance are release requirements for those features, not blockers for development.
 
-Privacy, extensibility and reuse are requirements. Ordinary use must work locally without AI, external bank connections or payment execution. Public source contains only code, empty templates and synthetic examples. Actual financial data, populated workbooks/databases, statement PDFs, logs and backups live outside this public repository and outside sync folders by default.
+The [complete data model](database/model.md), [offline relationship explorer](database/model.html) and [machine-readable inventory](database/schema-inventory.json) describe all 18 tables:
 
-Current status: CSV staging, Access repository and Excel core source are merged. Remaining integration and modules are being completed under the user's explicit 2026-11-05 instruction to continue with subagents. The tracker records actual merged revisions and local test evidence. Windows/ACE/desktop Excel runtime acceptance remains pending; source completion is not a verified Windows release.
+| Group | Tables | Responsibility |
+| --- | --- | --- |
+| Accounts/categories | account, category | Dated opening balances and category hierarchy |
+| Intake/review | import_batch, staging_row | File identity, provenance, errors and explicit decisions |
+| Ledger/transfers | ledger_txn, split, transfer_link | Atomic records, category splits, paired transfers and reversals |
+| Statements/reconciliation | statement, statement_bucket_balance, statement_payment, reconciliation, reconciliation_item | Statement buckets, allocations and reconciled transaction membership |
+| Card terms | card_terms, card_apr_bucket | Dated limits, minimum payments and APR buckets |
+| Wealth | asset_valuation | Dated values with source/method |
+| Evidence/metadata | command_log, audit_log, contract_meta | Replay identity, before/after audit, versions and configuration |
 
-## How the numbering works
+Foreign keys and logical references differ; inspect both in the model. SQLite stores exact bounded integer cents, explicit ISO dates and booleans. SQLite/Access SQL and collations are not identical. Canonical Python reports feed CSV/XLSX; Access saved queries remain platform-specific. Full-history archives retain more than ledger_bundle.
 
-The number is the wave; the letter is an independent task. **1a, 1b and 1c may run concurrently. Every Wave 1 task must be merged and verified before any Wave 2 task begins.** This rule applies to all lower-numbered waves, not just a task's most obvious dependency. GitHub's issue number (for example #2) is separate from the scheduling code (1a).
+## Three new waves
 
-The user's 2026-11-05 continuation instruction permits source implementation across the remaining waves while Windows runtime evidence is unavailable. Keep module dependencies and owned paths explicit, integrate tested producers before consumers, and never turn this source-progression authorization into a runtime PASS. The table's initial states are a creation snapshot. The tracker gate evidence and linked PRs are authoritative thereafter. A closed issue or merged PR alone is insufficient. An issue closed as duplicate/not planned does not satisfy its gate unless the tracker records the approved replacement/scope decision and evidence.
+The five original waves have merged source; do not repeat them. Their native evidence gaps belong to **8b**, without blocking portable work.
 
-| Task | Issue | Output | Initial state |
-| --- | --- | --- | --- |
-| 1a | [Freeze ledger, import and module contracts](https://github.com/NicoLeeVaz/PerFin/issues/2) | A small versioned contract lets backend, importer and workbook agents build independently. | Ready |
-| 1b | [Audit and pin reusable Access, Excel and community assets](https://github.com/NicoLeeVaz/PerFin/issues/3) | A small, licensed starter kit with explicit adopt/adapt/reference-only decisions. | Ready |
-| 1c | [Define local privacy boundary and NoPii export contract](https://github.com/NicoLeeVaz/PerFin/issues/4) | A practical privacy specification that keeps ordinary finance work local. | Ready |
-| 2a | [Build extensible CSV profiles and reviewed import staging](https://github.com/NicoLeeVaz/PerFin/issues/5) | Different CSV formats become validated preview rows without writing to the ledger. | Blocked |
-| 2b | [Build Access backend, controlled writes and reproducible setup](https://github.com/NicoLeeVaz/PerFin/issues/6) | An Access database is the sole source of truth, with atomic imports and auditable updates. | Blocked |
-| 2c | [Build Excel shell, refreshable views and module interface](https://github.com/NicoLeeVaz/PerFin/issues/7) | A familiar Excel interface displays accounts, transactions, reconciliation and dashboard views. | Blocked |
-| 3a | [Deliver first usable CSV → Access → Excel workflow](https://github.com/NicoLeeVaz/PerFin/issues/8) | First usable milestone: import, review, save, reconcile and refresh local finances. | Blocked |
-| 3b | [Build and validate mathematical credit-card payoff engine](https://github.com/NicoLeeVaz/PerFin/issues/9) | Reproducible payoff schedules compare cost and time for the user's strategies. | Blocked |
-| 3c | [Build personal statements and net-worth module](https://github.com/NicoLeeVaz/PerFin/issues/10) | Dated personal financial statements combine ledger balances and asset valuations without double counting. | Blocked |
-| 4a | [Add interactive Excel payoff planner](https://github.com/NicoLeeVaz/PerFin/issues/11) | Users can compare payoff plans visibly in Excel using the validated engine. | Blocked |
-| 4b | [Add Excel personal statements and asset valuation entry](https://github.com/NicoLeeVaz/PerFin/issues/12) | Users can view net worth and maintain dated asset estimates through a separate Excel module. | Blocked |
-| 4c | [Add local PDF extraction with mandatory import review](https://github.com/NicoLeeVaz/PerFin/issues/13) | Digital PDF statements can feed the existing staging/review workflow without silent ledger writes. | Blocked |
-| 5a | [Verify and package the local Windows release](https://github.com/NicoLeeVaz/PerFin/issues/14) | A reproducible, tested local release that a user can install and operate. | Blocked |
+| Wave/task | Issue | Owner | Deliverable | Integration dependency |
+| --- | --- | --- | --- | --- |
+| 6a | [#24](https://github.com/NicoLeeVaz/PerFin/issues/24) | Schema agent | Structure, relationship explorer, inventory drift checks | Existing contract/schema |
+| 6b | [#25](https://github.com/NicoLeeVaz/PerFin/issues/25) | Storage agent | Real SQLite schema/adapter and repository regressions | Adapter contract and 6a model |
+| 6c | [#26](https://github.com/NicoLeeVaz/PerFin/issues/26) | Portability agent | Backup/verified restore and full-history archives | 6b adapter |
+| 7a | [#27](https://github.com/NicoLeeVaz/PerFin/issues/27) | App agent | SQLite default, explicit Access option, full CLI workflow | 6b/6c APIs |
+| 7b | [#28](https://github.com/NicoLeeVaz/PerFin/issues/28) | Demo agent | Synthetic database workflow and three Excel workbooks on Linux/cloud | 6b and app/workbook APIs |
+| 8a | [#29](https://github.com/NicoLeeVaz/PerFin/issues/29) | Coordinator | Offline suites, installed wheel, portable package/evidence | 6a–6c and 7a–7b |
+| 8b | [#30](https://github.com/NicoLeeVaz/PerFin/issues/30) | Windows operator | Native ACE/Excel/Power Query/VBA and future Access import validation | Compatible native environment; release-only |
 
-## First useful delivery
+Five agents can begin immediately on agreed interfaces in separate worktrees. Dependent tests must use the integrated implementation before a task is verified. No unrelated native check blocks development.
 
-**3a / #8 is the first functional milestone:** a person can import CSV, review proposed transactions, commit to Access, reconcile statements, refresh Excel and restore a backup. It can be demonstrated as soon as 3a is verified, while 3b and 3c finish. Wave 4 still waits for the entire Wave 3 gate. PDF arrives in 4c; it does not delay the first CSV milestone. Financial statements are a separate optional module at runtime.
+## Previous task reconciliation
 
-## Ownership and independence
+| Original task | Retained source outcome | Continuing responsibility |
+| --- | --- | --- |
+| 1a #2 | Contract/schema validation | 6a structure; coordinate contract changes |
+| 1b #3 | Reuse/license review | Retain provenance; SQLite explicitly authorized |
+| 1c #4 | Privacy/location guards | Add SQLite database/journal exclusions |
+| 2a #5 | Reviewed CSV importer | 7a/7b integrate with SQLite |
+| 2b #6 | Access repository/recovery | 6b reuses semantics; 8b real ACE tests |
+| 2c #7 | Excel shell/CSV reports | 7b portable files; 8b native refresh/recalculation |
+| 3a #8 | Finance workflow | 7a removes Access-only runtime dependency |
+| 3b #9 | Payoff engine | Reuse verified math and declared limitations |
+| 3c #10 | Statements/net worth | Reuse engine with SQLite snapshots |
+| 4a #11 | Payoff workbook | 7b file demo; 8b native acceptance |
+| 4b #12 | Statements workbook | 7b file demo; 8b native acceptance |
+| 4c #13 | Local PDF staging | Reuse explicit review; synthetic layout only |
+| 5a #14 | Source/wheel package | 8a portable verification; 8b native release |
 
-| Task | Owned paths |
-| --- | --- |
-| 1a | contracts/**; docs/contracts.md |
-| 1b | research/reuse/**; third_party/** |
-| 1c | docs/privacy/**; config/privacy/** |
-| 2a | src/perfin_import/**; tests/import/**; fixtures/import/**; docs/import/** |
-| 2b | src/perfin_store/**; access/**; tests/store/**; docs/access/** |
-| 2c | excel/core/**; tests/excel_core/**; fixtures/excel_core/**; docs/excel/** |
-| 3a | src/perfin_app/**; tests/integration_core/**; scripts/core/**; docs/runbooks/core/**; dependency/project manifests; root .gitignore |
-| 3b | src/perfin_payoff/**; tests/payoff/**; fixtures/payoff/**; docs/payoff/** |
-| 3c | src/perfin_statements/**; tests/statements/**; fixtures/statements/**; docs/statements/** |
-| 4a | excel/payoff/**; tests/excel_payoff/**; docs/runbooks/payoff/** |
-| 4b | excel/statements/**; tests/excel_statements/**; docs/runbooks/statements/** |
-| 4c | src/perfin_pdf/**; tests/pdf/**; fixtures/pdf/**; docs/runbooks/pdf/** |
-| 5a | release/**; scripts/release/**; tests/acceptance/**; docs/GETTING-STARTED.md; root README.md; docs/EXECUTION-PLAN.md |
+## Ownership
 
-Same-wave tasks use frozen prior-wave contracts and synthetic mocks, never one another's unmerged implementation. Maintain one active owner per issue and separate branches/worktrees. Payoff and net-worth Excel modules have separate workbook files to prevent binary merge collisions. Do not create a monolithic workbook concurrently.
+- 6a: model/inventory, scripts/database, tests/database.
+- 6b: src/perfin_store/sqlite_backend.py, tests/sqlite.
+- 6c: sqlite_backup.py, portability.py, tests/portability, portability guide.
+- 7a: src/perfin_app, tests/integration_core, core runbook.
+- 7b: scripts/core/portable_demo.py, tests/portable_demo, demo guide.
+- 8a: root instructions/README, getting-started/release docs, package/release scripts, privacy/static guards, integration.
+- 8b: native harnesses and operator evidence; no invented PASS.
 
-The coordinator owns tracker updates and gate-evidence updates to this plan. Shared packaging is integrated by 3a. Request shared interface changes through the tracker; pause affected work and revalidate dependent results after a contract change. Do not silently broaden an issue's owned paths. Missing Windows/Office capabilities block applicable runtime checks; they are not evidence of failure in the code, and they are never recorded as passed.
+## Evidence gates
 
-## Gate checklist
+| Evidence | Enables | Does not establish |
+| --- | --- | --- |
+| Contract/Python unit tests | Continued development | Real database behavior |
+| Real on-disk SQLite integration | Portable SQLite workflow | ACE or native Excel behavior |
+| Workbook/formula inspection | Inspectable XLSX demonstrations | Desktop recalculation, Power Query or VBA |
+| Installed-wheel/portable acceptance | Tested portable release candidate | Universal platform/bank support |
+| Actual Windows/ACE/Office evidence | Applicable native release claims | Unsupported profiles or financial assumptions |
 
-- [ ] Wave 1: contracts, reusable-asset decisions and privacy specification are merged, internally consistent and verified. Freeze interface version for Wave 2.
-- [ ] Wave 2: CSV staging, Access repository and Excel shell pass their acceptance checks, including required Windows/Office checks. Independent components conform to the same frozen contract.
-- [ ] Wave 3: core end-to-end workflow is usable; payoff and statement engines pass independent mathematical/accounting tests.
-- [ ] Wave 4: Excel modules and local PDF staging pass their acceptance checks without changing frozen core interfaces.
-- [ ] Wave 5: a fresh Windows installation and complete offline acceptance/backup-restore run pass; release evidence is published.
+Use `python scripts/release/check_all.py --offline` for isolated sequential suites. See [portable demo](runbooks/portable-demo.md) and [release verification](../release/README.md). Record exact results and unrun requirements in the tracker and verification record.
 
-For each passed gate, the coordinator records issue IDs, merged PRs/commit revisions, commands/results, environment, acceptance evidence and remaining non-blocking limitations in the tracker. Reopen the gate when a prerequisite defect invalidates its evidence. Do not bypass it simply because the next issue is open.
+## Shared boundaries
 
-## Agent pickup procedure
+One selected authoritative backend per data root. Existing roots retain their backend; ambiguous/mismatched roots are refused. Private data stays outside Git/sync by default. Synthetic cloud work is authorized; actual financial data is not automatically uploaded. No cloud production database, bank connection, payment execution or external AI fallback.
 
-1. Read root AGENTS.md, this plan, the tracker and the selected issue. Inspect current repository instructions and uncommitted work.
-2. Confirm every lower-wave gate has verified evidence. Select one unclaimed issue from the earliest eligible wave. If none is eligible, report the concrete blocker; do not start later-wave implementation.
-3. Claim with agent/session identity and branch in the issue, then create `agent/<code>-<description>` from current main in an isolated worktree. No mass assignment or automated messages to others are needed.
-4. Read the exact inherited contracts/research relevant to the task. Implement within owned paths, using synthetic fixtures and local deterministic rules/calculations.
-5. Run meaningful acceptance checks. Record executed commands/results and runtime. Mark unrun Windows/Excel/Access checks as pending, with a reproducible handoff.
-6. Open a focused PR linked to the issue, with behavior, tests and limitations. The coordinator reviews/merges and records gate evidence. Do not self-declare unrelated tasks done.
-
-## Copy/paste agent prompt
-
-```text
-Work in NicoLeeVaz/PerFin. Read AGENTS.md, docs/EXECUTION-PLAN.md,
-tracker issue #1 and the current issue/PR state. Pick one unclaimed task
-from the earliest eligible wave (or work on the specified task: <code>).
-All lower-numbered tasks must be merged and verified before starting.
-Claim the issue with your session/branch, use an isolated worktree and
-stay within its owned paths. Excel is the frontend; Access is the local
-source of truth. Use the frozen contracts and synthetic data only.
-Complete the issue's acceptance checks, open a focused PR and report
-executed tests, pending Windows/Office checks and exact handoff artifacts.
-Do not introduce cloud processing, bank connections, payment execution,
-real financial records in Git, or a second authoritative ledger.
-If blocked, identify the unmet prerequisite instead of skipping waves.
-```
-
-## Research and reuse
-
-[Research index](../research/README.md), [source review](../research/source-review.md) and [payoff/net-worth requirements](../research/payoff-and-net-worth-plan.md) remain supporting evidence. Task 1b turns candidates into a license-checked, pinned starter kit; no downloaded template is presumed production-ready. Free/personal-use templates may be link-only and are not automatically open source. NoPii is an optional export boundary, not a prerequisite for ordinary local imports or a guarantee that an Excel add-in stays local.
+No native release check is marked passed by this plan. Development continues independently while #30 remains pending.

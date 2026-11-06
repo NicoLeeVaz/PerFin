@@ -1,0 +1,2530 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PerFin · Database model</title>
+<style>
+:root{--ink:#152f41;--muted:#526675;--paper:#f5f4ef;--line:#d8dfdf;--blue:#00668a;--pale:#e3f0f3;--amber:#926413;--white:#fff;--shadow:0 8px 28px #1633460a}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}header{padding:42px max(5vw,20px) 26px;background:var(--ink);color:#fff}header .eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#a5d8e5}h1{font-size:clamp(30px,4vw,50px);letter-spacing:-.045em;line-height:1.05;margin:12px 0 16px}header p{max-width:780px;margin:0;color:#d1e1e7;font-size:17px}.stats{display:flex;gap:28px;margin-top:26px;flex-wrap:wrap}.stats b{font-size:25px;display:block;color:#fff}.stats span{font-size:12px;color:#bad1d9}.wrap{max-width:1500px;margin:auto;padding:28px max(3vw,16px)}.intro{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}.step{padding:17px;background:#fff;border:1px solid var(--line);border-radius:12px}.step small{color:var(--blue);font-weight:750}.step strong{display:block;margin:5px 0}.step p{margin:0;font-size:13px;color:var(--muted)}.workspace{display:grid;grid-template-columns:minmax(360px,1fr) minmax(440px,1.25fr);gap:24px;align-items:start}.panel{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}.panel-head{padding:19px 21px;border-bottom:1px solid var(--line)}h2{font-size:20px;letter-spacing:-.02em;margin:0 0 6px}h3{font-size:16px;margin:0 0 10px}.muted{color:var(--muted)}p{margin:0 0 14px}input{width:100%;margin-top:12px;padding:11px 13px;border:1px solid #aabcc4;border-radius:8px;font:inherit;background:#fbfcfc}button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #e4a94d;outline-offset:3px}.groups{padding:8px 16px 16px}.group{margin:16px 0 0}.group-label{color:var(--muted);font-size:11px;font-weight:750;letter-spacing:.08em;text-transform:uppercase;margin:0 0 7px}.nodes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.node{display:flex;flex-direction:column;align-items:flex-start;text-align:left;min-width:0;background:#f7f9f9;border:1px solid #dbe3e5;border-radius:8px;padding:10px 11px;color:var(--ink)}.node .name{font:600 12px ui-monospace,Consolas,monospace;overflow-wrap:anywhere}.node .count{font-size:10px;color:var(--muted);margin-top:3px}.node:hover,.node.related{border-color:#6ca4b5;background:#eff6f8}.node.selected{background:var(--blue);color:#fff;border-color:var(--blue)}.node.selected .count{color:#d8edf2}.node.hidden{display:none}.group.hidden{display:none}.legend{padding:14px 20px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);display:flex;gap:15px;flex-wrap:wrap}.legend span::before{content:"";display:inline-block;width:10px;height:10px;border:1px solid #6ca4b5;background:#eff6f8;margin-right:5px}.legend span:first-child::before{background:var(--blue)}.details{padding:22px}.tag{display:inline-block;background:var(--pale);color:var(--blue);font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;margin:0 4px 5px 0}.detail-title{font:700 23px ui-monospace,Consolas,monospace;overflow-wrap:anywhere;margin:7px 0 10px}.key{padding:10px 12px;background:#f4f7f7;border-radius:8px;font-size:12px;margin:15px 0}.key code{color:var(--blue)}.rel-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:21px 0}.rel-box{background:#f7f9f9;border-radius:9px;padding:13px}.rel-box h3{font-size:12px;text-transform:uppercase;letter-spacing:.05em}.link-button{display:block;width:100%;border:0;background:transparent;text-align:left;color:var(--blue);font-size:12px;padding:7px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}.link-button code{font-size:11px}.logical{margin:12px 0;padding:12px;border-left:3px solid #c39239;background:#fcf8ed;color:#655027;font-size:12px}.table-scroll{overflow:auto}table{border-collapse:collapse;width:100%;font-size:12px}th{text-align:left;background:#f3f6f6;padding:8px;white-space:nowrap}td{padding:8px;border-bottom:1px solid #e5eaea;vertical-align:top}td code{font-size:11px;overflow-wrap:anywhere}.role{font-size:10px;display:inline-block;background:#e6eff2;color:#155e75;padding:1px 4px;margin:2px 3px 0 0;border-radius:3px}.constraints{margin-top:18px;font-size:12px}.constraints summary{cursor:pointer;font-weight:700;margin:12px 0}.constraints li{margin:5px 0;overflow-wrap:anywhere}.support{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:24px}.support article{background:#fff;padding:23px;border:1px solid var(--line);border-radius:14px}.support p,.support li{font-size:13px;color:var(--muted)}.support ul{padding-left:19px}.support h3{color:var(--ink)}.pill{font-size:11px;color:var(--amber);background:#fcf4df;border:1px solid #ebd4a3;padding:4px 8px;border-radius:5px;display:inline-block}.reports{margin-top:24px;padding:23px}.report-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}.report-tags code{font-size:11px;background:#edf3f4;padding:5px 9px;border-radius:6px}footer{max-width:1450px;margin:0 auto;padding:10px 30px 30px;color:var(--muted);font-size:12px}a{color:var(--blue)}.empty{font-size:12px;color:var(--muted)}@media(max-width:1000px){.workspace{grid-template-columns:1fr}.intro{grid-template-columns:1fr 1fr}.details{padding:18px}}@media(max-width:600px){.support,.rel-grid{grid-template-columns:1fr}.stats{gap:20px}.wrap{padding:18px 12px}.nodes{grid-template-columns:1fr 1fr}.intro{gap:8px}.step{padding:12px}.detail-title{font-size:20px}}@media print{header{background:#fff;color:#000}header p,.stats span,.stats b{color:#333}.workspace,.support{display:block}.groups{display:none}input{display:none}.panel{break-inside:avoid}.intro{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<header><div class="eyebrow">PerFin / Structure before implementation</div><h1>One ledger. Connected tables.</h1><p>Follow a source row through review, posting, categorization, reconciliation and reports. Select a table to inspect its keys, fields and relationships.</p><div class="stats"><div><b id="table-count">18</b><span>physical tables</span></div><div><b id="fk-count"></b><span>declared foreign keys</span></div><div><b id="column-count"></b><span>defined columns</span></div><div><b id="contract"></b><span>exchange contract</span></div></div></header>
+<main class="wrap">
+<section class="intro" aria-label="Transaction flow"><div class="step"><small>01 / INPUT</small><strong>Stage the source</strong><p>A batch and its raw rows retain provenance. No balances change.</p></div><div class="step"><small>02 / DECISION</small><strong>Review explicitly</strong><p>Resolve duplicates, approve or reject rows, then request a commit.</p></div><div class="step"><small>03 / RECORD</small><strong>Post atomically</strong><p>Transactions, splits, command results and audit history move together.</p></div><div class="step"><small>04 / OUTPUT</small><strong>Reconcile and report</strong><p>Statements test completeness. CSV and workbook views read the ledger.</p></div></section>
+<section class="workspace" aria-label="Interactive table explorer">
+<div class="panel"><div class="panel-head"><h2>The table map</h2><div class="muted">Click any table. Related tables are highlighted.</div><label for="search" class="sr-only">Find a table or column</label><input id="search" type="search" placeholder="Find a table or column…" autocomplete="off"></div><div class="groups" id="groups"></div><div class="legend"><span>Selected</span><span>Physical relationship</span></div></div>
+<div class="panel" aria-live="polite" aria-atomic="false"><div class="details" id="details"></div></div>
+</section>
+<section class="support">
+<article><h2>What the arrows mean</h2><p>Each reference points from a child field to a parent's primary key. A parent can usually have many child rows. The database enforces these declared links; the repository enforces the financial meaning.</p><ul><li><strong>Transfers:</strong> one link names two equal-and-opposite transactions on different same-currency accounts. Transfer splits connect each leg to that link.</li><li><strong>Statements:</strong> payment allocations and reconciliation membership are separate relationships. A payment allocation is not a second transaction.</li><li><strong>History:</strong> audit rows reference a command and keep before/after images. Their entity reference is logical so historical evidence can survive deletion.</li></ul><span class="pill">Amber notes identify logical links without a SQL foreign key.</span></article>
+<article><h2>Portable structure, explicit storage</h2><table><thead><tr><th>Access</th><th>SQLite</th><th>Preserved meaning</th></tr></thead><tbody><tr><td>CURRENCY</td><td>INTEGER</td><td>Exact cents, bounded to ±922337203685477</td></tr><tr><td>LONG / INTEGER</td><td>INTEGER</td><td>32-bit repository bounds</td></tr><tr><td>YESNO</td><td>INTEGER</td><td>Boolean 0/1</td></tr><tr><td>DATETIME</td><td>TEXT</td><td>ISO dates / timestamps at seconds</td></tr><tr><td>TEXT / MEMO</td><td>TEXT</td><td>Lengths, JSON and source text retained</td></tr></tbody></table><p style="margin-top:14px">SQLite uses STRICT tables and explicit foreign-key enforcement. Canonical TEXT columns use NOCASE; ASCII folding does not prove equivalence with every ACE locale. <code>contract_meta</code> identifies <code>backend=sqlite</code>, <code>sqlite_schema_version=1</code> and <code>report_views=python_export</code>.</p></article>
+<article><h2>Excel can run in two modes</h2><p>Python builds report data and workbook files in a cloud or local development environment using synthetic fixtures. SQLite uses those canonical report exports rather than translating Access SQL views.</p><p>Desktop Excel recalculation, VBA, Power Query and Access/ACE behavior still need native acceptance before claiming those release capabilities. Those checks do not prevent further development.</p></article>
+<article><h2>What a later port must preserve</h2><p>Matching table names alone does not establish compatibility. A full-history port must preserve staging decisions, exact money, audit rows, command replay, relationships, versions and metadata, then compare balances and history.</p><p>A ledger bundle is useful exchange data, but does not contain every staging/audit record. Renaming a file or copying only report rows cannot produce an equivalent database. See <a href="portability.md">the portability contract</a> and <a href="model.md">the full model document</a>.</p></article>
+</section>
+<section class="panel reports"><h2>Reports are read models</h2><p class="muted">These contract-shaped outputs feed CSV/Excel. They do not add duplicate ledger tables.</p><div class="report-tags" id="reports"></div></section>
+</main>
+<footer>Generated from the repository schema · No private financial data · Works offline · <a href="schema-inventory.json">Inspect the JSON inventory</a><br>Rebuild with <code>python3 scripts/database/build_model.py</code>; verify with <code>--check</code>.</footer>
+<script id="inventory" type="application/json">{
+  "inventory_format": 1,
+  "schema_version": "1.0.0",
+  "contract_version": "1.0.1",
+  "source_files": [
+    {
+      "path": "access/schema/010_tables.sql",
+      "sha256": "04e3393e92927ec17239b54c6b105cc2132c7057901850c26f964bdda0e62f57"
+    },
+    {
+      "path": "access/schema/020_checks.sql",
+      "sha256": "ca72bf7a278d06a1b65b9cb81ad58be0b95457fe0504d1cc060306a6aec323a5"
+    },
+    {
+      "path": "access/schema/030_indexes.sql",
+      "sha256": "8f53734df7606a80c93244fdf7a9a79fe93e2e5950bb6d2d30beeb8527fc6ed8"
+    },
+    {
+      "path": "access/schema/040_report_views.sql",
+      "sha256": "7606fa360033411148ea8e6b34869084ff0b1a8c6949f1616b1106de576dedb2"
+    },
+    {
+      "path": "contracts/schemas/report_tables.json",
+      "sha256": "ee152d5916e62141ae6c2a39eed8a1ca45f3c3f14acd4ffddef6f493f727249f"
+    }
+  ],
+  "groups": {
+    "Foundation": [
+      "account",
+      "category",
+      "contract_meta"
+    ],
+    "Import review": [
+      "import_batch",
+      "staging_row"
+    ],
+    "Ledger": [
+      "ledger_txn",
+      "split",
+      "transfer_link"
+    ],
+    "Statements": [
+      "statement",
+      "statement_bucket_balance",
+      "statement_payment",
+      "reconciliation",
+      "reconciliation_item"
+    ],
+    "Planning": [
+      "card_terms",
+      "card_apr_bucket",
+      "asset_valuation"
+    ],
+    "History": [
+      "command_log",
+      "audit_log"
+    ]
+  },
+  "mapping": {
+    "sqlite_types": {
+      "TEXT": "TEXT",
+      "MEMO": "TEXT",
+      "DATETIME": "TEXT",
+      "CURRENCY": "INTEGER",
+      "LONG": "INTEGER",
+      "INTEGER": "INTEGER",
+      "YESNO": "INTEGER"
+    },
+    "money_min": -922337203685477,
+    "money_max": 922337203685477,
+    "integer_min": -2147483648,
+    "integer_max": 2147483647,
+    "sqlite_tables": "STRICT; SQLite 3.37 or newer",
+    "text_collation": "NOCASE on canonical TEXT columns; ASCII folding, not full ACE locale equivalence",
+    "report_path": "Python report exports are canonical for SQLite; Access rpt_* SQL is backend-specific"
+  },
+  "tables": [
+    {
+      "name": "account",
+      "group": "Foundation",
+      "purpose": "One financial account: opening balance, currency, ownership and account class.",
+      "columns": [
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "kind",
+          "type": "TEXT",
+          "length": 16,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "account_class",
+          "type": "TEXT",
+          "length": 24,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "display_name",
+          "type": "TEXT",
+          "length": 120,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "institution_alias",
+          "type": "TEXT",
+          "length": 60,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "number_hint",
+          "type": "TEXT",
+          "length": 4,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "currency",
+          "type": "TEXT",
+          "length": 3,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "opening_balance_minor",
+          "type": "CURRENCY",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        },
+        {
+          "name": "opening_balance_date",
+          "type": "DATETIME",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false,
+          "format": "calendar date"
+        },
+        {
+          "name": "closed_date",
+          "type": "DATETIME",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false,
+          "format": "calendar date"
+        },
+        {
+          "name": "liquidity",
+          "type": "TEXT",
+          "length": 16,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "ownership_pct",
+          "type": "INTEGER",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        },
+        {
+          "name": "legal_liability_pct",
+          "type": "INTEGER",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        },
+        {
+          "name": "include_in_net_worth",
+          "type": "YESNO",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        },
+        {
+          "name": "tax_status",
+          "type": "TEXT",
+          "length": 16,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "row_version",
+          "type": "LONG",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        }
+      ],
+      "primary_key": [
+        "account_id"
+      ],
+      "unique_keys": [],
+      "foreign_keys": [],
+      "checks": [
+        {
+          "name": "ck_account_kind",
+          "expression": "kind IN ('asset','liability')"
+        },
+        {
+          "name": "ck_account_open_int",
+          "expression": "opening_balance_minor = Int(opening_balance_minor)"
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "name": "category",
+      "group": "Foundation",
+      "purpose": "Income/expense classifications, with an optional parent category.",
+      "columns": [
+        {
+          "name": "category_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "length": 120,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "category_kind",
+          "type": "TEXT",
+          "length": 16,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "parent_category_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        }
+      ],
+      "primary_key": [
+        "category_id"
+      ],
+      "unique_keys": [],
+      "foreign_keys": [
+        {
+          "column": "parent_category_id",
+          "table": "category",
+          "target_column": "category_id"
+        }
+      ],
+      "checks": [
+        {
+          "name": "ck_category_kind",
+          "expression": "category_kind IN ('income','expense','interest','fee')"
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "name": "import_batch",
+      "group": "Import review",
+      "purpose": "One source file for one account; its hash prevents silent repeated imports.",
+      "columns": [
+        {
+          "name": "batch_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "profile_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "profile_version",
+          "type": "TEXT",
+          "length": 16,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "source_file_sha256",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "source_file_name",
+          "type": "TEXT",
+          "length": 200,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "staged_at",
+          "type": "DATETIME",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false,
+          "format": "UTC timestamp, seconds"
+        },
+        {
+          "name": "committed_at",
+          "type": "DATETIME",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false,
+          "format": "UTC timestamp, seconds"
+        },
+        {
+          "name": "importer_version",
+          "type": "TEXT",
+          "length": 16,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "batch_status",
+          "type": "TEXT",
+          "length": 16,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "row_version",
+          "type": "LONG",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        }
+      ],
+      "primary_key": [
+        "batch_id"
+      ],
+      "unique_keys": [
+        [
+          "account_id",
+          "source_file_sha256"
+        ]
+      ],
+      "foreign_keys": [
+        {
+          "column": "account_id",
+          "table": "account",
+          "target_column": "account_id"
+        }
+      ],
+      "checks": [],
+      "indexes": [
+        {
+          "name": "ix_batch_status",
+          "table": "import_batch",
+          "columns": [
+            "batch_status"
+          ],
+          "unique": false,
+          "ignore_null": false
+        }
+      ]
+    },
+    {
+      "name": "staging_row",
+      "group": "Import review",
+      "purpose": "One raw/parsed source row, proposed splits, duplicate decision and human review state.",
+      "columns": [
+        {
+          "name": "batch_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "row_number",
+          "type": "LONG",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "INTEGER",
+          "primary_key": true
+        },
+        {
+          "name": "raw_fields_json",
+          "type": "MEMO",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "parsed_posted_date",
+          "type": "DATETIME",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false,
+          "format": "calendar date"
+        },
+        {
+          "name": "parsed_transaction_date",
+          "type": "DATETIME",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false,
+          "format": "calendar date"
+        },
+        {
+          "name": "parsed_amount_minor",
+          "type": "CURRENCY",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        },
+        {
+          "name": "parsed_description",
+          "type": "MEMO",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "source_txn_id",
+          "type": "TEXT",
+          "length": 128,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "fingerprint",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "errors_json",
+          "type": "MEMO",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "duplicate_status",
+          "type": "TEXT",
+          "length": 24,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "matched_transaction_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "review_state",
+          "type": "TEXT",
+          "length": 16,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "proposed_splits_json",
+          "type": "MEMO",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        }
+      ],
+      "primary_key": [
+        "batch_id",
+        "row_number"
+      ],
+      "unique_keys": [],
+      "foreign_keys": [
+        {
+          "column": "batch_id",
+          "table": "import_batch",
+          "target_column": "batch_id"
+        }
+      ],
+      "checks": [
+        {
+          "name": "ck_staging_parsed_amount_int",
+          "expression": "parsed_amount_minor IS NULL OR parsed_amount_minor = Int(parsed_amount_minor)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ix_staging_fingerprint",
+          "table": "staging_row",
+          "columns": [
+            "fingerprint"
+          ],
+          "unique": false,
+          "ignore_null": false
+        }
+      ]
+    },
+    {
+      "name": "ledger_txn",
+      "group": "Ledger",
+      "purpose": "One signed posted transaction. Retains source provenance or a reversal reference.",
+      "columns": [
+        {
+          "name": "transaction_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "posted_date",
+          "type": "DATETIME",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false,
+          "format": "calendar date"
+        },
+        {
+          "name": "transaction_date",
+          "type": "DATETIME",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false,
+          "format": "calendar date"
+        },
+        {
+          "name": "amount_minor",
+          "type": "CURRENCY",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        },
+        {
+          "name": "currency",
+          "type": "TEXT",
+          "length": 3,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "MEMO",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "entry_method",
+          "type": "TEXT",
+          "length": 16,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "source_batch_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "source_row_number",
+          "type": "LONG",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        },
+        {
+          "name": "source_txn_id",
+          "type": "TEXT",
+          "length": 128,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "reverses_transaction_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "row_version",
+          "type": "LONG",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        }
+      ],
+      "primary_key": [
+        "transaction_id"
+      ],
+      "unique_keys": [],
+      "foreign_keys": [
+        {
+          "column": "account_id",
+          "table": "account",
+          "target_column": "account_id"
+        },
+        {
+          "column": "source_batch_id",
+          "table": "import_batch",
+          "target_column": "batch_id"
+        },
+        {
+          "column": "reverses_transaction_id",
+          "table": "ledger_txn",
+          "target_column": "transaction_id"
+        }
+      ],
+      "checks": [
+        {
+          "name": "ck_txn_amount_int",
+          "expression": "amount_minor = Int(amount_minor)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ix_txn_account_posted",
+          "table": "ledger_txn",
+          "columns": [
+            "account_id",
+            "posted_date"
+          ],
+          "unique": false,
+          "ignore_null": false
+        },
+        {
+          "name": "ix_txn_source",
+          "table": "ledger_txn",
+          "columns": [
+            "source_batch_id",
+            "source_row_number"
+          ],
+          "unique": false,
+          "ignore_null": false
+        },
+        {
+          "name": "ix_txn_source_txn_id",
+          "table": "ledger_txn",
+          "columns": [
+            "account_id",
+            "source_txn_id"
+          ],
+          "unique": false,
+          "ignore_null": false
+        },
+        {
+          "name": "ux_txn_reverses",
+          "table": "ledger_txn",
+          "columns": [
+            "reverses_transaction_id"
+          ],
+          "unique": true,
+          "ignore_null": true
+        }
+      ]
+    },
+    {
+      "name": "transfer_link",
+      "group": "Ledger",
+      "purpose": "Pairs an outgoing and incoming ledger transaction for a transfer between accounts.",
+      "columns": [
+        {
+          "name": "transfer_link_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "from_transaction_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "to_transaction_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "link_status",
+          "type": "TEXT",
+          "length": 16,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "match_evidence",
+          "type": "MEMO",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "row_version",
+          "type": "LONG",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        }
+      ],
+      "primary_key": [
+        "transfer_link_id"
+      ],
+      "unique_keys": [],
+      "foreign_keys": [
+        {
+          "column": "from_transaction_id",
+          "table": "ledger_txn",
+          "target_column": "transaction_id"
+        },
+        {
+          "column": "to_transaction_id",
+          "table": "ledger_txn",
+          "target_column": "transaction_id"
+        }
+      ],
+      "checks": [],
+      "indexes": [
+        {
+          "name": "ix_link_from",
+          "table": "transfer_link",
+          "columns": [
+            "from_transaction_id"
+          ],
+          "unique": false,
+          "ignore_null": false
+        },
+        {
+          "name": "ix_link_to",
+          "table": "transfer_link",
+          "columns": [
+            "to_transaction_id"
+          ],
+          "unique": false,
+          "ignore_null": false
+        }
+      ]
+    },
+    {
+      "name": "split",
+      "group": "Ledger",
+      "purpose": "Allocates a transaction amount among categories, transfers or adjustments.",
+      "columns": [
+        {
+          "name": "split_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "transaction_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "split_kind",
+          "type": "TEXT",
+          "length": 16,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "amount_minor",
+          "type": "CURRENCY",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        },
+        {
+          "name": "category_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "transfer_link_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "memo",
+          "type": "MEMO",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        }
+      ],
+      "primary_key": [
+        "split_id"
+      ],
+      "unique_keys": [],
+      "foreign_keys": [
+        {
+          "column": "transaction_id",
+          "table": "ledger_txn",
+          "target_column": "transaction_id"
+        },
+        {
+          "column": "category_id",
+          "table": "category",
+          "target_column": "category_id"
+        },
+        {
+          "column": "transfer_link_id",
+          "table": "transfer_link",
+          "target_column": "transfer_link_id"
+        }
+      ],
+      "checks": [
+        {
+          "name": "ck_split_kind",
+          "expression": "split_kind IN ('category','transfer','adjustment')"
+        },
+        {
+          "name": "ck_split_amount_int",
+          "expression": "amount_minor IS NULL OR amount_minor = Int(amount_minor)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ix_split_txn",
+          "table": "split",
+          "columns": [
+            "transaction_id"
+          ],
+          "unique": false,
+          "ignore_null": false
+        },
+        {
+          "name": "ix_split_category",
+          "table": "split",
+          "columns": [
+            "category_id"
+          ],
+          "unique": false,
+          "ignore_null": false
+        },
+        {
+          "name": "ix_split_link",
+          "table": "split",
+          "columns": [
+            "transfer_link_id"
+          ],
+          "unique": false,
+          "ignore_null": false
+        }
+      ]
+    },
+    {
+      "name": "statement",
+      "group": "Statements",
+      "purpose": "Dated statement totals for one account, with an opaque external evidence reference.",
+      "columns": [
+        {
+          "name": "statement_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "period_start",
+          "type": "DATETIME",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false,
+          "format": "calendar date"
+        },
+        {
+          "name": "period_end",
+          "type": "DATETIME",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false,
+          "format": "calendar date"
+        },
+        {
+          "name": "due_date",
+          "type": "DATETIME",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false,
+          "format": "calendar date"
+        },
+        {
+          "name": "opening_balance_minor",
+          "type": "CURRENCY",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        },
+        {
+          "name": "closing_balance_minor",
+          "type": "CURRENCY",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        },
+        {
+          "name": "minimum_due_minor",
+          "type": "CURRENCY",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        },
+        {
+          "name": "interest_charged_minor",
+          "type": "CURRENCY",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        },
+        {
+          "name": "fees_charged_minor",
+          "type": "CURRENCY",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        },
+        {
+          "name": "evidence_ref",
+          "type": "TEXT",
+          "length": 200,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "row_version",
+          "type": "LONG",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        }
+      ],
+      "primary_key": [
+        "statement_id"
+      ],
+      "unique_keys": [],
+      "foreign_keys": [
+        {
+          "column": "account_id",
+          "table": "account",
+          "target_column": "account_id"
+        }
+      ],
+      "checks": [
+        {
+          "name": "ck_statement_opening_balance_int",
+          "expression": "opening_balance_minor IS NULL OR opening_balance_minor = Int(opening_balance_minor)"
+        },
+        {
+          "name": "ck_statement_closing_balance_int",
+          "expression": "closing_balance_minor IS NULL OR closing_balance_minor = Int(closing_balance_minor)"
+        },
+        {
+          "name": "ck_statement_minimum_due_int",
+          "expression": "minimum_due_minor IS NULL OR minimum_due_minor = Int(minimum_due_minor)"
+        },
+        {
+          "name": "ck_statement_interest_charged_int",
+          "expression": "interest_charged_minor IS NULL OR interest_charged_minor = Int(interest_charged_minor)"
+        },
+        {
+          "name": "ck_statement_fees_charged_int",
+          "expression": "fees_charged_minor IS NULL OR fees_charged_minor = Int(fees_charged_minor)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ix_statement_account_end",
+          "table": "statement",
+          "columns": [
+            "account_id",
+            "period_end"
+          ],
+          "unique": false,
+          "ignore_null": false
+        }
+      ]
+    },
+    {
+      "name": "statement_bucket_balance",
+      "group": "Statements",
+      "purpose": "One balance per statement and APR bucket identifier.",
+      "columns": [
+        {
+          "name": "statement_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "bucket_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "balance_minor",
+          "type": "CURRENCY",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        }
+      ],
+      "primary_key": [
+        "statement_id",
+        "bucket_id"
+      ],
+      "unique_keys": [],
+      "foreign_keys": [
+        {
+          "column": "statement_id",
+          "table": "statement",
+          "target_column": "statement_id"
+        }
+      ],
+      "checks": [
+        {
+          "name": "ck_sbb_balance_int",
+          "expression": "balance_minor IS NULL OR balance_minor = Int(balance_minor)"
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "name": "statement_payment",
+      "group": "Statements",
+      "purpose": "Allocates some of a payment transaction to a particular statement.",
+      "columns": [
+        {
+          "name": "allocation_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "statement_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "transaction_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "amount_minor",
+          "type": "CURRENCY",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        }
+      ],
+      "primary_key": [
+        "allocation_id"
+      ],
+      "unique_keys": [],
+      "foreign_keys": [
+        {
+          "column": "statement_id",
+          "table": "statement",
+          "target_column": "statement_id"
+        },
+        {
+          "column": "transaction_id",
+          "table": "ledger_txn",
+          "target_column": "transaction_id"
+        }
+      ],
+      "checks": [
+        {
+          "name": "ck_sp_amount_int",
+          "expression": "amount_minor IS NULL OR amount_minor = Int(amount_minor)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ix_sp_statement",
+          "table": "statement_payment",
+          "columns": [
+            "statement_id"
+          ],
+          "unique": false,
+          "ignore_null": false
+        },
+        {
+          "name": "ix_sp_txn",
+          "table": "statement_payment",
+          "columns": [
+            "transaction_id"
+          ],
+          "unique": false,
+          "ignore_null": false
+        }
+      ]
+    },
+    {
+      "name": "reconciliation",
+      "group": "Statements",
+      "purpose": "A statement comparison, its remaining difference and review status.",
+      "columns": [
+        {
+          "name": "reconciliation_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "statement_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "difference_minor",
+          "type": "CURRENCY",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        },
+        {
+          "name": "recon_status",
+          "type": "TEXT",
+          "length": 16,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "row_version",
+          "type": "LONG",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        }
+      ],
+      "primary_key": [
+        "reconciliation_id"
+      ],
+      "unique_keys": [],
+      "foreign_keys": [
+        {
+          "column": "statement_id",
+          "table": "statement",
+          "target_column": "statement_id"
+        }
+      ],
+      "checks": [
+        {
+          "name": "ck_recon_difference_int",
+          "expression": "difference_minor IS NULL OR difference_minor = Int(difference_minor)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ix_recon_statement",
+          "table": "reconciliation",
+          "columns": [
+            "statement_id"
+          ],
+          "unique": false,
+          "ignore_null": false
+        }
+      ]
+    },
+    {
+      "name": "reconciliation_item",
+      "group": "Statements",
+      "purpose": "Associates each included transaction with a reconciliation.",
+      "columns": [
+        {
+          "name": "reconciliation_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "transaction_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        }
+      ],
+      "primary_key": [
+        "reconciliation_id",
+        "transaction_id"
+      ],
+      "unique_keys": [],
+      "foreign_keys": [
+        {
+          "column": "reconciliation_id",
+          "table": "reconciliation",
+          "target_column": "reconciliation_id"
+        },
+        {
+          "column": "transaction_id",
+          "table": "ledger_txn",
+          "target_column": "transaction_id"
+        }
+      ],
+      "checks": [],
+      "indexes": [
+        {
+          "name": "ix_ri_txn",
+          "table": "reconciliation_item",
+          "columns": [
+            "transaction_id"
+          ],
+          "unique": false,
+          "ignore_null": false
+        }
+      ]
+    },
+    {
+      "name": "card_terms",
+      "group": "Planning",
+      "purpose": "Effective-dated credit limit and minimum-payment rule for a card account.",
+      "columns": [
+        {
+          "name": "terms_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "effective_from",
+          "type": "DATETIME",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false,
+          "format": "calendar date"
+        },
+        {
+          "name": "effective_to",
+          "type": "DATETIME",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false,
+          "format": "calendar date"
+        },
+        {
+          "name": "terms_source",
+          "type": "TEXT",
+          "length": 16,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "credit_limit_minor",
+          "type": "CURRENCY",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        },
+        {
+          "name": "min_rule_type",
+          "type": "TEXT",
+          "length": 24,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "min_amount_minor",
+          "type": "CURRENCY",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        },
+        {
+          "name": "min_pct",
+          "type": "TEXT",
+          "length": 12,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "min_floor_minor",
+          "type": "CURRENCY",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        },
+        {
+          "name": "row_version",
+          "type": "LONG",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        }
+      ],
+      "primary_key": [
+        "terms_id"
+      ],
+      "unique_keys": [],
+      "foreign_keys": [
+        {
+          "column": "account_id",
+          "table": "account",
+          "target_column": "account_id"
+        }
+      ],
+      "checks": [
+        {
+          "name": "ck_terms_credit_limit_int",
+          "expression": "credit_limit_minor IS NULL OR credit_limit_minor = Int(credit_limit_minor)"
+        },
+        {
+          "name": "ck_terms_min_amount_int",
+          "expression": "min_amount_minor IS NULL OR min_amount_minor = Int(min_amount_minor)"
+        },
+        {
+          "name": "ck_terms_min_floor_int",
+          "expression": "min_floor_minor IS NULL OR min_floor_minor = Int(min_floor_minor)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ix_terms_account",
+          "table": "card_terms",
+          "columns": [
+            "account_id",
+            "effective_from"
+          ],
+          "unique": false,
+          "ignore_null": false
+        }
+      ]
+    },
+    {
+      "name": "card_apr_bucket",
+      "group": "Planning",
+      "purpose": "APR and promotional/deferred-interest terms for each bucket in a terms record.",
+      "columns": [
+        {
+          "name": "terms_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "bucket_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "bucket_kind",
+          "type": "TEXT",
+          "length": 24,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "apr",
+          "type": "TEXT",
+          "length": 12,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "promo_end_date",
+          "type": "DATETIME",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false,
+          "format": "calendar date"
+        },
+        {
+          "name": "post_promo_apr",
+          "type": "TEXT",
+          "length": 12,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "deferred_interest",
+          "type": "YESNO",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        }
+      ],
+      "primary_key": [
+        "terms_id",
+        "bucket_id"
+      ],
+      "unique_keys": [],
+      "foreign_keys": [
+        {
+          "column": "terms_id",
+          "table": "card_terms",
+          "target_column": "terms_id"
+        }
+      ],
+      "checks": [],
+      "indexes": []
+    },
+    {
+      "name": "asset_valuation",
+      "group": "Planning",
+      "purpose": "A dated asset estimate, its source/method and optional cost basis.",
+      "columns": [
+        {
+          "name": "valuation_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "account_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "as_of",
+          "type": "DATETIME",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false,
+          "format": "calendar date"
+        },
+        {
+          "name": "value_minor",
+          "type": "CURRENCY",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        },
+        {
+          "name": "currency",
+          "type": "TEXT",
+          "length": 3,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "valuation_source",
+          "type": "TEXT",
+          "length": 120,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "valuation_method",
+          "type": "TEXT",
+          "length": 24,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "cost_basis_minor",
+          "type": "CURRENCY",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        },
+        {
+          "name": "row_version",
+          "type": "LONG",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "INTEGER",
+          "primary_key": false
+        }
+      ],
+      "primary_key": [
+        "valuation_id"
+      ],
+      "unique_keys": [],
+      "foreign_keys": [
+        {
+          "column": "account_id",
+          "table": "account",
+          "target_column": "account_id"
+        }
+      ],
+      "checks": [
+        {
+          "name": "ck_valuation_value_int",
+          "expression": "value_minor IS NULL OR value_minor = Int(value_minor)"
+        },
+        {
+          "name": "ck_valuation_cost_basis_int",
+          "expression": "cost_basis_minor IS NULL OR cost_basis_minor = Int(cost_basis_minor)"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ix_valuation_account",
+          "table": "asset_valuation",
+          "columns": [
+            "account_id",
+            "as_of"
+          ],
+          "unique": false,
+          "ignore_null": false
+        }
+      ]
+    },
+    {
+      "name": "command_log",
+      "group": "History",
+      "purpose": "Accepted command/result documents supporting idempotent replay and saved scenario payloads.",
+      "columns": [
+        {
+          "name": "command_id",
+          "type": "TEXT",
+          "length": 36,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "command_type",
+          "type": "TEXT",
+          "length": 32,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "issued_at",
+          "type": "DATETIME",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false,
+          "format": "UTC timestamp, seconds"
+        },
+        {
+          "name": "issued_by",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "payload_json",
+          "type": "MEMO",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "result_status",
+          "type": "TEXT",
+          "length": 16,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "result_json",
+          "type": "MEMO",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        }
+      ],
+      "primary_key": [
+        "command_id"
+      ],
+      "unique_keys": [],
+      "foreign_keys": [],
+      "checks": [],
+      "indexes": [
+        {
+          "name": "ix_command_issued",
+          "table": "command_log",
+          "columns": [
+            "issued_at"
+          ],
+          "unique": false,
+          "ignore_null": false
+        }
+      ]
+    },
+    {
+      "name": "audit_log",
+      "group": "History",
+      "purpose": "Before/after images of changed entities, linked to their accepted command.",
+      "columns": [
+        {
+          "name": "audit_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "command_id",
+          "type": "TEXT",
+          "length": 36,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "entity",
+          "type": "TEXT",
+          "length": 32,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "entity_id",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "action",
+          "type": "TEXT",
+          "length": 16,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "before_json",
+          "type": "MEMO",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "after_json",
+          "type": "MEMO",
+          "length": null,
+          "not_null": false,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        },
+        {
+          "name": "recorded_at",
+          "type": "DATETIME",
+          "length": null,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false,
+          "format": "UTC timestamp, seconds"
+        }
+      ],
+      "primary_key": [
+        "audit_id"
+      ],
+      "unique_keys": [],
+      "foreign_keys": [
+        {
+          "column": "command_id",
+          "table": "command_log",
+          "target_column": "command_id"
+        }
+      ],
+      "checks": [],
+      "indexes": [
+        {
+          "name": "ix_audit_command",
+          "table": "audit_log",
+          "columns": [
+            "command_id"
+          ],
+          "unique": false,
+          "ignore_null": false
+        },
+        {
+          "name": "ix_audit_entity",
+          "table": "audit_log",
+          "columns": [
+            "entity",
+            "entity_id"
+          ],
+          "unique": false,
+          "ignore_null": false
+        }
+      ]
+    },
+    {
+      "name": "contract_meta",
+      "group": "Foundation",
+      "purpose": "Schema/contract/backend versions, configuration and saved-scenario command pointers.",
+      "columns": [
+        {
+          "name": "meta_key",
+          "type": "TEXT",
+          "length": 64,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": true
+        },
+        {
+          "name": "meta_value",
+          "type": "TEXT",
+          "length": 255,
+          "not_null": true,
+          "sqlite_type": "TEXT",
+          "primary_key": false
+        }
+      ],
+      "primary_key": [
+        "meta_key"
+      ],
+      "unique_keys": [],
+      "foreign_keys": [],
+      "checks": [],
+      "indexes": []
+    }
+  ],
+  "logical_relationships": [
+    {
+      "source_table": "ledger_txn",
+      "source_columns": [
+        "source_batch_id",
+        "source_row_number"
+      ],
+      "target_table": "staging_row",
+      "target_columns": [
+        "batch_id",
+        "row_number"
+      ],
+      "note": "Import provenance. source_batch_id has a physical FK; this composite source-row link is repository-managed."
+    },
+    {
+      "source_table": "staging_row",
+      "source_columns": [
+        "matched_transaction_id"
+      ],
+      "target_table": "ledger_txn",
+      "target_columns": [
+        "transaction_id"
+      ],
+      "note": "Duplicate-match evidence; no SQL foreign key is declared."
+    },
+    {
+      "source_table": "audit_log",
+      "source_columns": [
+        "entity",
+        "entity_id"
+      ],
+      "target_table": null,
+      "target_columns": [],
+      "note": "Polymorphic reference to the changed entity; retained after an entity is removed, so it is not a SQL FK."
+    },
+    {
+      "source_table": "contract_meta",
+      "source_columns": [
+        "meta_value"
+      ],
+      "target_table": "command_log",
+      "target_columns": [
+        "command_id"
+      ],
+      "note": "Only meta_key values beginning scenario: point to saved payoff commands; ordinary metadata values do not."
+    }
+  ],
+  "reports": [
+    {
+      "name": "rpt_accounts",
+      "columns": [
+        {
+          "name": "account_id",
+          "type": "id",
+          "nullable": 0
+        },
+        {
+          "name": "display_name",
+          "type": "text",
+          "nullable": 0
+        },
+        {
+          "name": "kind",
+          "type": "enum",
+          "nullable": 0
+        },
+        {
+          "name": "account_class",
+          "type": "enum",
+          "nullable": 0
+        },
+        {
+          "name": "currency",
+          "type": "currency",
+          "nullable": 0
+        },
+        {
+          "name": "ledger_balance_minor",
+          "type": "money_minor",
+          "nullable": 0
+        },
+        {
+          "name": "display_balance_minor",
+          "type": "money_minor",
+          "nullable": 0
+        },
+        {
+          "name": "balance_as_of",
+          "type": "date",
+          "nullable": 0
+        },
+        {
+          "name": "include_in_net_worth",
+          "type": "boolean",
+          "nullable": 0
+        },
+        {
+          "name": "liquidity",
+          "type": "enum",
+          "nullable": 1
+        },
+        {
+          "name": "ownership_pct",
+          "type": "integer",
+          "nullable": 1
+        },
+        {
+          "name": "legal_liability_pct",
+          "type": "integer",
+          "nullable": 1
+        },
+        {
+          "name": "tax_status",
+          "type": "enum",
+          "nullable": 1
+        }
+      ]
+    },
+    {
+      "name": "rpt_transactions",
+      "columns": [
+        {
+          "name": "transaction_id",
+          "type": "id",
+          "nullable": 0
+        },
+        {
+          "name": "account_id",
+          "type": "id",
+          "nullable": 0
+        },
+        {
+          "name": "posted_date",
+          "type": "date",
+          "nullable": 0
+        },
+        {
+          "name": "transaction_date",
+          "type": "date",
+          "nullable": 1
+        },
+        {
+          "name": "amount_minor",
+          "type": "money_minor",
+          "nullable": 0
+        },
+        {
+          "name": "currency",
+          "type": "currency",
+          "nullable": 0
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": 0
+        },
+        {
+          "name": "entry_method",
+          "type": "enum",
+          "nullable": 0
+        },
+        {
+          "name": "reconciled",
+          "type": "boolean",
+          "nullable": 0
+        },
+        {
+          "name": "row_version",
+          "type": "integer",
+          "nullable": 0
+        }
+      ]
+    },
+    {
+      "name": "rpt_splits",
+      "columns": [
+        {
+          "name": "transaction_id",
+          "type": "id",
+          "nullable": 0
+        },
+        {
+          "name": "split_id",
+          "type": "id",
+          "nullable": 0
+        },
+        {
+          "name": "split_kind",
+          "type": "enum",
+          "nullable": 0
+        },
+        {
+          "name": "amount_minor",
+          "type": "money_minor",
+          "nullable": 0
+        },
+        {
+          "name": "category_id",
+          "type": "id",
+          "nullable": 1
+        },
+        {
+          "name": "category_kind",
+          "type": "enum",
+          "nullable": 1
+        },
+        {
+          "name": "transfer_link_id",
+          "type": "id",
+          "nullable": 1
+        }
+      ]
+    },
+    {
+      "name": "rpt_card_status",
+      "columns": [
+        {
+          "name": "account_id",
+          "type": "id",
+          "nullable": 0
+        },
+        {
+          "name": "statement_id",
+          "type": "id",
+          "nullable": 1
+        },
+        {
+          "name": "statement_closing_owed_minor",
+          "type": "money_minor",
+          "nullable": 1
+        },
+        {
+          "name": "current_owed_minor",
+          "type": "money_minor",
+          "nullable": 0
+        },
+        {
+          "name": "credit_limit_minor",
+          "type": "money_minor",
+          "nullable": 1
+        },
+        {
+          "name": "utilization_basis_points",
+          "type": "integer",
+          "nullable": 1
+        },
+        {
+          "name": "due_date",
+          "type": "date",
+          "nullable": 1
+        },
+        {
+          "name": "minimum_due_minor",
+          "type": "money_minor",
+          "nullable": 1
+        },
+        {
+          "name": "confirmed_payments_minor",
+          "type": "money_minor",
+          "nullable": 0
+        },
+        {
+          "name": "unpaid_statement_minor",
+          "type": "money_minor",
+          "nullable": 1
+        },
+        {
+          "name": "as_of",
+          "type": "date",
+          "nullable": 0
+        }
+      ]
+    },
+    {
+      "name": "rpt_statements",
+      "columns": [
+        {
+          "name": "statement_id",
+          "type": "id",
+          "nullable": 0
+        },
+        {
+          "name": "account_id",
+          "type": "id",
+          "nullable": 0
+        },
+        {
+          "name": "period_start",
+          "type": "date",
+          "nullable": 0
+        },
+        {
+          "name": "period_end",
+          "type": "date",
+          "nullable": 0
+        },
+        {
+          "name": "due_date",
+          "type": "date",
+          "nullable": 1
+        },
+        {
+          "name": "opening_balance_minor",
+          "type": "money_minor",
+          "nullable": 0
+        },
+        {
+          "name": "closing_balance_minor",
+          "type": "money_minor",
+          "nullable": 0
+        },
+        {
+          "name": "minimum_due_minor",
+          "type": "money_minor",
+          "nullable": 1
+        }
+      ]
+    },
+    {
+      "name": "rpt_reconciliation",
+      "columns": [
+        {
+          "name": "reconciliation_id",
+          "type": "id",
+          "nullable": 0
+        },
+        {
+          "name": "statement_id",
+          "type": "id",
+          "nullable": 0
+        },
+        {
+          "name": "included_count",
+          "type": "integer",
+          "nullable": 0
+        },
+        {
+          "name": "difference_minor",
+          "type": "money_minor",
+          "nullable": 0
+        },
+        {
+          "name": "recon_status",
+          "type": "enum",
+          "nullable": 0
+        }
+      ]
+    },
+    {
+      "name": "rpt_review_queue",
+      "columns": [
+        {
+          "name": "batch_id",
+          "type": "id",
+          "nullable": 0
+        },
+        {
+          "name": "row_number",
+          "type": "integer",
+          "nullable": 0
+        },
+        {
+          "name": "review_state",
+          "type": "enum",
+          "nullable": 0
+        },
+        {
+          "name": "duplicate_status",
+          "type": "enum",
+          "nullable": 0
+        },
+        {
+          "name": "error_codes",
+          "type": "text",
+          "nullable": 1
+        },
+        {
+          "name": "posted_date",
+          "type": "date",
+          "nullable": 1
+        },
+        {
+          "name": "amount_minor",
+          "type": "money_minor",
+          "nullable": 1
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": 1
+        }
+      ]
+    },
+    {
+      "name": "rpt_card_terms",
+      "columns": [
+        {
+          "name": "terms_id",
+          "type": "id",
+          "nullable": 0
+        },
+        {
+          "name": "account_id",
+          "type": "id",
+          "nullable": 0
+        },
+        {
+          "name": "bucket_id",
+          "type": "id",
+          "nullable": 0
+        },
+        {
+          "name": "bucket_kind",
+          "type": "enum",
+          "nullable": 0
+        },
+        {
+          "name": "apr",
+          "type": "decimal_string",
+          "nullable": 0
+        },
+        {
+          "name": "promo_end_date",
+          "type": "date",
+          "nullable": 1
+        },
+        {
+          "name": "deferred_interest",
+          "type": "boolean",
+          "nullable": 0
+        },
+        {
+          "name": "effective_from",
+          "type": "date",
+          "nullable": 0
+        },
+        {
+          "name": "terms_source",
+          "type": "enum",
+          "nullable": 0
+        },
+        {
+          "name": "effective_to",
+          "type": "date",
+          "nullable": 1
+        },
+        {
+          "name": "credit_limit_minor",
+          "type": "money_minor",
+          "nullable": 1
+        },
+        {
+          "name": "min_rule_type",
+          "type": "enum",
+          "nullable": 0
+        },
+        {
+          "name": "min_amount_minor",
+          "type": "money_minor",
+          "nullable": 1
+        },
+        {
+          "name": "min_pct",
+          "type": "decimal_string",
+          "nullable": 1
+        },
+        {
+          "name": "min_floor_minor",
+          "type": "money_minor",
+          "nullable": 1
+        },
+        {
+          "name": "post_promo_apr",
+          "type": "decimal_string",
+          "nullable": 1
+        }
+      ]
+    },
+    {
+      "name": "rpt_valuations",
+      "columns": [
+        {
+          "name": "valuation_id",
+          "type": "id",
+          "nullable": 0
+        },
+        {
+          "name": "account_id",
+          "type": "id",
+          "nullable": 0
+        },
+        {
+          "name": "as_of",
+          "type": "date",
+          "nullable": 0
+        },
+        {
+          "name": "value_minor",
+          "type": "money_minor",
+          "nullable": 0
+        },
+        {
+          "name": "currency",
+          "type": "currency",
+          "nullable": 0
+        },
+        {
+          "name": "valuation_method",
+          "type": "enum",
+          "nullable": 0
+        },
+        {
+          "name": "valuation_source",
+          "type": "text",
+          "nullable": 0
+        },
+        {
+          "name": "cost_basis_minor",
+          "type": "money_minor",
+          "nullable": 1
+        }
+      ]
+    },
+    {
+      "name": "rpt_statement_buckets",
+      "columns": [
+        {
+          "name": "statement_id",
+          "type": "id",
+          "nullable": 0
+        },
+        {
+          "name": "account_id",
+          "type": "id",
+          "nullable": 0
+        },
+        {
+          "name": "period_end",
+          "type": "date",
+          "nullable": 0
+        },
+        {
+          "name": "bucket_id",
+          "type": "id",
+          "nullable": 0
+        },
+        {
+          "name": "balance_minor",
+          "type": "money_minor",
+          "nullable": 0
+        }
+      ]
+    }
+  ]
+}
+</script>
+<script>
+'use strict';
+const model=JSON.parse(document.getElementById('inventory').textContent);
+const tables=Object.fromEntries(model.tables.map(t=>[t.name,t]));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let selected='ledger_txn';
+document.getElementById('table-count').textContent=model.tables.length;
+document.getElementById('column-count').textContent=model.tables.reduce((n,t)=>n+t.columns.length,0);
+document.getElementById('fk-count').textContent=model.tables.reduce((n,t)=>n+t.foreign_keys.length,0);
+document.getElementById('contract').textContent=model.contract_version;
+const groups=document.getElementById('groups');
+for(const [group,names] of Object.entries(model.groups)){
+ const box=document.createElement('section');box.className='group';box.dataset.group=group;
+ box.innerHTML='<h3 class="group-label">'+esc(group)+'</h3><div class="nodes">'+names.map(n=>'<button type="button" class="node" data-table="'+esc(n)+'"><span class="name">'+esc(n)+'</span><span class="count">'+tables[n].columns.length+' columns · '+tables[n].foreign_keys.length+' references</span></button>').join('')+'</div>';
+ groups.append(box);
+}
+document.getElementById('reports').innerHTML=model.reports.map(r=>'<code title="'+esc(r.columns.map(c=>c.name).join(', '))+'">'+esc(r.name)+'</code>').join('');
+function choose(name){
+ if(!tables[name])return;selected=name;const t=tables[name];
+ const incoming=model.tables.flatMap(other=>other.foreign_keys.filter(f=>f.table===name).map(f=>({from:other.name,...f})));
+ const related=new Set([...t.foreign_keys.map(f=>f.table),...incoming.map(f=>f.from)]);
+ document.querySelectorAll('[data-table]').forEach(b=>{b.classList.toggle('selected',b.dataset.table===name);b.classList.toggle('related',related.has(b.dataset.table));b.setAttribute('aria-pressed',b.dataset.table===name?'true':'false');});
+ const fkNames=new Set(t.foreign_keys.map(f=>f.column));
+ const logical=model.logical_relationships.filter(r=>r.source_table===name||r.target_table===name);
+ const jump=(name,caption)=>'<button type="button" class="link-button" data-jump="'+esc(name)+'">'+caption+'</button>';
+ document.getElementById('details').innerHTML='<span class="tag">'+esc(t.group)+'</span><div class="detail-title">'+esc(name)+'</div><p>'+esc(t.purpose)+'</p><div class="key"><strong>Primary key</strong> <code>'+esc(t.primary_key.join(' + '))+'</code></div>'+
+ '<div class="rel-grid"><div class="rel-box"><h3>References parents</h3>'+ (t.foreign_keys.map(f=>jump(f.table,'<code>'+esc(f.column)+'</code> → <strong>'+esc(f.table)+'</strong><br><code>'+esc(f.target_column)+'</code>')).join('')||'<span class="empty">No declared parent references.</span>')+'</div><div class="rel-box"><h3>Referenced by children</h3>'+ (incoming.map(f=>jump(f.from,'<strong>'+esc(f.from)+'</strong><br><code>'+esc(f.column)+'</code> → <code>'+esc(f.target_column)+'</code>')).join('')||'<span class="empty">No declared child references.</span>')+'</div></div>'+
+ logical.map(r=>'<div class="logical"><strong>Logical link:</strong> '+esc(r.note)+'</div>').join('')+
+ '<h3>Columns</h3><div class="table-scroll"><table><thead><tr><th>Name</th><th>Access → SQLite</th><th>Required</th></tr></thead><tbody>'+t.columns.map(c=>'<tr><td><code>'+esc(c.name)+'</code><br>'+(c.primary_key?'<span class="role">PK</span>':'')+(fkNames.has(c.name)?'<span class="role">FK</span>':'')+'</td><td>'+esc(c.type+(c.length?'('+c.length+')':''))+' → '+esc(c.sqlite_type)+(c.format?'<br><span class="muted">'+esc(c.format)+'</span>':'')+'</td><td>'+(c.not_null?'Yes':'No')+'</td></tr>').join('')+'</tbody></table></div>'+
+ '<div class="constraints"><details><summary>Indexes and unique keys ('+(t.indexes.length+t.unique_keys.length)+')</summary><ul>'+t.unique_keys.map(k=>'<li>Unique: <code>'+esc(k.join(', '))+'</code></li>').join('')+t.indexes.map(i=>'<li><code>'+esc(i.name)+'</code>: '+esc(i.columns.join(', '))+(i.unique?' · UNIQUE':'')+(i.ignore_null?' · ignore nulls':'')+'</li>').join('')+'</ul></details><details><summary>Declared checks ('+t.checks.length+')</summary><ul>'+t.checks.map(c=>'<li><code>'+esc(c.name)+'</code><br>'+esc(c.expression)+'</li>').join('')+'</ul><p class="muted">Repository validation adds semantic rules beyond the DDL. Access CHECK availability is a native setup concern.</p></details></div>';
+}
+groups.addEventListener('click',event=>{const b=event.target.closest('[data-table]');if(b)choose(b.dataset.table);});
+document.getElementById('details').addEventListener('click',event=>{const b=event.target.closest('[data-jump]');if(b){document.getElementById('search').value='';filter('');choose(b.dataset.jump);}});
+function filter(value){const q=value.toLowerCase().trim();document.querySelectorAll('.node').forEach(b=>{const t=tables[b.dataset.table];b.classList.toggle('hidden',q&&!([t.name,t.purpose,...t.columns.map(c=>c.name)].join(' ').toLowerCase().includes(q)));});document.querySelectorAll('.group').forEach(g=>g.classList.toggle('hidden',!g.querySelector('.node:not(.hidden)')));}
+document.getElementById('search').addEventListener('input',event=>filter(event.target.value));
+choose(selected);
+</script>
+</body>
+</html>

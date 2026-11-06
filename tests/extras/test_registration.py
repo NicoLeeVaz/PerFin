@@ -3,13 +3,16 @@ import io
 import json
 from pathlib import Path
 import tempfile
+import sys
 import unittest
 import zipfile
 from unittest.mock import patch
 from openpyxl import Workbook
+ROOT = Path(__file__).resolve().parents[2]
+for source in (ROOT / "src", ROOT / "excel/core", ROOT / "contracts/python"):
+    sys.path.insert(0, str(source))
 from perfin_excel_core.registry import scan
 
-ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location('extra_register', ROOT / 'extras/register.py')
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)

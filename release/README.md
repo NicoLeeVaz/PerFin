@@ -1,6 +1,6 @@
 # Release verification
 
-The implementation is source-complete only when all components and integration tests pass. A supported Windows release additionally requires actual ACE and desktop Excel evidence. **Windows/Office acceptance is currently PENDING; no production-ready release is certified.**
+Portable SQLite acceptance and native Access/Excel acceptance are separate. Real on-disk SQLite integration, offline Python checks, generated-workbook inspection and installed-wheel verification support the portable release candidate. **Native Windows/Office acceptance remains PENDING and is a release requirement for those features only; it does not block development or portable validation.**
 
 ## One local check command
 
@@ -14,7 +14,7 @@ On Windows choose a report under `%LOCALAPPDATA%\PerFin-acceptance`. This comman
 
 `--offline` blocks Python socket connections/resolution/sends through an audit hook, including child Python suite processes. This verifies the tested Python paths; it is **not** an OS firewall and does not prove Excel/Power Query's network behavior. Use airplane mode or an outbound firewall rule during the desktop checklist.
 
-## Real Windows run
+## Native release requirement — optional Access and desktop Excel
 
 Use a clean checkout and a fresh synthetic data directory, with Python/ACE/Office of matching bitness:
 
@@ -27,6 +27,14 @@ The runner executes the real Access acceptance harness, the integrated app harne
 Complete [the core Windows checklist](../docs/excel/windows-checklist.md), [payoff](../docs/runbooks/payoff/), [statements](../docs/runbooks/statements/) and [PDF](../docs/runbooks/pdf/) walkthroughs. Copy `manual-evidence.example.json` outside the checkout, fill the tested SHA/environment/operator and only mark observed checks PASS. Re-run with `--manual-evidence <path>` in a new work directory. The final report labels this portion **operator-reported**; it is not claimed as automated independent verification. Missing checks, a different revision or incomplete environment keep the result BLOCKED. Any FAIL wins over PASS.
 
 Fresh installation/restore includes: install from the built wheel outside the checkout; initialize synthetic accounts; import two statement cycles; review and commit explicitly; repeat an import; reconcile; generate Excel; compare payoff and statement outputs; backup, restore to a new database, reopen and compare balances/history/schema. Keep existing private databases out of acceptance testing.
+
+## Portable SQLite demonstration
+
+```sh
+python scripts/core/portable_demo.py --out /tmp/perfin-demo-new
+```
+
+This creates a real SQLite ledger, CSV reports, core/payoff/statements XLSX files, an offline index and machine-readable evidence outside the checkout. It uses synthetic data and deterministic expected balances. No native Excel recalculation is claimed. The [database model](../docs/database/model.html) shows every table and relationship; [portability](../docs/database/portability.md) explains coherent backup and full-history archives.
 
 ## Reproducible source package and wheel
 
@@ -46,7 +54,7 @@ Install and smoke-test the wheel **outside the checkout**, with `PYTHONPATH` cle
 /path/to/installed/venv/python -I /path/to/source/scripts/release/installed_smoke.py
 ```
 
-It rejects modules/resources loaded from the source checkout; it checks installed schemas, builtin profiles, module manifests, engine outputs, generated workbooks and CLI help (including the optional PDF parser). Runtime data stays outside the package and outside synced folders.
+It rejects modules/resources loaded from the source checkout; it checks installed schemas, builtin profiles, module manifests, engine outputs, generated workbooks and CLI help (including the optional PDF parser). The installed smoke also creates a real SQLite database, commits a reviewed CSV row, and verifies backup/restore. Runtime data stays outside the package and outside synced folders.
 
 ## Evidence and limitations
 
@@ -54,4 +62,4 @@ It rejects modules/resources loaded from the source checkout; it checks installe
 - No financial data, populated workbooks/databases, logs, statement PDFs, backups, credentials or private NoPii source belongs in the public release.
 - Initial bank/PDF profiles are synthetic declared layouts. A passing fixture is not a claim of real-institution support.
 - Optional AI export remains disabled. There are no bank connections or payment execution.
-- A ZIP, wheel, local-test pass or closed issue does not prove Windows/ACE/Excel runtime acceptance. Attach the actual evidence before certifying the release.
+- A ZIP, wheel, local-test pass or closed issue does not prove Windows/ACE/Excel runtime acceptance. Attach actual native evidence before certifying native Access/Excel features. Missing native evidence is not a development gate.

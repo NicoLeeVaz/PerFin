@@ -381,6 +381,16 @@ class ExportGateTests(unittest.TestCase):
 
 
 class RepoGuardTests(unittest.TestCase):
+    def test_sqlite_databases_and_sidecars_never_belong_in_source(self):
+        names = ('ledger.sqlite', 'ledger.sqlite3', 'ledger.db', 'ledger.sqlite-wal',
+                 'ledger.sqlite3-shm', 'ledger.db-journal', 'LEDGER.SQLITE-WAL')
+        with tempfile.TemporaryDirectory() as tmp:
+            for name in names:
+                Path(tmp, name).write_bytes(b'SYNTHETIC SQLite placeholder')
+            findings = pc.scan_repo_for_forbidden(tmp)
+        for name in names:
+            self.assertTrue(any(f.startswith(name + ':') for f in findings), name)
+
     def test_detects_forbidden_files_and_numbers(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

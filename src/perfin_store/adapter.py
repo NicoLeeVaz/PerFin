@@ -1,9 +1,10 @@
 """Low-level adapter: the only code that talks to the database engine.
 
-Primary (and only production) adapter: pyodbc + the Microsoft Access Database Engine (ACE)
+Optional native adapter: pyodbc + the Microsoft Access Database Engine (ACE)
 ODBC driver "Microsoft Access Driver (*.mdb, *.accdb)". The interface is deliberately small
 and DB-API-like so the repository can be unit-tested on Linux against the test-only fake in
 tests/store/fake_access.py. Passing those tests proves repository logic, not ACE behaviour.
+The real portable SQLite adapter is in sqlite_backend.py and implements this interface.
 
     begin()                 start a database transaction
     execute(sql, params)    run one parameterized statement

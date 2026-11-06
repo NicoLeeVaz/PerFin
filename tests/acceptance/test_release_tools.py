@@ -66,7 +66,9 @@ class ReleaseTools(unittest.TestCase):
             package.source_zip(root, ['a.py', 'README.md'], first)
             package.source_zip(root, ['README.md', 'a.py'], second)
             self.assertEqual(hashlib.sha256(first.read_bytes()).digest(), hashlib.sha256(second.read_bytes()).digest())
-            for name in ['db/private.accdb', 'book.xlsx', 'statement.pdf', '../escape.py', '.env', 'backups/file.json']:
+            for name in ['db/private.accdb', 'db/private.sqlite', 'db/private.sqlite3', 'db/private.db',
+                         'db/private.sqlite-wal', 'db/private.sqlite3-shm', 'db/private.db-journal',
+                         'db/PRIVATE.SQLITE-WAL', 'book.xlsx', 'statement.pdf', '../escape.py', '.env', 'backups/file.json']:
                 with self.subTest(name=name), self.assertRaises(ValueError):
                     package.check_source_path(name)
 

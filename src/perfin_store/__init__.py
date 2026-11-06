@@ -1,10 +1,14 @@
-"""PerFin Access store (task 2b): the single authoritative ledger.
+"""PerFin local store: one selected authoritative backend per data root.
 
-Access (.accdb through the Microsoft ACE ODBC driver and pyodbc) is the only production
-backend. Everything that can run on Linux here is standard library only; pyodbc is imported
-lazily, and only by perfin_store.adapter.AccessOdbcAdapter.
+SQLite is the portable default; Access (.accdb via ACE/pyodbc) remains explicit.
+Both use Repository commands and the same canonical table definitions. SQLite
+uses exact integer cents and real transactions; it is not the test-only fake.
+pyodbc is loaded lazily only for native Access operations.
 
 Entry points:
+    perfin --data-root PATH [--backend sqlite|access] init
+    python -m perfin_store.portability export | verify | import
+    Access-specific legacy CLI:
     python -m perfin_store.setup --create <path outside the repository>
     python -m perfin_store envcheck | review | stage | import-bundle | export-reports |
                            export-bundle | backup | restore

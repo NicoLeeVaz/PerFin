@@ -111,7 +111,7 @@
     "store_original_in_access": true
   },
   "repo_guard": {
-    "always_forbidden_globs": ["*.log", "*.bak", "*.laccdb", "*.ldb", "~$*", "*.tmp", "perfin-data-dir.json"],
+    "always_forbidden_globs": ["*.log", "*.bak", "*.laccdb", "*.ldb", "*.sqlite", "*.sqlite3", "*.db", "*-wal", "*-shm", "*-journal", "~$*", "*.tmp", "perfin-data-dir.json"],
     "restricted_extensions": {
       ".pdf": ["fixtures/"],
       ".csv": ["fixtures/", "contracts/"],

@@ -1,14 +1,14 @@
 """PerFin local launcher; all money arguments are signed integer cents."""
 import argparse
 import json
+import sqlite3
 import sys
 from pathlib import Path
-from perfin_store import backup, setup
-from perfin_store.__main__ import open_access
 from perfin_store.repository import utc_now, derive_id
 from perfin_import import builtin_profiles, load_profile
 from .paths import checked_root, child, initialize_layout
 from .service import FinanceApp, WorkflowError, accepted
+from .backends import select_backend, record_backend, operations
 
 
 def read_json(path):
@@ -30,6 +30,8 @@ def demo_bundle(version='1.0.1'):
 def parser():
     p=argparse.ArgumentParser(prog='perfin',description=__doc__)
     p.add_argument('--data-root');p.add_argument('--acknowledge-location',action='store_true')
+    p.add_argument('--backend', choices=['sqlite', 'access'],
+                   help='SQLite for new roots by default; existing roots retain their selected backend')
     sub=p.add_subparsers(dest='action',required=True)
     s=sub.add_parser('init');s.add_argument('--demo',action='store_true');s.add_argument('--engine',choices=['odbc','adox'],default='odbc')
     sub.add_parser('gui');sub.add_parser('envcheck')
@@ -63,23 +65,38 @@ def parser():
     return p
 
 
-def main(argv=None, *, open_repo=open_access, create_db=setup.create_database):
+def main(argv=None, *, open_repo=None, create_db=None):
     args=parser().parse_args(argv)
     repo=None
     try:
-        if args.action=='envcheck':
-            from perfin_store.envcheck import main as check
-            return check([])
         root=checked_root(args.data_root,args.acknowledge_location)
+        selection=select_backend(root,args.backend,acknowledge=args.acknowledge_location,
+                                 default='access' if open_repo is not None or create_db is not None else 'sqlite')
+        if args.action=='envcheck':
+            if selection.backend=='access':
+                from perfin_store.envcheck import main as check
+                return check([])
+            ready=sqlite3.sqlite_version_info >= (3,37,0)
+            print(json.dumps({'backend':'sqlite','sqlite_version':sqlite3.sqlite_version,'platform':sys.platform,
+                              'ready':ready,'requires':'SQLite >= 3.37',
+                              'native_access_excel':'not checked'},indent=2));return 0 if ready else 2
         if args.action=='gui':
             from .gui import launch
-            launch(root,args.acknowledge_location);return 0
-        db=child(root,'db/perfin.accdb',args.acknowledge_location)
+            launch(root,args.acknowledge_location,selection.backend);return 0
+        default_open,default_create,backup=operations(selection.backend)
+        open_repo=open_repo or default_open
+        create_db=create_db or default_create
+        db=selection.path
         if args.action=='init':
             initialize_layout(root,args.acknowledge_location,args.demo)
-            create_db(db,engine=args.engine,acknowledge_location=args.acknowledge_location)
+            create_options={'acknowledge_location':args.acknowledge_location}
+            if selection.backend=='access':create_options['engine']=args.engine
+            create_db(db,**create_options)
         if args.action=='restore':
             target=child(root,args.target,args.acknowledge_location)
+            extensions=('.sqlite3','.sqlite','.db') if selection.backend=='sqlite' else ('.accdb',)
+            if target.suffix.lower() not in extensions:
+                raise WorkflowError('Restore target extension does not match the %s backend' % selection.backend)
             def summary(path):
                 r=open_repo(str(path))
                 try:return r.summary()
@@ -93,6 +110,7 @@ def main(argv=None, *, open_repo=open_access, create_db=setup.create_database):
                 minimal=demo_bundle(repo.contract_version);minimal['accounts']=[]
                 accepted(repo.import_bundle(minimal))
             result=accepted(repo.set_default_categories('expenses','income'))
+            record_backend(root,selection,acknowledge=args.acknowledge_location)
         elif args.action=='onboard':result=accepted(repo.import_bundle(read_json(args.file)))
         elif args.action=='account-add':
             bundle={'contract':'perfin','contract_version':repo.contract_version,'document_type':'ledger_bundle',
@@ -157,6 +175,8 @@ def main(argv=None, *, open_repo=open_access, create_db=setup.create_database):
         elif args.action=='status':result=repo.summary()
         else:raise WorkflowError('Unknown action')
         print(json.dumps(result,indent=2));return 0
+    except sqlite3.Error as exc:
+        print('PerFin refused: SQLite database operation failed ('+type(exc).__name__+')',file=sys.stderr);return 2
     except (ValueError,OSError,RuntimeError,NotImplementedError) as exc:
         # No raw record text, amounts or statement contents in diagnostic logs.
         print('PerFin refused: '+str(exc),file=sys.stderr);return 2
