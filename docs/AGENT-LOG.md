@@ -11,7 +11,7 @@ databases, statements and generated workbooks outside this public repository.
 | Responsibility | Owner / role | Actual status |
 | --- | --- | --- |
 | Accountable GitHub owner | `NicoLeeVaz` | #34 assigned; ready for a Windows session |
-| Prepare Windows, run automated checks, capture evidence | Local Codex on Windows | Intended executor; no session has claimed or started this task |
+| Prepare Windows, run automated checks, capture evidence | Local Codex native thread `01a1afaa-f8c9-7cd2-8235-297fd5c7bed4` | Claimed #34; preflight started, then paused on local Git HTTPS and run-directory authorization blockers; acceptance unrun |
 | Observe native Excel, Power Query, VBA and GUI behavior | User, guided by local Codex | Not started |
 | Review evidence, coordinate fixes and reconcile release status | Spot / cloud Codex (`/root` in this conversation) | Cloud review/merge complete; handoff prepared; waiting for Windows evidence |
 | Optional Access/ACE and future Access migration | Separate native lane in [#30](https://github.com/NicoLeeVaz/PerFin/issues/30) | Pending; no actual native acceptance, migration unimplemented |
@@ -104,3 +104,37 @@ requirements in #30.
 | Intended checks | Existing offline suites and privacy scan; portable demo; clean package/isolated installed-wheel smoke; real SQLite workflow/replay/backup/restore; native runner; actual operator observations W1-W19/W15b and module/GUI/PDF/offline checks. Optional ACE stays separate. |
 | Evidence state | No acceptance commands have executed; tested SHA/tree and clean-status evidence are unavailable. No native success or historical Linux test count is claimed. |
 | Next owner | Same Codex session resumes after local preparation blockers are resolved, with the user for desktop observations; Spot/cloud coordinator reviews the eventual handoff. |
+
+
+## 2026-11-05 — Windows issue #34 preflight pause / Spot handoff
+
+This is a preparation pause, not Windows acceptance or task completion. The reviewed start-log commit is `3f0af1c74776804780c3d9ba16ab78220b44cffa`; it was created through the GitHub connector because local Git HTTPS was unavailable. No local source revision was tested. This documentation follow-up is also untested and must not be presented as a tested revision.
+
+| Component | Status | Evidence kind | Sanitized evidence reference |
+| --- | --- | --- | --- |
+| Offline suites | BLOCKED | Automated, not executed | Clean local checkout and private run root unavailable |
+| Privacy source scan | BLOCKED | Automated, not executed | Same prerequisites; no scan result produced |
+| Portable demo | BLOCKED | Automated, not executed | No demo output produced |
+| Installed wheel | BLOCKED | Automated, not executed | No package, wheelhouse, isolated environment, or installed smoke produced |
+| SQLite workflow / replay | BLOCKED | Automated / CLI, not executed | No synthetic database initialized |
+| Backup / restore | BLOCKED | Automated / CLI, not executed | No backup or restore comparison produced |
+| Excel COM | BLOCKED | Automated, not executed | Required runner and core fixture not available locally |
+| Power Query | PENDING | Operator observation required | No observation reported |
+| VBA | PENDING | Operator observation required | No observation reported |
+| Payoff | PENDING | Operator observation required | No edit/recompute observation reported |
+| Statements / valuations | PENDING | Operator observation required | No refresh or valuation observation reported |
+| Native GUI | PENDING | Operator observation required | No observation reported |
+| Privacy / offline desktop | PENDING | Operator observation required | No network or locale settings changed; no observation reported |
+| PDF review / rejection | PENDING | Operator observation required | No fixture or observation produced |
+| Fresh-install / restore observation | PENDING | Operator observation required | No observation reported |
+| Optional Access / ACE | PENDING | Separate optional native lane, not executed | Availability has not been established; not assumed absent |
+
+Native-runner aggregate: **NOT RUN; no aggregate result exists.** Windows observed through the runtime OS API: NT 10.0.19045, 64-bit OS, en-US. A Windows edition query was denied. Python, SQLite, dependencies and Excel metadata remain unverified; locating a Python executable is not version evidence.
+
+W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11, W12, W13, W14, W15, W15b, W16, W17, W18, W19, and optional W20 are each PENDING. All eight required manual-evidence keys remain PENDING; the template has been read but no evidence file has been created. W14 still requires a real later-day observation when the desktop checklist is reached.
+
+No product defect has been established; these are environment/authorization blockers. Local Git clone returned connection failures, and an independent TCP probe also failed. No GitHub credentials, firewall, proxy, global macro setting, networking, locale, or system time was changed. No dependencies or third-party wheels were installed, no financial data was opened, and no generated financial artifacts or raw evidence were uploaded. Only sanitized coordination was published.
+
+The unique LocalAppData acceptance directory has been specified privately to the user for the required explicit outside-Code read/write approval. It has not been created and contains no evidence. Runtime evidence references will be recorded only after authorization and preparation.
+
+**Next actions / owners:** the user authorizes the named private run path and restores local Git HTTPS access; the same Codex session then obtains the isolated branch, reviews/commits any necessary start-log update, records clean full HEAD/tree/status and freezes that revision before running the existing acceptance scripts. Use fresh outputs and preserve actual exit codes. The user performs the desktop observations when fixtures are ready. Spot/cloud coordinator reviews this pause and the eventual results. Keep #34, #30, #1 and older native issues open; no merge or closure is requested.
