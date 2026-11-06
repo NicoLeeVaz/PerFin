@@ -135,7 +135,8 @@ class Repository:
          self.contract_major, self.contract_minor) = _paths.contracts()
         with _read_context(adapter):
             if check_schema:
-                self.meta = migrations.ensure_compatible(adapter, contract_major=self.contract_major)
+                self.meta = migrations.ensure_compatible(adapter, contract_major=self.contract_major,
+                                                         contract_minor=self.contract_minor)
             else:
                 self.meta = migrations.read_meta(adapter)
             self.base_currency = self.meta.get("base_currency")

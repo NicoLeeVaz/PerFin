@@ -142,6 +142,28 @@ class Backup(RealStore):
             sqlite_backup.create_backup(self.path, self.root / "backups", summary=summary)
         self.assertEqual(list((self.root / "backups").iterdir()), [])
 
+    @unittest.skipUnless(os.name == "posix", "POSIX symlink test")
+    def test_restore_refuses_dangling_sidecar_links_without_touching_them(self):
+        backup_set = self.backup()
+        for suffix in ("-wal", "-shm", "-journal"):
+            with self.subTest(suffix=suffix):
+                target = self.root / ("dangling" + suffix + ".sqlite")
+                sidecar = Path(str(target) + suffix)
+                sidecar.symlink_to(self.root / "missing-private-file")
+                with self.assertRaises(BackupError):
+                    sqlite_backup.restore_backup(backup_set, target)
+                self.assertFalse(target.exists())
+                self.assertTrue(sidecar.is_symlink())
+
+    def test_future_contract_backup_is_refused_and_partial_set_removed(self):
+        self.repo.adapter.begin()
+        self.repo.adapter.execute("UPDATE contract_meta SET meta_value = ? WHERE meta_key = ?",
+                                  ("1.1.0", "contract_version"))
+        self.repo.adapter.commit()
+        with self.assertRaises(SchemaVersionError):
+            self.backup()
+        self.assertEqual(list((self.root / "backups").iterdir()), [])
+
     def test_restore_callback_mismatch_removes_target(self):
         backup_set = self.backup()
         target = self.root / "mismatch.sqlite"
@@ -166,6 +188,19 @@ class Backup(RealStore):
 
 
 class Archive(RealStore):
+    @unittest.skipUnless(os.name == "posix", "POSIX symlink test")
+    def test_import_refuses_dangling_sidecar_links_before_writing(self):
+        archive = self.archive()
+        for suffix in ("-wal", "-shm", "-journal"):
+            with self.subTest(suffix=suffix):
+                target = self.root / ("dangling" + suffix + ".sqlite")
+                sidecar = Path(str(target) + suffix)
+                sidecar.symlink_to(self.root / "missing-private-file")
+                with self.assertRaises(portability.PortabilityError):
+                    portability.import_snapshot(archive, target)
+                self.assertFalse(target.exists())
+                self.assertTrue(sidecar.is_symlink())
+
     def test_cli_exports_verifies_and_imports_using_database_alias(self):
         archive = self.root / "cli-history.json"
         target = self.root / "cli-restored.sqlite"

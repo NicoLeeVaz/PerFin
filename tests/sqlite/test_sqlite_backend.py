@@ -280,6 +280,51 @@ class SQLiteRepository(unittest.TestCase):
             self.repo.adapter.execute("UPDATE contract_meta SET meta_value = ? WHERE meta_key = ?", (original, key))
             self.repo.adapter.commit()
 
+    def test_future_contract_minor_is_refused_without_changing_database(self):
+        self.repo.adapter.begin()
+        self.repo.adapter.execute("UPDATE contract_meta SET meta_value = ? WHERE meta_key = ?",
+                                  ("1.1.0", "contract_version"))
+        self.repo.adapter.commit()
+        before = self.path.read_bytes()
+        with self.assertRaises(SchemaVersionError):
+            opened = open_database(self.path)
+            opened.adapter.close()
+        self.assertEqual(self.path.read_bytes(), before)
+
+    def test_same_contract_minor_patch_versions_remain_compatible(self):
+        for version in ("1.0.0", "1.0.999"):
+            with self.subTest(version=version):
+                self.repo.adapter.begin()
+                self.repo.adapter.execute("UPDATE contract_meta SET meta_value = ? WHERE meta_key = ?",
+                                          (version, "contract_version"))
+                self.repo.adapter.commit()
+                opened = open_database(self.path)
+                opened.adapter.close()
+
+    def test_create_preserves_orphaned_sidecars_and_refuses_target(self):
+        for suffix in ("-wal", "-shm", "-journal"):
+            with self.subTest(suffix=suffix):
+                target = self.path.parent / ("orphan" + suffix + ".sqlite")
+                sidecar = Path(str(target) + suffix)
+                sentinel = b"SYNTHETIC existing sidecar; preserve exactly"
+                sidecar.write_bytes(sentinel)
+                with self.assertRaises(FileExistsError):
+                    create_database(target)
+                self.assertFalse(target.exists())
+                self.assertEqual(sidecar.read_bytes(), sentinel)
+
+    @unittest.skipUnless(sys.platform != "win32", "symlink creation requires native Windows privileges")
+    def test_create_refuses_dangling_sidecar_links(self):
+        for suffix in ("-wal", "-shm", "-journal"):
+            with self.subTest(suffix=suffix):
+                target = self.path.parent / ("dangling" + suffix + ".sqlite")
+                sidecar = Path(str(target) + suffix)
+                sidecar.symlink_to(self.path.parent / "missing-private-file")
+                with self.assertRaises(FileExistsError):
+                    create_database(target)
+                self.assertFalse(target.exists())
+                self.assertTrue(sidecar.is_symlink())
+
     def interleaving_pair(self):
         # WAL permits the writer to commit inside the deterministic read hook.
         # The production default rollback journal also preserves snapshots, but

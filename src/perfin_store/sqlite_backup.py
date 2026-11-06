@@ -12,6 +12,7 @@ import time
 import uuid
 
 from .backup import BackupError, check_location, compare_summaries, sha256_file
+from .sqlite_backend import database_path_occupied
 
 MANIFEST_KIND = "perfin.sqlite.backup"
 DATABASE_NAME = "snapshot.sqlite3"
@@ -159,7 +160,7 @@ def restore_backup(set_dir, target_db, *, acknowledge_location=False, open_summa
     manifest = read_manifest(set_dir)
     source, target = Path(set_dir) / DATABASE_NAME, Path(target_db)
     check_location(target, acknowledge_location, "restore target")
-    if target.exists() or target.is_symlink() or any(Path(str(target) + s).exists() for s in ("-wal", "-shm", "-journal")):
+    if database_path_occupied(target):
         raise BackupError("restore target already exists; choose a new path")
     target.parent.mkdir(parents=True, exist_ok=True)
     # Exclusive creation also protects against another process racing our existence check.

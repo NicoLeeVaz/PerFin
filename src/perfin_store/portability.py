@@ -123,11 +123,11 @@ def read_snapshot(archive_path):
 
 def import_snapshot(archive_path, target_db, *, acknowledge_location=False):
     """Restore complete SQLite history into a new database, never merge into existing data."""
-    from .sqlite_backend import create_database, open_database
+    from .sqlite_backend import create_database, database_path_occupied, open_database
     payload = read_snapshot(archive_path)["payload"]
     target = Path(target_db)
     check_location(target, acknowledge_location, "archive import target")
-    if target.exists() or target.is_symlink() or any(Path(str(target) + s).exists() for s in ("-wal", "-shm", "-journal")):
+    if database_path_occupied(target):
         raise PortabilityError("archive import requires a new database path")
     meta = {r["meta_key"]: r["meta_value"] for r in payload["tables"]["contract_meta"]}
     create_database(target, base_currency=meta["base_currency"], acknowledge_location=acknowledge_location)

@@ -28,6 +28,13 @@ SUFFIXES = {".sqlite3", ".sqlite", ".db"}
 _FROM = re.compile(r"\bFROM\s+\[?([a-z][a-z0-9_]*)\]?", re.I)
 
 
+def database_path_occupied(path):
+    """A new database must not reuse recovery files, including dangling links."""
+    return any(candidate.exists() or candidate.is_symlink()
+               for candidate in (Path(str(path) + suffix)
+                                 for suffix in ("", "-wal", "-shm", "-journal")))
+
+
 def _q(name: str) -> str:
     if not re.fullmatch(r"[a-z][a-z0-9_]*", name):
         raise ValueError("invalid schema identifier")
@@ -199,6 +206,8 @@ def create_database(path, *, base_currency="USD", acknowledge_location=False):
     verdict = _paths.privacy().evaluate_data_dir(str(target))
     if verdict["decision"] == "refuse" or (verdict["decision"] == "warn" and not acknowledge_location):
         raise AdapterError("database location refused: " + "; ".join(verdict["reasons"]))
+    if database_path_occupied(target):
+        raise FileExistsError("database or associated SQLite sidecar already exists; choose a new path")
     target.parent.mkdir(parents=True, exist_ok=True)
     # Exclusive file creation refuses existing files, symlinks and racing creators.
     fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)

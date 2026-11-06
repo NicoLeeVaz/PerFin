@@ -52,12 +52,16 @@ def check_version(found: str, supported: Tuple[int, int, int] = SUPPORTED) -> st
 
 
 def ensure_compatible(adapter, *, migrate: bool = False,
-                      contract_major: Optional[int] = None) -> Dict[str, str]:
+                      contract_major: Optional[int] = None,
+                      contract_minor: Optional[int] = None) -> Dict[str, str]:
     meta = read_meta(adapter)
     state = check_version(meta.get("schema_version"))
     cv = meta.get("contract_version")
     if contract_major is not None and parse_version(cv)[0] != contract_major:
         raise SchemaVersionError("database contract_version %s does not match contract major %d" % (cv, contract_major))
+    if contract_minor is not None and parse_version(cv)[1] > contract_minor:
+        raise SchemaVersionError("database contract_version %s has a newer minor version than this PerFin; "
+                                 "refusing (fail closed)" % cv)
     if state == "older":
         if not migrate:
             raise SchemaVersionError("database schema %s is older; run migrations explicitly" % meta["schema_version"])
