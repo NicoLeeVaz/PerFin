@@ -1,6 +1,6 @@
 # Agent activity and handoff log
 
-Updated 2026-11-05, America/Los_Angeles. This is the shared coordination record
+Updated 2026-11-08, America/Los_Angeles. This is the shared coordination record
 for actual work, recorded owners, evidence and the next actor. Keep runtime logs,
 databases, statements and generated workbooks outside this public repository.
 
@@ -13,7 +13,7 @@ databases, statements and generated workbooks outside this public repository.
 | Accountable GitHub owner | `NicoLeeVaz` | #34 assigned; ready for a Windows session |
 | Prepare Windows, run automated checks, capture evidence | Local Codex native thread `01a1afaa-f8c9-7cd2-8235-297fd5c7bed4` | Claimed #34; preflight started, then paused on local Git HTTPS and run-directory authorization blockers; acceptance unrun |
 | Observe native Excel, Power Query, VBA and GUI behavior | User, guided by local Codex | Not started |
-| Review evidence, coordinate fixes and reconcile release status | Spot / cloud Codex (`/root` in this conversation) | Cloud review/merge complete; handoff prepared; waiting for Windows evidence |
+| Review evidence, coordinate fixes and reconcile release status | Spot / cloud Codex (`/root` in this conversation) | Cloud implementation and handoff complete; next Windows developer must claim/resume #34 |
 | Optional Access/ACE and future Access migration | Separate native lane in [#30](https://github.com/NicoLeeVaz/PerFin/issues/30) | Pending; no actual native acceptance, migration unimplemented |
 
 Portable waves 6, 7 and 8a are merged and complete. Do not repeat their
@@ -55,9 +55,9 @@ See [the independent integration review](PR-33-INTEGRATION-REVIEW.md) for exact
 commands, package hashes and evidence distinctions. Those test counts apply to
 the verified runtime/test source; this coordination update changes Markdown only.
 
-## Next actor: local Codex on Windows
+## Next actor: resuming or replacement Windows developer
 
-1. Claim #34 and append a real start entry here, naming the actual agent/session,
+1. Check the live #34 comments for active work, then resume or claim the handoff and append a real start entry here, naming the actual agent/session,
    environment, branch, exact current checkout SHA and owned paths. Do not label
    a proposed Windows session as started until it actually starts.
 2. Read [the task](https://github.com/NicoLeeVaz/PerFin/issues/34),
@@ -138,3 +138,17 @@ No product defect has been established; these are environment/authorization bloc
 The unique LocalAppData acceptance directory has been specified privately to the user for the required explicit outside-Code read/write approval. It has not been created and contains no evidence. Runtime evidence references will be recorded only after authorization and preparation.
 
 **Next actions / owners:** the user authorizes the named private run path and restores local Git HTTPS access; the same Codex session then obtains the isolated branch, reviews/commits any necessary start-log update, records clean full HEAD/tree/status and freezes that revision before running the existing acceptance scripts. Use fresh outputs and preserve actual exit codes. The user performs the desktop observations when fixtures are ready. Spot/cloud coordinator reviews this pause and the eventual results. Keep #34, #30, #1 and older native issues open; no merge or closure is requested.
+
+
+## 2026-11-08 — Deferred Windows acceptance handoff
+
+- Actor: Spot / cloud Codex coordinator, this conversation. Read-only GitHub status review followed by documentation reconciliation; no Windows execution.
+- User instruction: preserve and merge completed work; leave unfinished work ready for another developer at a later date.
+- Verified remote baseline: main `183ac4896c4e1d569f04927526df230ea8cbfa85`. Portable implementation #33 and preflight log #35 are merged. The recorded 547 Linux tests and 31 demo checks remain historical portable evidence, not a new test run.
+- Remaining task: reuse [#34](https://github.com/NicoLeeVaz/PerFin/issues/34); no duplicate issue. It remains open. Latest recorded local session `01a1afaa-f8c9-7cd2-8235-297fd5c7bed4` paused before acceptance. This review cannot determine whether that process still exists.
+- Last observed prerequisites: Git HTTPS/TCP connection to github.com:443 failed, and the exact private LocalAppData test directory lacked required authorization. Recheck these on the next host; do not assume they persist or bypass its permission controls. No product defect was established by the preflight.
+- Next owner: a Windows developer/local Codex session, currently unclaimed for this new handoff, with the desktop operator for manual observations. A replacement session may take over after checking live claims; the original session is not required.
+- Resume: preserve local work; obtain a clean current revision; record actual Windows/Python/SQLite/Excel versions; confirm an allowed synthetic output directory outside Git/sync; execute the existing offline suite, demo and isolated installed-wheel smoke. Then verify actual desktop Excel with the correct core fixture and record Power Query/VBA/GUI and remaining manual observations separately. Follow #34 and release/README.md for exact commands and completion criteria.
+- If source download is still blocked, a permitted source transfer pinned to a verifiable commit may be used; do not present an unverified ZIP or modified tree as a clean tested revision. Request only the concrete local access needed.
+- Completion: publish a redacted revision-specific result summary, update this log and #34, and link any reproducible defects. Keep raw evidence and financial artifacts local. Close #34 only after its acceptance is supported; #30 retains separate optional ACE and future Access-import requirements. Native checks remain UNRUN, and further portable development may continue.
+- Owned files: AGENTS.md, docs/EXECUTION-PLAN.md and this log. Validation: reviewed documentation diff, historical log retained, no runtime/test files changed; no new test execution claimed.
