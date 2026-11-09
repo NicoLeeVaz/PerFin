@@ -9,6 +9,7 @@ Import statements into an explicit review queue, commit approved transactions to
 - [Agent activity and handoff log](docs/AGENT-LOG.md): completed work, recorded owners and the [next Windows task #34](https://github.com/NicoLeeVaz/PerFin/issues/34)
 - [Complete 18-table model](docs/database/model.md) and [offline clickable relationship explorer](docs/database/model.html)
 - [Install and run](docs/GETTING-STARTED.md)
+- [Archived November 5 HTML guide](docs/archive/perfin-user-guide-2026-11-05.html): historical Access-first snapshot; [SQLite-first refresh #36](https://github.com/NicoLeeVaz/PerFin/issues/36) is open
 - [Run the synthetic portable demo](docs/runbooks/portable-demo.md): real SQLite, two statement cycles, three Excel workbooks and evidence
 - [SQLite backup and full-history portability](docs/database/portability.md)
 - [Core workflow](docs/runbooks/core/), [payoff](docs/payoff/), [statements](docs/statements/), [local PDF](docs/runbooks/pdf/)
