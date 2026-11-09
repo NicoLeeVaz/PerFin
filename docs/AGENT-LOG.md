@@ -23,6 +23,10 @@ run native Windows/Office acceptance. Missing Access/ACE does not prevent the
 independent SQLite/Excel work; the aggregate native runner can still report its
 Access component as BLOCKED.
 
+## Independent documentation handoff
+
+[**#36 — refresh the comprehensive HTML user guide for SQLite-first PerFin**](https://github.com/NicoLeeVaz/PerFin/issues/36) is a separate, unclaimed documentation task. The completed November 5 Access-first guide is preserved at [the dated archive](archive/perfin-user-guide-2026-11-05.html), prominently labeled historical. Use [Getting Started](GETTING-STARTED.md) for current installation. This handoff does not change Windows ownership or native acceptance status in #34/#30.
+
 ## Recorded implementation ownership
 
 These owner labels come from the original wave issues. They preserve historical
@@ -140,6 +144,24 @@ The unique LocalAppData acceptance directory has been specified privately to the
 **Next actions / owners:** the user authorizes the named private run path and restores local Git HTTPS access; the same Codex session then obtains the isolated branch, reviews/commits any necessary start-log update, records clean full HEAD/tree/status and freezes that revision before running the existing acceptance scripts. Use fresh outputs and preserve actual exit codes. The user performs the desktop observations when fixtures are ready. Spot/cloud coordinator reviews this pause and the eventual results. Keep #34, #30, #1 and older native issues open; no merge or closure is requested.
 
 
+## 2026-11-08 — HTML guide preservation and deferred refresh handoff
+
+| Field | Record |
+| --- | --- |
+| Actor / environment | Spot / cloud Codex `/root`, this conversation; Linux. No Windows/Office execution. |
+| Authorization / scope | Owner requested an issue/worklog handoff for incomplete work and publication/merge of completed work. Documentation only. |
+| Branch / starting revision | `agent/docs-guide-archive-2026-11-08`, from `183ac4896c4e1d569f04927526df230ea8cbfa85`. |
+| Owned files | `docs/archive/perfin-user-guide-2026-11-05.html`, `README.md`, `docs/AGENT-LOG.md`. |
+| Work at start | Inspected current instructions, agent log, tracker, README, installation/release docs, repository tree and existing guide-related issues/PRs. Recovered the completed HTML artifact. Confirmed it predates merged SQLite-first #33 and was not in the repository. |
+| Work at handoff | Preserved the 16-section self-contained guide with a prominent historical/Access-first warning and current-document links; added README navigation; created [#36](https://github.com/NicoLeeVaz/PerFin/issues/36) with concrete scope, reusable inputs and acceptance criteria. The original downloadable artifact remains preserved. |
+| Observed checks | Local structural checks: HTML parsed, unique IDs/internal anchors, no remotely loaded assets, both new relative documentation links resolve; source diff limited to the three owned documentation files. Guide script syntax checked with Node. No application suite, current first-use run, browser render or native Office acceptance rerun for this archival change. |
+| Prior evidence | The earlier guide recorded 75 pinned file links, 45 CLI lines and DOM-harness checks. These are historical results against the Access-first guide; not a current SQLite verification. Product 473/547 test counts remain attributed to their source revisions. |
+| Remaining work | #36: inspect current implementation, refresh guide for SQLite/online backup/full-history portability/demo/model, execute real-SQLite walkthrough, browser-check interactions/layout, and publish the new current downloadable guide. Native #34/#30 remain independent and pending. |
+| Next owner | Intended documentation developer/agent; unclaimed. Claim #36 and update this log with the actual session/environment and tested SHA before starting. |
+
+The preservation PR is intended to merge under the owner's instruction; verify its merged status on GitHub. Publication of this archive does not complete #36 or certify Windows.
+
+
 ## 2026-11-08 — Deferred Windows acceptance handoff
 
 - Actor: Spot / cloud Codex coordinator, this conversation. Read-only GitHub status review followed by documentation reconciliation; no Windows execution.
@@ -152,3 +174,5 @@ The unique LocalAppData acceptance directory has been specified privately to the
 - If source download is still blocked, a permitted source transfer pinned to a verifiable commit may be used; do not present an unverified ZIP or modified tree as a clean tested revision. Request only the concrete local access needed.
 - Completion: publish a redacted revision-specific result summary, update this log and #34, and link any reproducible defects. Keep raw evidence and financial artifacts local. Close #34 only after its acceptance is supported; #30 retains separate optional ACE and future Access-import requirements. Native checks remain UNRUN, and further portable development may continue.
 - Owned files: AGENTS.md, docs/EXECUTION-PLAN.md and this log. Validation: reviewed documentation diff, historical log retained, no runtime/test files changed; no new test execution claimed.
+
+Concurrent documentation PR #37 was reconciled before publication; its archived-guide links, #36 handoff and full worklog entry are retained.
