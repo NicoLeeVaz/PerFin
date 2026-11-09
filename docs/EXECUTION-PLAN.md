@@ -3,7 +3,7 @@
 Revised 2026-11-05 under the user's explicit SQLite and parallel-agent instruction.
 [Live tracker #1](https://github.com/NicoLeeVaz/PerFin/issues/1) records completion evidence.
 
-**Current status:** portable waves 6, 7 and 8a are merged in PR #33 (`af6a794`). The next executable task is [#34: Windows SQLite and desktop Excel acceptance](https://github.com/NicoLeeVaz/PerFin/issues/34). Intended executor: local Codex on Windows; desktop operator: the user; results review: Spot/cloud coordinator. The Windows task is not yet claimed or running. Optional Access/ACE and remaining native release requirements stay open in #30. See [the agent log](AGENT-LOG.md) for actual activity, recorded ownership and later handoffs.
+**Current status:** portable waves 6, 7 and 8a are merged in PR #33 (`af6a794`). The next executable task is [#34: Windows SQLite and desktop Excel acceptance](https://github.com/NicoLeeVaz/PerFin/issues/34). Intended executor: local Codex on Windows; desktop operator: the user; results review: Spot/cloud coordinator. The original session claimed the Windows task but paused before acceptance; PR #35 merged the preflight log. A resuming or replacement Windows developer should check live claims and take over #34. Optional Access/ACE and remaining native release requirements stay open in #30. See [the agent log](AGENT-LOG.md) for actual activity, recorded ownership and later handoffs.
 
 ## Outcome and structure first
 
@@ -36,7 +36,7 @@ The five original waves have merged source; do not repeat them. Their native evi
 | 7b | [#28](https://github.com/NicoLeeVaz/PerFin/issues/28) | `cloud_workbooks` | Synthetic database workflow and three Excel workbooks | Merged #33; closed |
 | 8a | [#29](https://github.com/NicoLeeVaz/PerFin/issues/29) | `root` coordinator | Offline suites, installed wheel, portable package/evidence | Merged #33; closed; 547 tests and installed smoke PASS |
 | 8b | [#30](https://github.com/NicoLeeVaz/PerFin/issues/30) | Compatible Windows operator needed | Native ACE/Excel/Power Query/VBA and future Access import validation | Open; native requirements UNRUN |
-| Next Windows slice | [#34](https://github.com/NicoLeeVaz/PerFin/issues/34) | Local Codex + user; Spot reviews results | Actual Windows SQLite and desktop Excel evidence | Open; intended executor not yet claimed |
+| Next Windows slice | [#34](https://github.com/NicoLeeVaz/PerFin/issues/34) | Local Codex + user; Spot reviews results | Actual Windows SQLite and desktop Excel evidence | Open; preflight paused; next Windows developer needed |
 
 Implementation owners above come from the original wave issues; they are historical attribution, not newly launched agents. The next actor should claim #34 and update the agent log before starting. Follow actual code dependencies and record component results separately. Missing optional Access/ACE does not prevent independent SQLite/Excel checks or continued development.
 
